@@ -28,6 +28,10 @@ common:
     url: https://browser-use.com
   - type: Documentation
     url: https://docs.browser-use.com
+  - type: Integrations
+    url: https://browser-use.com/marketplace
+integrations:
+  - name: Browser Use
 maintainers:
   - FN: Kin Lane
     email: kin@apievangelist.com
