@@ -1,0 +1,405 @@
+openapi: 3.1.0
+info:
+  title: Browser Use Cloud API
+  description: >-
+    Browser Use Cloud API exposes browser automation sessions, raw CDP browsers,
+    persistent workspaces, browser profiles, and billing endpoints for
+    AI-powered browser automation. Requests authenticate with an
+    X-Browser-Use-API-Key header issued from cloud.browser-use.com.
+  version: v3
+  contact:
+    name: Browser Use
+    url: https://docs.browser-use.com
+servers:
+  - url: https://api.browser-use.com/api/v3
+    description: Production
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: Sessions
+  - name: Browsers
+  - name: Workspaces
+  - name: Profiles
+  - name: Billing
+paths:
+  /sessions:
+    post:
+      summary: Create a session
+      operationId: createSession
+      tags: [Sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SessionCreate" }
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Session" } }
+    get:
+      summary: List sessions
+      operationId: listSessions
+      tags: [Sessions]
+      parameters:
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Session" }
+  /sessions/{session_id}:
+    parameters:
+      - { name: session_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get a session
+      operationId: getSession
+      tags: [Sessions]
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Session" } }
+  /sessions/{session_id}/stop:
+    parameters:
+      - { name: session_id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Stop a session
+      operationId: stopSession
+      tags: [Sessions]
+      responses:
+        "200":
+          description: Session stopped
+          content:
+            application/json: { schema: { type: object } }
+  /sessions/{session_id}/messages:
+    parameters:
+      - { name: session_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Fetch agent messages
+      operationId: getSessionMessages
+      tags: [Sessions]
+      responses:
+        "200":
+          description: Agent messages stream
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+  /sessions/{session_id}/recording:
+    parameters:
+      - { name: session_id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Retrieve session recording
+      operationId: getSessionRecording
+      tags: [Sessions]
+      responses:
+        "200":
+          description: Recording URL
+          content:
+            application/json: { schema: { type: object, properties: { recording_url: { type: string, format: uri } } } }
+  /browsers:
+    post:
+      summary: Create a raw CDP browser
+      operationId: createBrowser
+      tags: [Browsers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BrowserCreate" }
+      responses:
+        "200":
+          description: Browser created
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Browser" } }
+  /browsers/{browser_id}:
+    parameters:
+      - { name: browser_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get browser details
+      operationId: getBrowser
+      tags: [Browsers]
+      responses:
+        "200":
+          description: Browser
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Browser" } }
+  /browsers/{browser_id}/stop:
+    parameters:
+      - { name: browser_id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Stop a browser
+      operationId: stopBrowser
+      tags: [Browsers]
+      responses:
+        "200":
+          description: Browser stopped
+          content:
+            application/json: { schema: { type: object } }
+  /workspaces:
+    post:
+      summary: Create a workspace
+      operationId: createWorkspace
+      tags: [Workspaces]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "200":
+          description: Workspace created
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Workspace" } }
+    get:
+      summary: List workspaces
+      operationId: listWorkspaces
+      tags: [Workspaces]
+      responses:
+        "200":
+          description: Workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Workspace" }
+  /workspaces/{workspace_id}:
+    parameters:
+      - { name: workspace_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get a workspace
+      operationId: getWorkspace
+      tags: [Workspaces]
+      responses:
+        "200":
+          description: Workspace
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Workspace" } }
+    put:
+      summary: Update a workspace
+      operationId: updateWorkspace
+      tags: [Workspaces]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        "200":
+          description: Workspace updated
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Workspace" } }
+    delete:
+      summary: Delete a workspace
+      operationId: deleteWorkspace
+      tags: [Workspaces]
+      responses:
+        "204": { description: Deleted }
+  /workspaces/{workspace_id}/upload:
+    parameters:
+      - { name: workspace_id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Upload files
+      operationId: uploadWorkspaceFiles
+      tags: [Workspaces]
+      parameters:
+        - { name: prefix, in: query, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        "200":
+          description: File uploaded
+          content:
+            application/json: { schema: { type: object } }
+  /workspaces/{workspace_id}/files:
+    parameters:
+      - { name: workspace_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: List workspace files
+      operationId: listWorkspaceFiles
+      tags: [Workspaces]
+      parameters:
+        - { name: prefix, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Files
+          content:
+            application/json: { schema: { type: array, items: { type: object } } }
+  /workspaces/{workspace_id}/size:
+    parameters:
+      - { name: workspace_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get workspace storage size
+      operationId: getWorkspaceSize
+      tags: [Workspaces]
+      responses:
+        "200":
+          description: Size
+          content:
+            application/json: { schema: { type: object, properties: { bytes: { type: integer } } } }
+  /profiles:
+    post:
+      summary: Create a profile
+      operationId: createProfile
+      tags: [Profiles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "200":
+          description: Profile created
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Profile" } }
+    get:
+      summary: List profiles
+      operationId: listProfiles
+      tags: [Profiles]
+      parameters:
+        - { name: query, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Profile" }
+  /profiles/{profile_id}:
+    parameters:
+      - { name: profile_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Get a profile
+      operationId: getProfile
+      tags: [Profiles]
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Profile" } }
+    put:
+      summary: Rename a profile
+      operationId: updateProfile
+      tags: [Profiles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Profile" } }
+    delete:
+      summary: Delete a profile
+      operationId: deleteProfile
+      tags: [Profiles]
+      responses:
+        "204": { description: Deleted }
+  /billing/usage:
+    get:
+      summary: Get billing usage
+      operationId: getBillingUsage
+      tags: [Billing]
+      responses:
+        "200":
+          description: Usage
+          content:
+            application/json: { schema: { type: object } }
+  /billing/balance:
+    get:
+      summary: Get account balance
+      operationId: getBillingBalance
+      tags: [Billing]
+      responses:
+        "200":
+          description: Balance
+          content:
+            application/json: { schema: { type: object, properties: { balance: { type: number } } } }
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key
+  schemas:
+    SessionCreate:
+      type: object
+      required: [task]
+      properties:
+        task: { type: string }
+        model: { type: string }
+        session_id: { type: string }
+        keep_alive: { type: boolean }
+        enable_recording: { type: boolean }
+        workspace_id: { type: string }
+        profile_id: { type: string }
+        output_schema: { type: object }
+        proxy_country_code: { type: string }
+        agentmail: { type: boolean }
+    Session:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [running, idle, stopped, error, timed_out] }
+        output: { type: string }
+        live_url: { type: string, format: uri }
+        steps: { type: array, items: { type: object } }
+    BrowserCreate:
+      type: object
+      properties:
+        proxy_country_code: { type: string }
+        custom_proxy: { type: object }
+        profile_id: { type: string }
+        enable_recording: { type: boolean }
+        browserScreenWidth: { type: integer }
+        browserScreenHeight: { type: integer }
+        timeout: { type: integer, maximum: 240 }
+    Browser:
+      type: object
+      properties:
+        id: { type: string }
+        cdp_url: { type: string }
+        live_url: { type: string, format: uri }
+        recording_url: { type: string, format: uri }
+        status: { type: string }
+    Workspace:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+    Profile:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
