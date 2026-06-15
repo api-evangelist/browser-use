@@ -1,0 +1,490 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Browser Use Cloud API",
+    "version": "v3"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-Browser-Use-API-Key",
+      "value": "{{X-Browser-Use-API-Key}}",
+      "placement": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Sessions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List sessions",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/sessions",
+            "params": [
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "List sessions"
+        },
+        {
+          "info": {
+            "name": "Create a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/sessions",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Create a session"
+        },
+        {
+          "info": {
+            "name": "Get a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a session"
+        },
+        {
+          "info": {
+            "name": "Stop a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id/stop",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Stop a session"
+        },
+        {
+          "info": {
+            "name": "Fetch agent messages",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id/messages",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Fetch agent messages"
+        },
+        {
+          "info": {
+            "name": "Retrieve session recording",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id/recording",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Retrieve session recording"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Browsers",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Create a raw CDP browser",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/browsers",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Create a raw CDP browser"
+        },
+        {
+          "info": {
+            "name": "Get browser details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/browsers/:browser_id",
+            "params": [
+              {
+                "name": "browser_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get browser details"
+        },
+        {
+          "info": {
+            "name": "Stop a browser",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/browsers/:browser_id/stop",
+            "params": [
+              {
+                "name": "browser_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Stop a browser"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Workspaces",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List workspaces",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/workspaces"
+          },
+          "docs": "List workspaces"
+        },
+        {
+          "info": {
+            "name": "Create a workspace",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/workspaces",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Create a workspace"
+        },
+        {
+          "info": {
+            "name": "Get a workspace",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/workspaces/:workspace_id",
+            "params": [
+              {
+                "name": "workspace_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a workspace"
+        },
+        {
+          "info": {
+            "name": "Update a workspace",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.browser-use.com/api/v3/workspaces/:workspace_id",
+            "params": [
+              {
+                "name": "workspace_id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Update a workspace"
+        },
+        {
+          "info": {
+            "name": "Delete a workspace",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.browser-use.com/api/v3/workspaces/:workspace_id",
+            "params": [
+              {
+                "name": "workspace_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Delete a workspace"
+        },
+        {
+          "info": {
+            "name": "Upload files",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/workspaces/:workspace_id/upload",
+            "params": [
+              {
+                "name": "workspace_id",
+                "value": "",
+                "type": "path"
+              },
+              {
+                "name": "prefix",
+                "value": "",
+                "type": "query"
+              }
+            ],
+            "body": {
+              "type": "multipart-form",
+              "data": [
+                {
+                  "name": "file",
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "docs": "Upload files"
+        },
+        {
+          "info": {
+            "name": "List workspace files",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/workspaces/:workspace_id/files",
+            "params": [
+              {
+                "name": "workspace_id",
+                "value": "",
+                "type": "path"
+              },
+              {
+                "name": "prefix",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "List workspace files"
+        },
+        {
+          "info": {
+            "name": "Get workspace storage size",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/workspaces/:workspace_id/size",
+            "params": [
+              {
+                "name": "workspace_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get workspace storage size"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Profiles",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List profiles",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/profiles",
+            "params": [
+              {
+                "name": "query",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "List profiles"
+        },
+        {
+          "info": {
+            "name": "Create a profile",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/profiles",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Create a profile"
+        },
+        {
+          "info": {
+            "name": "Get a profile",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/profiles/:profile_id",
+            "params": [
+              {
+                "name": "profile_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a profile"
+        },
+        {
+          "info": {
+            "name": "Rename a profile",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.browser-use.com/api/v3/profiles/:profile_id",
+            "params": [
+              {
+                "name": "profile_id",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Rename a profile"
+        },
+        {
+          "info": {
+            "name": "Delete a profile",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.browser-use.com/api/v3/profiles/:profile_id",
+            "params": [
+              {
+                "name": "profile_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Delete a profile"
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Billing",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get billing usage",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/billing/usage"
+          },
+          "docs": "Get billing usage"
+        },
+        {
+          "info": {
+            "name": "Get account balance",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/billing/balance"
+          },
+          "docs": "Get account balance"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
