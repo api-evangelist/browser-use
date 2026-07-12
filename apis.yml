@@ -24,6 +24,10 @@ apis:
       - type: Documentation
         url: https://docs.browser-use.com
 common:
+  - type: DomainSecurity
+    url: security/browser-use-domain-security.yml
+  - type: Authentication
+    url: authentication/browser-use-authentication.yml
   - type: GitHubOrganization
     url: https://github.com/browser-use
   - type: LinkedIn
@@ -36,6 +40,8 @@ common:
     url: https://browser-use.com/marketplace
   - type: LlmsText
     url: https://docs.browser-use.com/llms.txt
+  - url: https://browser-use.com/rss.xml
+    type: Blog
 integrations:
   - name: Browser Use
 maintainers:
