@@ -1,0 +1,124 @@
+openapi: 3.1.0
+info:
+  title: Browser Use Cloud Billing Profiles API
+  description: Browser Use Cloud API exposes browser automation sessions, raw CDP browsers, persistent workspaces, browser profiles, and billing endpoints for AI-powered browser automation. Requests authenticate with an X-Browser-Use-API-Key header issued from cloud.browser-use.com.
+  version: v3
+  contact:
+    name: Browser Use
+    url: https://docs.browser-use.com
+servers:
+- url: https://api.browser-use.com/api/v3
+  description: Production
+security:
+- ApiKeyAuth: []
+tags:
+- name: Profiles
+paths:
+  /profiles:
+    post:
+      summary: Create a profile
+      operationId: createProfile
+      tags:
+      - Profiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+    get:
+      summary: List profiles
+      operationId: listProfiles
+      tags:
+      - Profiles
+      parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Profile'
+  /profiles/{profile_id}:
+    parameters:
+    - name: profile_id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Get a profile
+      operationId: getProfile
+      tags:
+      - Profiles
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+    put:
+      summary: Rename a profile
+      operationId: updateProfile
+      tags:
+      - Profiles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+    delete:
+      summary: Delete a profile
+      operationId: deleteProfile
+      tags:
+      - Profiles
+      responses:
+        '204':
+          description: Deleted
+components:
+  schemas:
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: Browser Use Cloud Billing Workspaces API
+  description: Browser Use Cloud API exposes browser automation sessions, raw CDP browsers, persistent workspaces, browser profiles, and billing endpoints for AI-powered browser automation. Requests authenticate with an X-Browser-Use-API-Key header issued from cloud.browser-use.com.
+  version: v3
+  contact:
+    name: Browser Use
+    url: https://docs.browser-use.com
+servers:
+- url: https://api.browser-use.com/api/v3
+  description: Production
+security:
+- ApiKeyAuth: []
+tags:
+- name: Workspaces
+paths:
+  /workspaces:
+    post:
+      summary: Create a workspace
+      operationId: createWorkspace
+      tags:
+      - Workspaces
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Workspace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+    get:
+      summary: List workspaces
+      operationId: listWorkspaces
+      tags:
+      - Workspaces
+      responses:
+        '200':
+          description: Workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+  /workspaces/{workspace_id}:
+    parameters:
+    - name: workspace_id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Get a workspace
+      operationId: getWorkspace
+      tags:
+      - Workspaces
+      responses:
+        '200':
+          description: Workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+    put:
+      summary: Update a workspace
+      operationId: updateWorkspace
+      tags:
+      - Workspaces
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Workspace updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+    delete:
+      summary: Delete a workspace
+      operationId: deleteWorkspace
+      tags:
+      - Workspaces
+      responses:
+        '204':
+          description: Deleted
+  /workspaces/{workspace_id}/upload:
+    parameters:
+    - name: workspace_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Upload files
+      operationId: uploadWorkspaceFiles
+      tags:
+      - Workspaces
+      parameters:
+      - name: prefix
+        in: query
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+  /workspaces/{workspace_id}/files:
+    parameters:
+    - name: workspace_id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: List workspace files
+      operationId: listWorkspaceFiles
+      tags:
+      - Workspaces
+      parameters:
+      - name: prefix
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /workspaces/{workspace_id}/size:
+    parameters:
+    - name: workspace_id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Get workspace storage size
+      operationId: getWorkspaceSize
+      tags:
+      - Workspaces
+      responses:
+        '200':
+          description: Size
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bytes:
+                    type: integer
+components:
+  schemas:
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

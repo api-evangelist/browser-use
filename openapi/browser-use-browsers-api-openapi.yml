@@ -1,0 +1,113 @@
+openapi: 3.1.0
+info:
+  title: Browser Use Cloud Billing Browsers API
+  description: Browser Use Cloud API exposes browser automation sessions, raw CDP browsers, persistent workspaces, browser profiles, and billing endpoints for AI-powered browser automation. Requests authenticate with an X-Browser-Use-API-Key header issued from cloud.browser-use.com.
+  version: v3
+  contact:
+    name: Browser Use
+    url: https://docs.browser-use.com
+servers:
+- url: https://api.browser-use.com/api/v3
+  description: Production
+security:
+- ApiKeyAuth: []
+tags:
+- name: Browsers
+paths:
+  /browsers:
+    post:
+      summary: Create a raw CDP browser
+      operationId: createBrowser
+      tags:
+      - Browsers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserCreate'
+      responses:
+        '200':
+          description: Browser created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Browser'
+  /browsers/{browser_id}:
+    parameters:
+    - name: browser_id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Get browser details
+      operationId: getBrowser
+      tags:
+      - Browsers
+      responses:
+        '200':
+          description: Browser
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Browser'
+  /browsers/{browser_id}/stop:
+    parameters:
+    - name: browser_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Stop a browser
+      operationId: stopBrowser
+      tags:
+      - Browsers
+      responses:
+        '200':
+          description: Browser stopped
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    Browser:
+      type: object
+      properties:
+        id:
+          type: string
+        cdp_url:
+          type: string
+        live_url:
+          type: string
+          format: uri
+        recording_url:
+          type: string
+          format: uri
+        status:
+          type: string
+    BrowserCreate:
+      type: object
+      properties:
+        proxy_country_code:
+          type: string
+        custom_proxy:
+          type: object
+        profile_id:
+          type: string
+        enable_recording:
+          type: boolean
+        browserScreenWidth:
+          type: integer
+        browserScreenHeight:
+          type: integer
+        timeout:
+          type: integer
+          maximum: 240
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

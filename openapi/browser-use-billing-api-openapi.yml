@@ -1,0 +1,51 @@
+openapi: 3.1.0
+info:
+  title: Browser Use Cloud Billing API
+  description: Browser Use Cloud API exposes browser automation sessions, raw CDP browsers, persistent workspaces, browser profiles, and billing endpoints for AI-powered browser automation. Requests authenticate with an X-Browser-Use-API-Key header issued from cloud.browser-use.com.
+  version: v3
+  contact:
+    name: Browser Use
+    url: https://docs.browser-use.com
+servers:
+- url: https://api.browser-use.com/api/v3
+  description: Production
+security:
+- ApiKeyAuth: []
+tags:
+- name: Billing
+paths:
+  /billing/usage:
+    get:
+      summary: Get billing usage
+      operationId: getBillingUsage
+      tags:
+      - Billing
+      responses:
+        '200':
+          description: Usage
+          content:
+            application/json:
+              schema:
+                type: object
+  /billing/balance:
+    get:
+      summary: Get account balance
+      operationId: getBillingBalance
+      tags:
+      - Billing
+      responses:
+        '200':
+          description: Balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

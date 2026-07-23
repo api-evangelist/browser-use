@@ -1,0 +1,194 @@
+openapi: 3.1.0
+info:
+  title: Browser Use Cloud Billing Sessions API
+  description: Browser Use Cloud API exposes browser automation sessions, raw CDP browsers, persistent workspaces, browser profiles, and billing endpoints for AI-powered browser automation. Requests authenticate with an X-Browser-Use-API-Key header issued from cloud.browser-use.com.
+  version: v3
+  contact:
+    name: Browser Use
+    url: https://docs.browser-use.com
+servers:
+- url: https://api.browser-use.com/api/v3
+  description: Production
+security:
+- ApiKeyAuth: []
+tags:
+- name: Sessions
+paths:
+  /sessions:
+    post:
+      summary: Create a session
+      operationId: createSession
+      tags:
+      - Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionCreate'
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+    get:
+      summary: List sessions
+      operationId: listSessions
+      tags:
+      - Sessions
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+      - name: offset
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+  /sessions/{session_id}:
+    parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Get a session
+      operationId: getSession
+      tags:
+      - Sessions
+      responses:
+        '200':
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+  /sessions/{session_id}/stop:
+    parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Stop a session
+      operationId: stopSession
+      tags:
+      - Sessions
+      responses:
+        '200':
+          description: Session stopped
+          content:
+            application/json:
+              schema:
+                type: object
+  /sessions/{session_id}/messages:
+    parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Fetch agent messages
+      operationId: getSessionMessages
+      tags:
+      - Sessions
+      responses:
+        '200':
+          description: Agent messages stream
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /sessions/{session_id}/recording:
+    parameters:
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Retrieve session recording
+      operationId: getSessionRecording
+      tags:
+      - Sessions
+      responses:
+        '200':
+          description: Recording URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recording_url:
+                    type: string
+                    format: uri
+components:
+  schemas:
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+          - running
+          - idle
+          - stopped
+          - error
+          - timed_out
+        output:
+          type: string
+        live_url:
+          type: string
+          format: uri
+        steps:
+          type: array
+          items:
+            type: object
+    SessionCreate:
+      type: object
+      required:
+      - task
+      properties:
+        task:
+          type: string
+        model:
+          type: string
+        session_id:
+          type: string
+        keep_alive:
+          type: boolean
+        enable_recording:
+          type: boolean
+        workspace_id:
+          type: string
+        profile_id:
+          type: string
+        output_schema:
+          type: object
+        proxy_country_code:
+          type: string
+        agentmail:
+          type: boolean
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key
