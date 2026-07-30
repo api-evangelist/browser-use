@@ -3,7 +3,20 @@ name: Browser Use
 description: >-
   Browser Use is an open-source framework for AI-powered browser automation and web interaction.
 type: Index
-image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+accessModel:
+  pricing: freemium
+  onboarding: self-serve
+  trial: false
+  try_now: true
+  public: false
+  label: Freemium · Self-serve signup
+  confidence: high
+  source:
+  - plans
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/browser-use.png
 tags:
   - AI Automation
   - Browser Automation
@@ -13,16 +26,61 @@ created: '2026-03-27'
 modified: '2026-03-27'
 specificationVersion: '0.19'
 apis:
-  - aid: browser-use:browser-use
-    name: Browser Use
-    description: >-
-      Browser Use is an open-source framework for AI-powered browser automation and web interaction.
-    humanURL: https://browser-use.com
-    tags:
-      - AI Automation
-    properties:
-      - type: Documentation
-        url: https://docs.browser-use.com
+- aid: browser-use:browser-use
+  name: Browser Use
+  description: >-
+    Browser Use is an open-source framework for AI-powered browser automation and web interaction.
+  humanURL: https://browser-use.com
+  tags:
+  - AI Automation
+  properties:
+  - type: Documentation
+    url: https://docs.browser-use.com
+- aid: browser-use:browser-use-billing-api
+  name: Browser Use Billing API
+  description: The Billing API from Browser Use — 2 operation(s) for billing.
+  humanURL: https://browser-use.com
+  tags:
+  - Billing
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-billing-api-openapi.yml
+- aid: browser-use:browser-use-browsers-api
+  name: Browser Use Browsers API
+  description: The Browsers API from Browser Use — 3 operation(s) for browsers.
+  humanURL: https://browser-use.com
+  tags:
+  - Browsers
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-browsers-api-openapi.yml
+- aid: browser-use:browser-use-profiles-api
+  name: Browser Use Profiles API
+  description: The Profiles API from Browser Use — 2 operation(s) for profiles.
+  humanURL: https://browser-use.com
+  tags:
+  - Profiles
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-profiles-api-openapi.yml
+- aid: browser-use:browser-use-sessions-api
+  name: Browser Use Sessions API
+  description: The Sessions API from Browser Use — 5 operation(s) for sessions.
+  humanURL: https://browser-use.com
+  tags:
+  - Sessions
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-sessions-api-openapi.yml
+- aid: browser-use:browser-use-workspaces-api
+  name: Browser Use Workspaces API
+  description: The Workspaces API from Browser Use — 5 operation(s) for workspaces.
+  humanURL: https://browser-use.com
+  tags:
+  - Workspaces
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-workspaces-api-openapi.yml
 common:
   - type: AgenticAccess
     url: agentic-access/browser-use-agentic-access.yml
