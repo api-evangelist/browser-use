@@ -1,0 +1,22 @@
+{
+  "provider": "browser-use",
+  "sources": [
+    "browser-use-billing-api-openapi.yml",
+    "browser-use-browsers-api-openapi.yml",
+    "browser-use-profiles-api-openapi.yml",
+    "browser-use-sessions-api-openapi.yml",
+    "browser-use-workspaces-api-openapi.yml"
+  ],
+  "outputs": [
+    "browser-use-billing-api-openapi.yml",
+    "browser-use-browsers-api-openapi.yml",
+    "browser-use-profiles-api-openapi.yml",
+    "browser-use-sessions-api-openapi.yml",
+    "browser-use-workspaces-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}
