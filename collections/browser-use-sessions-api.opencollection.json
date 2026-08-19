@@ -1,0 +1,136 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Browser Use Cloud Billing Sessions API",
+    "version": "v3"
+  },
+  "request": {
+    "auth": {
+      "type": "apikey",
+      "key": "X-Browser-Use-API-Key",
+      "value": "{{X-Browser-Use-API-Key}}",
+      "placement": "header"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Sessions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List sessions",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/sessions",
+            "params": [
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "List sessions"
+        },
+        {
+          "info": {
+            "name": "Create a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/sessions",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Create a session"
+        },
+        {
+          "info": {
+            "name": "Get a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a session"
+        },
+        {
+          "info": {
+            "name": "Stop a session",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id/stop",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Stop a session"
+        },
+        {
+          "info": {
+            "name": "Fetch agent messages",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id/messages",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Fetch agent messages"
+        },
+        {
+          "info": {
+            "name": "Retrieve session recording",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.browser-use.com/api/v3/sessions/:session_id/recording",
+            "params": [
+              {
+                "name": "session_id",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Retrieve session recording"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
