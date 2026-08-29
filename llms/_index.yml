@@ -1,0 +1,38 @@
+generated: '2026-08-29'
+method: searched
+description: >-
+  Browser Use serves four llms.txt surfaces plus markdown twins of most product pages. All were fetched
+  and verified on 2026-08-29; the two saved here are the ones an agent should read first.
+files:
+- file: browser-use-llms.txt
+  source: https://docs.browser-use.com/cloud/llms.txt
+  http_status: 200
+  scope: Cloud documentation index — quickstart, agent, browser, authentication, integrations, API v4/v2.
+- file: browser-use-product-llms.txt
+  source: https://browser-use.com/llms.txt
+  http_status: 200
+  scope: >-
+    Product map — which of the two commercial products to use, predictable developer URLs, pricing
+    tables, benchmark claims, package install lines, and the showcase index.
+also_served:
+- url: https://docs.browser-use.com/llms.txt
+  http_status: 200
+- url: https://docs.browser-use.com/open-source/llms.txt
+  http_status: 200
+- url: https://browser-use.com/llms-full.txt
+  http_status: 200
+  note: Not committed — see .gitignore.
+markdown_twins:
+- https://browser-use.com/index.md
+- https://browser-use.com/pricing.md
+- https://browser-use.com/auth.md
+- https://browser-use.com/webhooks.md
+- https://browser-use.com/developers.md
+- https://browser-use.com/changelog.md
+- https://browser-use.com/showcase.md
+- 'https://docs.browser-use.com/<any-page>.md'
+note: >-
+  Every predictable developer URL advertised in browser-use.com/llms.txt was probed and every one
+  resolved: /openapi.json (200, the real v4 spec), /auth.md, /webhooks, /mcp, /developers,
+  /.well-known/oauth-authorization-server. No dead links in the agent-facing index — which is
+  unusual enough to be worth recording.

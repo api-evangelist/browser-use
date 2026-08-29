@@ -1,0 +1,129 @@
+generated: '2026-08-29'
+method: searched
+source: https://browser-use.com/changelog.md
+docs: https://browser-use.com/changelog
+scheme: dated entries, one page per release date, slug is D-M-YYYY
+machine_readable: true
+current_version: v4 (4.0.0)
+entry_count: 23
+window: 2025-08-19 to 2026-08-17
+note: >-
+  Browser Use publishes its changelog as markdown at a predictable URL, and every entry has its own
+  .md twin. Entries are product-wide (platform, models, CLI, SDK) rather than API-versioned; breaking
+  API changes are named in prose, not flagged with a field.
+entries:
+- date: '2026-08-17'
+  title: Scheduled V4 Agents, Agency Skill & Model Picker Updates
+  url: https://browser-use.com/changelog/17-8-2026
+  breaking: false
+  additions:
+  - V4 agents can be scheduled, with pause/resume controls
+  - New Agency skill that asks for approval before an external action
+  - AgentMail enabled for API runs
+  - bu-2-0-mini-preview added to the V2 API
+  removals:
+  - MiniMax M3 removed from the model picker
+- date: '2026-08-10'
+  title: Session Sharing, Usage Analytics & X402 Pricing
+  url: https://browser-use.com/changelog/10-8-2026
+  breaking: false
+  highlights: Session sharing and management upgrades, redesigned Usage page, cheaper x402 top-ups
+- date: '2026-07-20'
+  title: Recording Controls & OAuth Browser Access
+  url: https://browser-use.com/changelog/20-7-2026
+  breaking: false
+  highlights: Client-controlled browser recording on the Browser Harness API; OAuth read access to browsers
+- date: '2026-07-17'
+  title: Browser Harness API, New Models & Lower Top-Up Minimum
+  url: https://browser-use.com/changelog/17-7-2026
+  breaking: false
+  highlights: Browser Harness agent API made public; new models; lower pay-as-you-go minimum
+- date: '2026-07-01'
+  title: Browser Use CLI 3.0
+  url: https://browser-use.com/changelog/1-7-2026
+  breaking: true
+  highlights: >-
+    CLI rebuilt on Browser Harness. The fixed menu of browser actions was replaced with free Python
+    execution inside the browser — a behavioural break for anything driving the old CLI action list.
+- date: '2026-04-12'
+  title: BYOK, Code Mode & Sensitive Data
+  url: https://browser-use.com/changelog/12-4-2026
+  breaking: false
+  highlights: Bring your own LLM keys, reusable generated automation scripts, secure secret passing
+- date: '2026-04-03'
+  title: Free Tier, Agent Signup & New Pricing
+  url: https://browser-use.com/changelog/3-4-2026
+  breaking: false
+  highlights: Cloud became free to start; agent signup flow; simplified pricing
+- date: '2026-03-22'
+  title: CLI 2.0 + Weekly Update
+  url: https://browser-use.com/changelog/22-3-2026
+  breaking: false
+- date: '2026-02-25'
+  title: BU Agent API & SDK 3.0
+  url: https://browser-use.com/changelog/25-2-2026
+  breaking: true
+  highlights: New experimental agent API; SDK 3.0 shipped with breaking changes, stated as such
+- date: '2026-01-27'
+  title: Browser Use Model - BU 2.0
+  url: https://browser-use.com/changelog/27-1-2026
+  breaking: false
+- date: '2025-12-16'
+  title: Our First Open-Source LLM
+  url: https://browser-use.com/changelog/16-12-2025
+  breaking: false
+- date: '2025-12-04'
+  title: Skills - API for Anything
+  url: https://browser-use.com/changelog/4-12-2025
+  breaking: false
+  highlights: Describe a website workflow in plain text, get a reusable API endpoint
+- date: '2025-11-21'
+  title: MCP Server, Gemini 3, Teams, Library Judge
+  url: https://browser-use.com/changelog/21-11-2025
+  breaking: false
+  highlights: The MCP server shipped here
+- date: '2025-11-13'
+  title: Templates Library
+  url: https://browser-use.com/changelog/13-11-2025
+  breaking: false
+- date: '2025-11-04'
+  title: SOC 2 Type II Compliance
+  url: https://browser-use.com/changelog/4-11-2025
+  breaking: false
+  highlights: SOC 2 Type II certification announced
+- date: '2025-10-27'
+  title: Profile Use
+  url: https://browser-use.com/changelog/27-10-2025
+  breaking: false
+- date: '2025-10-15'
+  title: Code Use
+  url: https://browser-use.com/changelog/15-10-2025
+  breaking: false
+- date: '2025-10-08'
+  title: LLM Use
+  url: https://browser-use.com/changelog/8-10-2025
+  breaking: false
+- date: '2025-09-30'
+  title: Stealth Browser Infrastructure
+  url: https://browser-use.com/changelog/30-9-2025
+  breaking: false
+- date: '2025-09-19'
+  title: Actor Use
+  url: https://browser-use.com/changelog/19-9-2025
+  breaking: false
+- date: '2025-09-17'
+  title: Browser Use can write Javascript
+  url: https://browser-use.com/changelog/17-9-2025
+  breaking: false
+- date: '2025-09-02'
+  title: Cloud SDK
+  url: https://browser-use.com/changelog/2-9-2025
+  breaking: false
+  highlights: Typed Python and TypeScript SDKs released
+- date: '2025-08-19'
+  title: We switched from Playwright to CDP
+  url: https://browser-use.com/changelog/19-8-2025
+  breaking: true
+  highlights: >-
+    All interactions became 100% CDP-based; the Playwright dependency was removed entirely from the
+    open-source framework.

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "browser",
+      "type": "skill-md",
+      "description": "Use when automating browser interactions, web scraping, form filling, data extraction, or testing web applications. Reach for this skill when you need to control a browser programmatically, navigate websites, interact with web pages, or extract structured data from the web.",
+      "url": "/.well-known/agent-skills/browser/skill.md",
+      "digest": "sha256:ffd51f67a385c16ad2178de86aeadd9e580f6b777466b4ee27092ef362a9b227"
+    }
+  ]
+}

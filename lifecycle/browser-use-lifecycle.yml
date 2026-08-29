@@ -1,0 +1,55 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://browser-use.com/changelog.md, https://browser-use.com/llms.txt,
+  https://status.browser-use.com, and the three OpenAPI documents in openapi/
+versioning:
+  scheme: uri-path major version
+  pattern: https://api.browser-use.com/api/v{n}
+  current: v4
+  current_version_string: 4.0.0
+  supported:
+  - version: v4
+    status: current
+    positioning: Recommended for new integrations; hard, high-accuracy, long-horizon tasks.
+    spec: openapi/browser-use-api-v4-openapi.json
+  - version: v3
+    status: supported
+    positioning: Token-priced agent integrations. Also carries the x402 balance endpoint.
+    spec: openapi/browser-use-api-v3-openapi.json
+  - version: v2
+    status: supported
+    positioning: >-
+      Simple, low-cost, step-based workflows. The provider states plainly that "V2 accuracy is
+      substantially lower" than V4. Documentation labels it Legacy while the product pages call it
+      supported.
+    spec: openapi/browser-use-api-v2-openapi.json
+deprecation:
+  policy_published: false
+  sunset_header: false
+  deprecation_header: false
+  deprecated_operations: 0
+  note: >-
+    No deprecation policy, no notice period, no Sunset or Deprecation headers, and not one operation in
+    any of the three specs carries deprecated: true — even though v2 and v3 are openly superseded and
+    the docs index files v2 under "Legacy". An integrator has no published signal for when v2 or v3
+    stops answering. This is the largest operational gap on the profile.
+status_page:
+  url: https://status.browser-use.com
+  http_status: 200
+  provider: hosted status page
+sla:
+  published: false
+  note: Service-level agreements are named as an Enterprise plan inclusion only; no public SLA document.
+support:
+  discord: https://link.browser-use.com/discord
+  sales: mailto:sales@browser-use.com
+  in_product: Support contact inside the Cloud dashboard
+changelog:
+  url: https://browser-use.com/changelog
+  machine_readable: https://browser-use.com/changelog.md
+  detail: changelog/browser-use-changelog.yml
+release_cadence:
+  observed: roughly monthly, with clusters of weekly entries
+  window_covered: 2025-08-19 to 2026-08-17
+  entries_published: 23

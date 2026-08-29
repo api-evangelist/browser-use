@@ -1,0 +1,50 @@
+generated: '2026-08-29'
+method: probed
+source: https://docs.browser-use.com/.well-known/agent-card.json
+discovery:
+  path: /.well-known/agent-card.json
+  canonical: true
+  host: docs.browser-use.com
+  note: >-
+    The card is served from the documentation host only. browser-use.com, api.browser-use.com and
+    cloud.browser-use.com all 404 on both the canonical and the legacy /.well-known/agent.json path.
+x-evidence:
+  fetched: '2026-08-29'
+  url: https://docs.browser-use.com/.well-known/agent-card.json
+  http_status: 200
+  content_type: application/json
+card: a2a/browser-use-agent-card.json
+grade: conformant
+graded_against: A2A 1.0.0
+checks:
+  capabilities_is_object: true
+  protocol_version_present: true
+  skills_is_array: true
+  preferred_transport_present: true
+  default_input_modes_present: true
+  default_output_modes_present: true
+deviations:
+- >-
+  No top-level `description` field. A2A lists description among the core AgentCard fields, and an
+  agent choosing between cards has nothing to read at the card level.
+- >-
+  `protocolVersion` is "0.3", not "1.0.0" — the card declares the pre-1.0 protocol revision.
+- >-
+  `url` and every `supportedInterfaces[].url` point at https://docs.browser-use.com/, the
+  documentation site, not at an A2A JSON-RPC endpoint. The card is a discovery beacon, not a callable
+  A2A service address.
+- >-
+  `capabilities` declares streaming:false and pushNotifications:false, yet the v4 REST API does expose
+  incremental run events and Browser Use ships signed webhooks. The card understates the platform.
+- >-
+  The single skill carries an empty `tags` array.
+skills:
+- id: browser
+  name: Browser
+  url: https://docs.browser-use.com/.well-known/agent-skills/browser/skill.md
+  local_copy: skills/browser-use-browser.md
+  http_status: 200
+related:
+  agent_skills_discovery: well-known/browser-use-agent-skills-index.json
+  agent_skills_schema: https://schemas.agentskills.io/discovery/0.2.0/schema.json
+  mcp_endpoint: https://api.browser-use.com/mcp

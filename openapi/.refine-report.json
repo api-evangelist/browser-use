@@ -17,6 +17,13 @@
   "archived": [],
   "errors": [],
   "warnings": [],
-  "notes": [],
+  "notes": [
+    "browser-use-billing-api-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "browser-use-browsers-api-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "browser-use-profiles-api-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "browser-use-sessions-api-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "browser-use-workspaces-api-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "apis.yml register: already-registered"
+  ],
   "skipped": []
 }

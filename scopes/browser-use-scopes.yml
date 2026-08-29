@@ -1,0 +1,33 @@
+generated: '2026-08-29'
+method: probed
+source: https://browser-use.com/.well-known/oauth-authorization-server
+docs: https://browser-use.com/auth.md
+note: >-
+  Derived from the live OAuth 2.0 authorization-server metadata, not from an OpenAPI oauth2
+  securityScheme — none of the three published OpenAPI documents declares an oauth2 flow. The
+  authorization server exists to protect the hosted MCP resource, and it advertises exactly one scope.
+authorization_server:
+  issuer: https://api.browser-use.com
+  metadata_url: https://browser-use.com/.well-known/oauth-authorization-server
+  http_status: 200
+  protected_resource: https://api.browser-use.com/mcp
+  protected_resource_metadata_url: https://api.browser-use.com/.well-known/oauth-protected-resource
+  http_status_protected_resource: 200
+  dynamic_client_registration: true
+  grant_types:
+  - authorization_code
+  - urn:ietf:params:oauth:grant-type:device_code
+  code_challenge_methods:
+  - S256
+scope_count: 1
+scopes:
+- name: mcp
+  description: >-
+    Access the Browser Use hosted MCP resource at https://api.browser-use.com/mcp. This is the only
+    permission published in the authorization-server metadata.
+  resource: https://api.browser-use.com/mcp
+  source: https://browser-use.com/.well-known/oauth-authorization-server
+gaps:
+- >-
+  No per-operation or per-resource scopes are published for the v2/v3/v4 REST APIs. An API key is
+  all-or-nothing against a project, which is a real constraint for agent delegation.

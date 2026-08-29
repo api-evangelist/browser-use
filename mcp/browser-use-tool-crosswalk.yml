@@ -1,0 +1,183 @@
+generated: '2026-08-29'
+method: derived
+source: >-
+  mcp/browser-use-mcp-tools.json + mcp/browser-use-v3-mcp-tools.json (live tools/list) bound to
+  operationIds in openapi/browser-use-api-v4-openapi.json, openapi/browser-use-api-v3-openapi.json and
+  openapi/browser-use-api-v2-openapi.json
+surfaces:
+  openapi:
+  - file: openapi/browser-use-api-v4-openapi.json
+    base: https://api.browser-use.com/api/v4
+    operations: 32
+    gated: false
+  - file: openapi/browser-use-api-v3-openapi.json
+    base: https://api.browser-use.com/api/v3
+    operations: 27
+    gated: false
+  - file: openapi/browser-use-api-v2-openapi.json
+    base: https://api.browser-use.com/api/v2
+    operations: 44
+    gated: false
+  graphql: null
+  mcp:
+  - url: https://api.browser-use.com/mcp
+    tools: 6
+    gated: false
+    note: tools/list is anonymous; tool CALLS require OAuth (mcp scope) or an API key.
+  - url: https://api.browser-use.com/v3/mcp
+    tools: 7
+    gated: false
+coverage:
+  mcp_tools: 13
+  mapped_to_rest: 11
+  mcp_only: 2
+  rest_operations_total: 103
+  rest_only: 92
+  note: >-
+    The MCP surface is a deliberately narrow projection: 13 tools against 103 REST operations. Nothing
+    in MCP reaches workspaces, files, profiles beyond listing, billing, public share links, the skills
+    marketplace, or x402.
+crosswalk:
+- tool: browser_task
+  category: agent-run
+  rest:
+  - create_run_runs_post
+  binding: direct
+  confidence: high
+  note: >-
+    task/model/profile_id map onto RunCreateRequest; max_steps and proxy_country map onto the run's
+    browser settings. The tool creates a run and returns its id, which is what POST /runs does.
+- tool: monitor_task
+  category: agent-run
+  rest:
+  - get_run_status_runs__run_id__status_get
+  - get_run_runs__run_id__get
+  - get_run_events_runs__run_id__events_get
+  binding: composite
+  confidence: high
+  note: >-
+    One tool call returns status plus the most recent step with agent reasoning, which requires the
+    status endpoint and the events endpoint in REST.
+- tool: list_browser_profiles
+  category: profiles
+  rest:
+  - list_profiles_profiles_get
+  binding: direct
+  confidence: high
+- tool: get_cookies
+  category: profiles
+  rest: []
+  binding: none
+  confidence: medium
+  note: >-
+    No public REST operation returns profile cookies in v2, v3 or v4. Recorded in mcp_only.
+- tool: list_skills
+  category: skills
+  rest:
+  - list_skills_skills_get
+  - list_skills_marketplace_skills_get
+  binding: semantic
+  confidence: medium
+  note: Skills are a v2 surface; the tool does not say whether it reads project skills, marketplace skills, or both.
+- tool: execute_skill
+  category: skills
+  rest:
+  - execute_skill_skills__skill_id__execute_post
+  - execute_skill_marketplace_skills__skill_id__execute_post
+  binding: semantic
+  confidence: medium
+- tool: run_session
+  category: agent-session
+  rest:
+  - create_session_sessions_post
+  binding: direct
+  confidence: high
+  note: v3 server. workspace_id and keep_alive map onto the v3 session create body.
+- tool: send_task
+  category: agent-session
+  rest:
+  - queue_session_message_sessions__session_id__queue_post
+  binding: direct
+  confidence: medium
+  note: >-
+    v3 tool. The nearest published operation is the v4 session message queue; v3's own session surface
+    exposes messages read-only, so the follow-up path is not fully represented in the v3 contract.
+- tool: get_session
+  category: agent-session
+  rest:
+  - get_session_sessions__session_id__get
+  binding: direct
+  confidence: high
+- tool: get_session_messages
+  category: agent-session
+  rest:
+  - list_session_messages_sessions__session_id__messages_get
+  binding: direct
+  confidence: high
+- tool: stop_session
+  category: agent-session
+  rest:
+  - stop_session_sessions__session_id__stop_post
+  - delete_session_sessions__session_id__delete
+  binding: composite
+  confidence: high
+  note: strategy "task" maps to the stop operation; strategy "session" maps to the delete operation.
+- tool: list_sessions
+  category: agent-session
+  rest:
+  - list_sessions_sessions_get
+  binding: direct
+  confidence: high
+mcp_only:
+- tool: get_cookies
+  reason: >-
+    No public REST operation exposes profile cookies. Cookie extraction is only reachable through MCP,
+    which is notable because it is the highest-consequence capability on the surface.
+- tool: search_browser_use
+  reason: Documentation search on the Mintlify docs MCP server; no product REST equivalent.
+rest_only:
+- group: workspaces
+  operations:
+  - create_workspace_workspaces_post
+  - get_workspace_workspaces__workspace_id__get
+  - update_workspace_workspaces__workspace_id__patch
+  - delete_workspace_workspaces__workspace_id__delete
+  - upload_workspace_files_workspaces__workspace_id__files_upload_post
+  - list_workspace_files_workspaces__workspace_id__files_get
+  - delete_workspace_file_workspaces__workspace_id__files_delete
+  - get_workspace_size_workspaces__workspace_id__size_get
+  reason: Persistent file storage has no MCP tool at all; an agent cannot stage or retrieve run files over MCP.
+- group: browsers
+  operations:
+  - create_browser_session_browsers_post
+  - list_browser_sessions_browsers_get
+  - get_browser_session_browsers__session_id__get
+  - update_browser_session_browsers__session_id__patch
+  - list_browser_session_downloads_browsers__session_id__downloads_get
+  reason: >-
+    Standalone Browser Infrastructure — including the stop action that ends billing — is REST/CDP only.
+- group: runs
+  operations:
+  - list_runs_runs_get
+  - cancel_run_runs__run_id__cancel_post
+  - list_run_attachments_runs__run_id__attachments_get
+  reason: >-
+    Cancel has no MCP tool on the /mcp server. An agent that starts work with browser_task has no MCP
+    way to take it back.
+- group: profiles-write
+  operations:
+  - create_profile_profiles_post
+  - update_profile_profiles__profile_id__patch
+  - delete_browser_profile_profiles__profile_id__delete
+  reason: MCP can list profiles and read their cookies but cannot create, update or delete them.
+- group: billing-and-payments
+  operations:
+  - get_account_billing_billing_account_get
+  - x402_balance_x402_balance_post
+  reason: Credit balance and the x402 machine-payment balance are REST only.
+- group: sharing
+  operations:
+  - create_session_public_share_sessions__session_id__public_share_post
+  - get_session_public_share_sessions__session_id__public_share_get
+  - delete_session_public_share_sessions__session_id__public_share_delete
+  reason: v2 public share links have no MCP tool.

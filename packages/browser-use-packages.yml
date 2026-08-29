@@ -1,0 +1,100 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  registry.npmjs.org, pypi.org/pypi/<pkg>/json, api.github.com/orgs/browser-use/repos, and the
+  provider's own package list at https://browser-use.com/llms.txt
+note: >-
+  Two distinct product lines ship packages. browser-use-sdk (Python + TypeScript, versions locked in
+  step at 3.11.1) is the Cloud SDK for the hosted API; browser-use is the open-source agent framework
+  and now also the CLI entry point. Both are current — nothing here is decayed.
+packages:
+- name: browser-use-sdk
+  registry: pypi
+  url: https://pypi.org/project/browser-use-sdk/
+  language: python
+  official: true
+  role: cloud-sdk
+  version: 3.11.1
+  published: '2026-08-22'
+  repository: https://github.com/browser-use/sdk
+  install: pip install --upgrade browser-use-sdk
+- name: browser-use-sdk
+  registry: npm
+  url: https://www.npmjs.com/package/browser-use-sdk
+  language: typescript
+  official: true
+  role: cloud-sdk
+  version: 3.11.1
+  published: '2026-08-22'
+  repository: https://github.com/browser-use/sdk
+  install: npm install browser-use-sdk@latest
+- name: browser-use
+  registry: pypi
+  url: https://pypi.org/project/browser-use/
+  language: python
+  official: true
+  role: open-source-framework-and-cli
+  version: 0.13.8
+  published: '2026-08-16'
+  repository: https://github.com/browser-use/browser-use
+  install: pip install browser-use
+  note: >-
+    Also the CLI binary — `uv tool install browser-use` installs the Browser Use CLI 3.0 documented at
+    https://docs.browser-use.com/open-source/browser-use-cli. See cli/browser-use-cli.yml.
+- name: browser-harness
+  registry: pypi
+  url: https://pypi.org/project/browser-harness/
+  language: python
+  official: true
+  role: agent-harness
+  version: 0.1.10
+  published: '2026-08-26'
+  repository: https://github.com/browser-use/browser-harness
+  note: The self-healing harness that backs Browser Use CLI 3.0.
+- name: cdp-use
+  registry: pypi
+  url: https://pypi.org/project/cdp-use/
+  language: python
+  official: true
+  role: library
+  version: 1.4.5
+  published: '2026-02-22'
+  repository: https://github.com/browser-use/cdp-use
+  note: Type-safe Chrome DevTools Protocol client; the CDP layer the framework runs on since it dropped Playwright.
+- name: bubus
+  registry: pypi
+  url: https://pypi.org/project/bubus/
+  language: python
+  official: true
+  role: library
+  version: 1.5.6
+  published: '2025-08-30'
+  repository: https://github.com/browser-use/bubus
+  note: >-
+    Pydantic event bus used inside the agent framework. Nearly a year without a release — the only
+    first-party package on this list that looks parked.
+excluded:
+- name: browser-use
+  registry: npm
+  version: 0.8.0
+  published: '2026-07-16'
+  official: false
+  reason: >-
+    Name collision. This npm package is published by "unadlib" from github.com/webllm/browser-use and
+    is not a Browser Use, Inc. artifact. The company's TypeScript package is browser-use-sdk.
+- name: n8n-nodes-browser-use
+  registry: npm
+  version: 0.1.6
+  published: '2025-03-01'
+  official: false
+  reason: >-
+    Community n8n node published from github.com/draphonix/n8n-nodes-browser-use. Browser Use maintains
+    its own n8n-nodes-browser-use repository in its GitHub org, but does not publish under this npm name.
+- name: browser-harness
+  registry: npm
+  version: 0.0.58
+  published: '2014-05-28'
+  official: false
+  reason: Unrelated 2014 package; not the Browser Use harness.
+sdk_count: 2
+official_package_count: 6

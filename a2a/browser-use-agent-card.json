@@ -1,0 +1,38 @@
+{
+  "name": "Browser Use",
+  "url": "https://docs.browser-use.com/",
+  "version": "1.0.0",
+  "protocolVersion": "0.3",
+  "preferredTransport": "HTTP+JSON",
+  "supportedInterfaces": [
+    {
+      "url": "https://docs.browser-use.com/",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "0.3"
+    }
+  ],
+  "provider": {
+    "url": "https://docs.browser-use.com/",
+    "organization": "Browser Use"
+  },
+  "documentationUrl": "https://docs.browser-use.com/",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "defaultInputModes": [
+    "text/plain"
+  ],
+  "defaultOutputModes": [
+    "text/plain"
+  ],
+  "skills": [
+    {
+      "id": "browser",
+      "name": "Browser",
+      "description": "Use when building AI agents that automate browser tasks, scrape websites, fill forms, handle authentication, extract data, or perform multi-step workflows. Agents work with any LLM (Claude, GPT, Gemini, etc.) and run locally or in the cloud.",
+      "tags": [],
+      "url": "https://docs.browser-use.com/.well-known/agent-skills/browser/skill.md"
+    }
+  ]
+}

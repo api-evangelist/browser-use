@@ -1,0 +1,34 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://docs.browser-use.com/cloud/browser/live-preview, https://docs.browser-use.com/cloud/faq,
+  https://docs.browser-use.com/cloud/agent/human-in-the-loop
+description: >-
+  Browser Use ships no component library, element SDK or npm UI package. What it does publish is one
+  embeddable surface: a per-run live browser view served at a URL the API hands back, which the
+  provider documents as embeddable in an iframe. Recorded here because it is the only client-side
+  embed on the platform, and because it is the mechanism behind human-in-the-loop takeover.
+component_families: 1
+families:
+- name: Live browser view
+  kind: hosted-embed
+  loader: none — a URL rendered in an iframe
+  acquisition:
+    v4: >-
+      Poll GET /runs/{run_id}/events for the browser.ready event; live_view_url is in its data
+      payload.
+    docs: https://docs.browser-use.com/cloud/faq
+  components:
+  - name: live_view_url
+    summary: >-
+      Live, interactive view of the running cloud browser. Embed in an iframe or open directly. The
+      same surface carries human-in-the-loop takeover — a person can drive the browser mid-run for
+      authentication, approvals or payments, then hand control back.
+    docs: https://docs.browser-use.com/cloud/agent/human-in-the-loop
+  - name: session recording
+    summary: Recorded playback of a browser session, for debugging and audit.
+    docs: https://docs.browser-use.com/cloud/browser/live-preview
+not_published:
+- No web-component or React component package
+- No embeddable dashboard or hosted checkout-style flow
+- No design system or element library

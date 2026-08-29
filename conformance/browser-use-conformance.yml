@@ -1,0 +1,147 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://browser-use.com/changelog/4-11-2025 (SOC 2 Type II), the live
+  /.well-known/oauth-authorization-server and /.well-known/oauth-protected-resource documents,
+  https://docs.browser-use.com/.well-known/agent-card.json, live MCP tools/list responses, and the
+  three OpenAPI documents in openapi/
+description: >-
+  Cross-cutting standards Browser Use conforms to, each with the artifact or live probe that shows it.
+  Every "conforms: true" below was verified against a document this pipeline fetched, not against a
+  marketing claim.
+standards:
+- id: openapi-3.1
+  conforms: true
+  evidence: >-
+    Three published OpenAPI 3.1.0 documents at predictable URLs — browser-use.com/openapi.json,
+    api.browser-use.com/api/v4/openapi.json (and /v3/, /v2/), and
+    docs.browser-use.com/cloud/openapi/{v2,v4}.json. All parse; all declare servers, paths,
+    components.schemas and securitySchemes.
+- id: oauth2
+  conforms: true
+  evidence: >-
+    RFC 8414 authorization-server metadata served at /.well-known/oauth-authorization-server (HTTP
+    200) declaring authorization, token, registration and revocation endpoints.
+- id: oauth2-pkce
+  conforms: true
+  evidence: code_challenge_methods_supported ["S256"] in the authorization-server metadata.
+- id: rfc8628-device-authorization
+  conforms: true
+  evidence: grant_types_supported includes urn:ietf:params:oauth:grant-type:device_code.
+- id: rfc7591-dynamic-client-registration
+  conforms: true
+  evidence: registration_endpoint https://api.browser-use.com/oauth/register in the authorization-server metadata.
+- id: rfc9728-oauth-protected-resource
+  conforms: true
+  evidence: >-
+    /.well-known/oauth-protected-resource (HTTP 200) names https://api.browser-use.com/mcp as the
+    resource, api.browser-use.com as its authorization server, header bearer methods, and the mcp scope.
+- id: rfc7009-token-revocation
+  conforms: true
+  evidence: revocation_endpoint https://api.browser-use.com/oauth/revoke.
+- id: oidc
+  conforms: false
+  evidence: /.well-known/openid-configuration returns 404 on every host. The authorization server is OAuth 2.0 only.
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: >-
+    Errors are FastAPI-shaped ({"detail": ...}); no application/problem+json media type appears in any
+    of the three specs. See errors/browser-use-problem-types.yml.
+- id: rfc9116-security-txt
+  conforms: false
+  evidence: /.well-known/security.txt returns 404 on browser-use.com, api.browser-use.com and docs.browser-use.com.
+- id: rfc9727-api-catalog
+  conforms: false
+  evidence: /.well-known/api-catalog returns 404 on every host.
+- id: pagination
+  conforms: true
+  evidence: >-
+    Opaque cursor pagination with a declared 400 "Malformed pagination cursor." error in v3 and v4;
+    page/page_size in v2.
+- id: idempotency
+  conforms: partial
+  evidence: >-
+    Two operations document idempotent behaviour (cancel run, delete workspace). No idempotency key
+    header exists on any create operation. See conventions/browser-use-conventions.yml.
+- id: webhook-signing
+  conforms: true
+  evidence: >-
+    HMAC-SHA256 over "{timestamp}.{body}" with X-Browser-Use-Signature and X-Browser-Use-Timestamp and
+    a 300-second replay window, with reference verifiers published in Python and TypeScript.
+    See asyncapi/browser-use-webhooks.yml.
+domain_standards:
+- id: model-context-protocol
+  name: Model Context Protocol
+  conforms: true
+  market: AI agent tooling
+  evidence: >-
+    Two live product MCP endpoints. https://api.browser-use.com/mcp answered a JSON-RPC 2.0
+    initialize with protocolVersion 2024-11-05 and serverInfo browser-use-web-automation 1.0.0, and a
+    tools/list returning six tools with full inputSchema. Captured verbatim in
+    mcp/browser-use-mcp-tools.json.
+  location: POST https://api.browser-use.com/mcp — {"jsonrpc":"2.0","method":"tools/list"}
+- id: a2a-agent-card
+  name: A2A Agent Card
+  conforms: true
+  market: Agent interoperability
+  evidence: >-
+    https://docs.browser-use.com/.well-known/agent-card.json returns HTTP 200 application/json with a
+    real AgentCard — protocolVersion 0.3, capabilities as an object, skills as an array. Graded
+    conformant in a2a/browser-use-a2a.yml.
+  location: /.well-known/agent-card.json on docs.browser-use.com
+- id: agent-skills-discovery
+  name: Agent Skills discovery 0.2.0
+  conforms: true
+  market: AI agent tooling
+  evidence: >-
+    https://docs.browser-use.com/.well-known/agent-skills/index.json declares
+    $schema https://schemas.agentskills.io/discovery/0.2.0/schema.json and lists one skill-md entry
+    with a sha256 digest, resolving to a real skill.md.
+  location: /.well-known/agent-skills/index.json
+- id: llms-txt
+  name: llms.txt
+  conforms: true
+  market: Agent-readable documentation
+  evidence: >-
+    Four llms.txt surfaces served — browser-use.com/llms.txt, docs.browser-use.com/llms.txt,
+    docs.browser-use.com/cloud/llms.txt and docs.browser-use.com/open-source/llms.txt — plus markdown
+    twins for pricing, auth, webhooks, developers, index, showcase and every changelog entry.
+- id: x402
+  name: x402 machine payments
+  conforms: partial
+  market: Agent payments
+  evidence: >-
+    The v3 contract declares POST /x402/balance (operationId x402_balance_x402_balance_post), and the
+    2026-08-10 changelog entry announces cheaper x402 top-ups. Only the balance operation is public —
+    no x402 payment-required challenge is declared on any priced endpoint.
+  location: openapi/browser-use-api-v3-openapi.json — /x402/balance
+- id: chrome-devtools-protocol
+  name: Chrome DevTools Protocol
+  conforms: true
+  market: Browser automation
+  evidence: >-
+    BrowserSessionView exposes cdpUrl, and the provider documents connecting Playwright, Puppeteer and
+    Selenium directly over CDP. The open-source framework moved to 100% CDP in the 2025-08-19 release.
+  location: openapi/browser-use-api-v4-openapi.json — BrowserSessionView.cdpUrl
+compliance:
+  certifications:
+  - name: SOC 2 Type II
+    status: announced
+    announced: '2025-11-04'
+    evidence: https://browser-use.com/changelog/4-11-2025
+    note: >-
+      Announced in the changelog as "Enterprise-grade security certification now available". There is
+      no trust center, no report-request page and no compliance page — probed trust.browser-use.com (no
+      response), browser-use.com/trust (404) and browser-use.com/security (404). The certification is
+      claimed but not evidenced by a published artifact.
+  trust_center: null
+  vulnerability_disclosure: null
+  data_handling:
+  - feature: Zero Data Retention
+    evidence: >-
+      A ZDR project mode is enforced in the contract: 15 of the 32 v4 operations declare a 403 "Zero
+      Data Retention is enabled on the project (V4 unsupported)".
+    source: openapi/browser-use-api-v4-openapi.json
+  - feature: Password handling
+    published: "Browser profiles preserve browser state; Browser Use does not store browser passwords."
+    source: https://browser-use.com/llms.txt

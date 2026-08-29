@@ -3,87 +3,113 @@ specificationVersion: '0.1'
 schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/RateLimits
 provider: Browser Use
 providerId: browser-use
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://browser-use.com/pricing.md (per-plan concurrency), https://docs.browser-use.com/cloud/faq
+  (429 behaviour), and the 429 responses declared in openapi/browser-use-api-v4-openapi.json
 created: '2026-05-04'
-# Provenance stamped 2026-08-11: this artifact was written by the API Evangelist
-# bulk sweep dated 2026-05-04, not harvested from the provider. See roadmap#35.
-method: generated
-modified: '2026-05-04'
+modified: '2026-08-29'
 tags:
   - AI Automation
   - Browser Automation
   - Rate Limiting
-  - Quotas
-  - Throttling
-description: Machine-readable rate limit definitions for the Browser Use API surface. Captures per-tier
-  quotas, burst behavior, response signaling, and recovery semantics. Defaults are scaffold values to
-  be replaced with published provider limits.
+  - Concurrency
+description: >-
+  Browser Use does not throttle on requests per second. The governing limit is CONCURRENT ACTIVE
+  SESSIONS per project, set by plan, and the v3 billing account object returns it live as
+  concurrentSessionLimit (with rateLimit kept as a legacy alias for the same number). Two 429
+  conditions are declared in the v4 contract. No RateLimit-* or Retry-After response headers were
+  observed or documented — the SDKs retry 429 with exponential backoff on the client side instead.
 headers:
-  limit: X-RateLimit-Limit
-  remaining: X-RateLimit-Remaining
-  reset: X-RateLimit-Reset
-  retryAfter: Retry-After
-  policy: RateLimit-Policy
+  limit: null
+  remaining: null
+  reset: null
+  retryAfter: null
+  policy: null
+  note: >-
+    Checked: no RateLimit-*, X-RateLimit-* or Retry-After header appears in any of the three OpenAPI
+    documents, and none was returned on a live unauthenticated request to
+    https://api.browser-use.com/api/v4/runs (401, headers date/content-type/content-length/server
+    only). An agent cannot read its remaining budget from a response; it must call the billing account
+    endpoint.
 responseCodes:
   throttled: 429
-  quotaExceeded: 429
-  serviceUnavailable: 503
+  quotaExceeded: 402
+  note: >-
+    402 is credit exhaustion ("The project has no credits available."), which is the quota wall on this
+    platform, not 429.
+runtime_signal:
+  operation: get_account_billing_billing_account_get
+  path: /api/v3/billing/account
+  fields:
+    - concurrentSessionLimit
+    - activeSessionCount
+    - rateLimit
+    - totalCreditsBalanceUsd
+    - monthlyCreditsBalanceUsd
+    - additionalCreditsBalanceUsd
+  note: The only published way to read current concurrency headroom before starting work.
+limit_count: 7
 limits:
   - tier: free
-    name: Free Tier Default
-    scope: api-key
-    metric: requests_per_minute
-    limit: 10
-    burst: 20
-    timeFrame: minute
-    applies:
-      - Browser Use
+    scope: per-project
+    metric: concurrent_active_sessions
+    limit: 3
+    window: concurrent
+    source: https://browser-use.com/pricing.md
   - tier: free
-    name: Free Tier Monthly Quota
-    scope: api-key
-    metric: requests_per_month
-    limit: 1000
-    timeFrame: month
-    applies:
-      - Browser Use
-  - tier: professional
-    name: Professional Tier Default
-    scope: api-key
-    metric: requests_per_minute
-    limit: 100
-    burst: 200
-    timeFrame: minute
-    applies:
-      - Browser Use
-  - tier: professional
-    name: Professional Tier Monthly Quota
-    scope: api-key
-    metric: requests_per_month
-    limit: 100000
-    timeFrame: month
-    applies:
-      - Browser Use
-  - tier: enterprise
-    name: Enterprise Negotiated Limit
-    scope: contract
-    metric: requests_per_minute
-    limit: 1000
-    burst: 5000
-    timeFrame: minute
-    applies:
-      - Browser Use
-policies:
-  - name: Backoff Strategy
-    description: Clients should implement exponential backoff with jitter, honoring the Retry-After header
-      when present.
-  - name: Burst Handling
-    description: Short bursts above the steady-state limit are tolerated up to the documented burst ceiling
-      before throttling engages.
-  - name: Quota Reset
-    description: Monthly quotas reset at the start of each calendar month in UTC. Per-minute and per-second
-      windows reset on a sliding-window basis.
-  - name: Fair Use
-    description: Even on uncapped enterprise tiers, sustained usage that materially impacts shared infrastructure
-      may be subject to fair-use throttling.
-maintainers:
-  - FN: Kin Lane
-    email: kin@apievangelist.com
+    scope: per-project
+    metric: agent_tasks
+    limit: 10
+    window: month
+    source: https://browser-use.com/pricing.md
+  - tier: pay-as-you-go
+    scope: per-project
+    metric: concurrent_active_sessions
+    limit: 10
+    window: concurrent
+    note: Applies after the first credit top-up.
+    source: https://browser-use.com/pricing.md
+  - tier: dev
+    scope: per-project
+    metric: concurrent_active_sessions
+    limit: 25
+    window: concurrent
+    source: https://browser-use.com/pricing.md
+  - tier: business
+    scope: per-project
+    metric: concurrent_active_sessions
+    limit: 200
+    window: concurrent
+    source: https://browser-use.com/pricing.md
+  - tier: scaleup
+    scope: per-project
+    metric: concurrent_active_sessions
+    limit: 500
+    window: concurrent
+    source: https://browser-use.com/pricing.md
+  - tier: all
+    scope: per-session
+    metric: session_timeout
+    limit: 4
+    window: hours
+    note: >-
+      Declared in the v4 contract as a 403 SessionTimeoutLimitExceededError — "Session timeout limit
+      exceeded (maximum 4 hours)".
+    source: openapi/browser-use-api-v4-openapi.json
+throttle_conditions:
+  - code: 429
+    schema: TooManyConcurrentActiveSessionsError
+    message: Too many concurrent active sessions
+    operation: create_browser_session_browsers_post
+    remedy: Wait for an active session to end, raise the plan, or contact support for more concurrency.
+  - code: 429
+    message: The session message queue is full.
+    operation: queue_session_message_sessions__session_id__queue_post
+    remedy: Drain the session queue before enqueuing further follow-ups.
+client_behaviour:
+  documented: >-
+    "The SDK auto-retries 429 responses with exponential backoff. If persistent, you may need more
+    concurrent sessions — contact support."
+  source: https://docs.browser-use.com/cloud/faq

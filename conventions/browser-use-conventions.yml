@@ -1,0 +1,141 @@
+generated: '2026-08-29'
+method: searched
+source: >-
+  https://browser-use.com/auth.md, https://browser-use.com/webhooks.md,
+  https://docs.browser-use.com/cloud/faq, https://browser-use.com/pricing.md, and the three OpenAPI
+  documents in openapi/
+description: >-
+  Cross-cutting runtime semantics for the Browser Use Cloud API, as an agent needs them before it acts.
+auth:
+  style: api-key-header
+  header: X-Browser-Use-API-Key
+  key_prefix: bu_
+  oauth:
+    applies_to: https://api.browser-use.com/mcp
+    scope: mcp
+  detail: authentication/browser-use-authentication.yml
+versioning:
+  style: uri-path
+  pattern: https://api.browser-use.com/api/v{n}
+  current: v4
+  supported: [v4, v3, v2]
+  note: >-
+    Three major versions are live simultaneously with different pricing models. No version header, no
+    date-pinning, no Sunset header on any of them.
+pagination:
+  style: cursor
+  parameters: [cursor, limit]
+  response_fields: [items, next_cursor]
+  error: 400 "Malformed pagination cursor."
+  note: >-
+    v4 and v3 are cursor-based; the v2 tasks/sessions listings use page/page_size. Cursors are opaque
+    and must be echoed back verbatim.
+field_expansion:
+  supported: false
+sparse_fieldsets:
+  supported: false
+metadata:
+  supported: true
+  note: The webhook payload carries a free-form metadata object; run creation accepts caller-supplied metadata.
+request_tracing:
+  request_id_header: null
+  note: >-
+    No X-Request-Id or equivalent correlation header is documented or present in any spec. The durable
+    identifier an agent can correlate on is the run_id / session_id in the response body.
+error_envelope:
+  format: custom
+  rfc9457: false
+  detail: errors/browser-use-problem-types.yml
+rate_limit_signaling:
+  headers: none
+  mechanism: concurrency
+  detail: rate-limits/browser-use-rate-limits.yml
+idempotency:
+  supported: partial
+  key_header: null
+  scope: operation-level only
+  retention: null
+  grade: documented
+  idempotent_operations:
+  - operationId: cancel_run_runs__run_id__cancel_post
+    published: >-
+      "Idempotent: a run already in a terminal state (completed / failed / cancelled) is returned
+      as-is."
+  - operationId: delete_workspace_workspaces__workspace_id__delete
+    published: "Archive a workspace. Idempotent for missing, archived, and foreign ids."
+  note: >-
+    There is NO client-supplied idempotency key anywhere in the platform. The two operations above
+    document idempotent behaviour, but the create paths that cost money — POST /runs and POST /browsers
+    — offer no way to make a retry safe. A dropped response on POST /runs leaves an agent unable to
+    tell whether it started one run or two, and both bill. This is why no `Idempotency` pointer is
+    wired in apis.yml: recording one would credit a mechanism the provider does not ship.
+dry_run_mode:
+  supported: false
+  note: >-
+    No preview, validate-only or simulate parameter on any write operation. The nearest published
+    control is a per-run cost cap.
+reversibility:
+  grade: verified
+  applies: true
+  surfaces:
+  - operation: create_run_runs_post
+    reversal: cancel_run_runs__run_id__cancel_post
+    method: POST /runs/{run_id}/cancel
+    window: >-
+      Any time before the run reaches a terminal state. The contract states that once cancelled the
+      gateway refuses every subsequent chat_completions call from the worker, "so the project cannot be
+      billed further"; the worker may run at most one more step, consuming no LLM tokens.
+    window_verified: true
+    source: openapi/browser-use-api-v4-openapi.json (POST /runs/{run_id}/cancel description)
+  - operation: create_browser_session_browsers_post
+    reversal: update_browser_session_browsers__session_id__patch
+    method: PATCH /browsers/{session_id} with the stop action
+    window: >-
+      "When you stop a session, unused time is automatically refunded. If the session ran for less than
+      1 hour, you'll receive a proportional refund. Billing is ceil to the nearest minute (minimum 1
+      minute)." Reserved credits for the requested timeout are returned when the browser ends.
+    window_verified: true
+    source: >-
+      openapi/browser-use-api-v4-openapi.json (PATCH /browsers/{session_id} description) and
+      https://browser-use.com/pricing.md
+  - operation: queue_session_message_sessions__session_id__queue_post
+    reversal: cancel_queued_message_sessions__session_id__queue__message_id__delete
+    method: DELETE /sessions/{session_id}/queue/{message_id}
+    window: >-
+      Only while the message is still pending. Once it is picked up the API returns 409 "The message is
+      no longer pending and cannot be cancelled."
+    window_verified: true
+    source: openapi/browser-use-api-v4-openapi.json (409 on the cancel operation)
+  - operation: delete_workspace_workspaces__workspace_id__delete
+    reversal: null
+    method: null
+    window: >-
+      None published. The operation archives rather than hard-deletes ("Archive a workspace"), which
+      implies recoverable state, but no restore operation and no retention period appear anywhere in
+      the contract or the documentation.
+    window_verified: false
+  - operation: delete_workspace_file_workspaces__workspace_id__files_delete
+    reversal: null
+    window: None published. Treat workspace file deletion as irreversible.
+    window_verified: false
+  - operation: purge_session_sessions__session_id__purge_post
+    reversal: null
+    window: None published. Purge is documented as destructive.
+    window_verified: false
+  note: >-
+    The two operations that spend money — starting a run and starting a browser — both have a published
+    reversal with a stated window, and stopping a browser refunds unused reserved credits. The
+    destructive data operations (workspace and file delete, session purge) have no published restore
+    path or retention window at all, so an agent should treat them as final.
+webhooks:
+  detail: asyncapi/browser-use-webhooks.yml
+  signature_header: X-Browser-Use-Signature
+  timestamp_header: X-Browser-Use-Timestamp
+  algorithm: HMAC-SHA256 over "{timestamp}.{body}" with keys sorted alphabetically and no extra whitespace
+  replay_window_seconds: 300
+cross_links:
+  errors: errors/browser-use-problem-types.yml
+  lifecycle: lifecycle/browser-use-lifecycle.yml
+  authentication: authentication/browser-use-authentication.yml
+  rate_limits: rate-limits/browser-use-rate-limits.yml
+  scopes: scopes/browser-use-scopes.yml

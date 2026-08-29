@@ -1,0 +1,128 @@
+generated: '2026-08-29'
+method: derived
+source: openapi/browser-use-api-v4-openapi.json ($ref graph and id-reference fields), cross-checked against openapi/browser-use-api-v3-openapi.json
+description: >-
+  Entity graph of the Browser Use Cloud v4 API. Two independent trees hang off a project: the AGENT
+  tree (workspace → session → run → events/attachments/queue) and the BROWSER tree (browser session,
+  optionally linked back to an agent session). Profiles are shared authentication state that either
+  tree can attach.
+identifiers:
+  format: UUID
+  prefixed: false
+  note: >-
+    Every id in v4 is a bare UUID with no type prefix, so an id carries no information about what it
+    points at. An agent holding a loose id cannot tell a run from a session from a workspace.
+entity_count: 9
+entities:
+- name: Workspace
+  schema: WorkspaceInfo
+  fields: [id, name, archived, createdAt, updatedAt]
+  operations: [create_workspace_workspaces_post, get_workspace_workspaces__workspace_id__get, update_workspace_workspaces__workspace_id__patch, delete_workspace_workspaces__workspace_id__delete, get_workspace_size_workspaces__workspace_id__size_get]
+  note: Persistent file store shared across runs and conversations. Delete archives rather than hard-deletes.
+- name: WorkspaceFile
+  schema: WorkspaceFileInfo
+  operations: [list_workspace_files_workspaces__workspace_id__files_get, upload_workspace_files_workspaces__workspace_id__files_upload_post, delete_workspace_file_workspaces__workspace_id__files_delete]
+- name: Session
+  schema: SessionInfo
+  fields: [sessionId, workspaceId, latestRunId, task, title, status, createdAt, updatedAt]
+  operations: [list_sessions_sessions_get, get_session_sessions__session_id__get, purge_session_sessions__session_id__purge_post]
+  note: A conversation. Created implicitly by a run, not by an explicit create operation in v4.
+- name: Run
+  schema: RunSummary
+  fields: [id, task, title, model, contextLimit, status, result, error, sessionId, workspaceId, attachedFileIds, judgement, totalInputTokens, totalOutputTokens, totalCostUsd, createdAt, updatedAt]
+  operations: [create_run_runs_post, list_runs_runs_get, get_run_runs__run_id__get, get_run_status_runs__run_id__status_get, cancel_run_runs__run_id__cancel_post]
+  note: The billable unit. Carries its own cost totals and an optional maxCostUsd cap on creation.
+- name: RunEvent
+  schema: RunEvent
+  fields: [runId, id, ts, type, data]
+  operations: [get_run_events_runs__run_id__events_get]
+  note: Ordered, incrementally polled. browser.ready carries live_view_url.
+- name: RunAttachment
+  schema: RunAttachment
+  fields: [id, name, contentType, sizeBytes, status]
+  operations: [list_run_attachments_runs__run_id__attachments_get]
+- name: QueuedMessage
+  schema: QueuedMessage
+  fields: [id, sessionId, runId, mode, status, text, attachedFileIds, createdAt]
+  operations: [queue_session_message_sessions__session_id__queue_post, list_session_queue_sessions__session_id__queue_get, get_session_queue_message_sessions__session_id__queue__message_id__get, cancel_queued_message_sessions__session_id__queue__message_id__delete]
+- name: BrowserSession
+  schema: BrowserSessionView
+  fields: [id, status, liveUrl, cdpUrl, timeoutAt, startedAt, finishedAt, proxyUsedMb, proxyCost, browserCost, agentSessionId, recordingUrl, metadata]
+  operations: [create_browser_session_browsers_post, list_browser_sessions_browsers_get, get_browser_session_browsers__session_id__get, update_browser_session_browsers__session_id__patch, list_browser_session_downloads_browsers__session_id__downloads_get]
+  note: The Browser Infrastructure unit. Carries its own cost fields and a CDP URL for external clients.
+- name: Profile
+  schema: ProfileView
+  fields: [id, userId, name, lastUsedAt, createdAt, updatedAt, cookieDomains]
+  operations: [list_profiles_profiles_get, create_profile_profiles_post, get_profile_profiles__profile_id__get, update_profile_profiles__profile_id__patch, delete_browser_profile_profiles__profile_id__delete]
+  note: Persistent cookies and login state. cookieDomains is the only published view of what a profile holds.
+relationships:
+- from: Session
+  to: Workspace
+  type: belongs_to
+  via: workspaceId
+- from: Session
+  to: Run
+  type: has_many
+  via: sessionId
+- from: Session
+  to: Run
+  type: has_one
+  via: latestRunId
+  note: Denormalised pointer to the most recent run.
+- from: Run
+  to: Workspace
+  type: belongs_to
+  via: workspaceId
+- from: Run
+  to: Session
+  type: belongs_to
+  via: sessionId
+- from: Run
+  to: RunEvent
+  type: has_many
+  via: runId
+- from: Run
+  to: RunAttachment
+  type: has_many
+  via: attachedFileIds
+- from: Run
+  to: WorkspaceFile
+  type: has_many
+  via: attachedFileIds
+  note: Attachments are workspace files bound to a single run turn.
+- from: QueuedMessage
+  to: Session
+  type: belongs_to
+  via: sessionId
+- from: QueuedMessage
+  to: Run
+  type: belongs_to
+  via: runId
+- from: Workspace
+  to: WorkspaceFile
+  type: has_many
+  via: workspace_id path parameter
+- from: BrowserSession
+  to: Session
+  type: has_one
+  via: agentSessionId
+  note: Set when a browser was launched on behalf of an agent session rather than standalone.
+- from: Run
+  to: Profile
+  type: has_one
+  via: browserSettings.profileId
+- from: BrowserSession
+  to: Profile
+  type: has_one
+  via: profileId on CreateBrowserSessionRequest
+supporting_types:
+- RunBrowserSettings
+- RunJudgeSettings
+- SecretBinding
+- InlineSecretSource
+- CustomProxy
+- ProxyCountryCode
+- ExternalBrowserAttach
+- SteeringCutoff
+- BrowserSessionStatus
+- BrowserSessionUpdateAction

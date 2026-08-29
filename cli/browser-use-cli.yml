@@ -1,0 +1,82 @@
+generated: '2026-08-29'
+method: searched
+source: https://docs.browser-use.com/open-source/browser-use-cli.md
+docs: https://docs.browser-use.com/open-source/browser-use-cli
+name: browser-use
+version_line: Browser Use CLI 3.0
+released: '2026-07-01'
+release_note: https://browser-use.com/changelog/1-7-2026
+description: >-
+  A direct browser-control surface for coding agents, backed by the Browser Harness. Rather than
+  exposing a fixed menu of browser actions, the CLI accepts Python on stdin and executes it inside a
+  live browser, so the agent uses the same coding loop it already has. It drives a local Chrome over
+  CDP, a Browser Use cloud browser, or any CDP endpoint.
+package: browser-use (PyPI) — see packages/browser-use-packages.yml
+install:
+- method: uv tool
+  command: uv tool install browser-use
+  note: The documented primary install.
+- method: uvx
+  command: uvx browser-use
+  note: One-off runs with no permanent tool install.
+- method: pip
+  command: pip install browser-use
+- method: git head
+  command: uv tool install --python 3.12 --upgrade --force 'browser-use @ git+https://github.com/browser-use/browser-use.git'
+  note: The install line Browser Use tells users to paste into a coding agent.
+invocation:
+  style: python-on-stdin
+  example: |
+    uvx browser-use <<'PY'
+    new_tab("https://example.com")
+    print(page_info())
+    PY
+  powershell_note: In PowerShell, pipe a here-string instead of using the heredoc form.
+commands:
+- group: core
+  commands:
+  - command: browser-use --help
+    summary: Command reference.
+  - command: browser-use --doctor
+    summary: Diagnose a failed browser connection.
+- group: auth
+  commands:
+  - command: browser-use auth login
+    summary: Authenticate against Browser Use Cloud for cloud browsers.
+  - command: browser-use auth status
+    summary: Show current authentication state.
+- group: skill
+  commands:
+  - command: browser-use skill install
+    summary: Register the Browser Use skill with Claude Code, Codex, or another coding agent.
+  - command: browser-use skill show
+    summary: Print the installed skill.
+- group: telemetry
+  commands:
+  - command: browser-use telemetry status
+    summary: Show telemetry state.
+- group: remote browsers
+  commands:
+  - command: start_remote_daemon("<name>")
+    summary: Python function, run through the CLI, that starts a named cloud browser daemon.
+  - command: stop_remote_daemon("<name>")
+    summary: Stops it. Remote browsers bill until they stop or time out.
+browser_modes:
+- mode: local
+  detail: Attaches to a running Chrome or Chromium over CDP, preserving open tabs, cookies, extensions and logins.
+- mode: cloud
+  detail: Browser Use cloud browsers, for headless machines, isolation, parallelism, proxies, CAPTCHA handling and live view.
+- mode: external-cdp
+  detail: Any CDP endpoint, set with BU_CDP_URL or BU_CDP_WS.
+environment:
+- name: BU_CDP_URL
+  purpose: Point the CLI at an existing CDP browser over HTTP.
+- name: BU_CDP_WS
+  purpose: Point the CLI at an existing CDP browser over WebSocket.
+- name: BU_NAME
+  purpose: Select which named remote browser daemon a command talks to.
+- name: BROWSER_USE_API_KEY
+  purpose: Cloud API key, prefix bu_.
+distribution:
+  skill_directory: https://skills.sh/browser-use/browser-use/browser-use
+  repository: https://github.com/browser-use/browser-harness

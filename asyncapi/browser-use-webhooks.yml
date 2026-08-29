@@ -1,0 +1,48 @@
+generated: '2026-08-29'
+method: searched
+source: https://browser-use.com/webhooks.md
+docs: https://browser-use.com/webhooks
+type: Webhooks
+asyncapi_published: false
+note: >-
+  Browser Use documents a signed webhook surface but publishes no AsyncAPI document and no event
+  catalog beyond the two types below. Probed for a spec: no /asyncapi.yaml, /asyncapi.json or events
+  endpoint on any host, and nothing in the GitHub org. Recorded as a webhook catalog rather than an
+  AsyncAPI, with no fabricated channels.
+configuration:
+  url: https://cloud.browser-use.com/settings?tab=webhooks
+  note: Endpoints are registered in the Cloud dashboard, not through the API.
+delivery:
+  transport: https
+  method: POST
+  content_type: application/json
+security:
+  signature_header: X-Browser-Use-Signature
+  timestamp_header: X-Browser-Use-Timestamp
+  algorithm: HMAC-SHA256
+  signed_string: '{timestamp}.{body}'
+  canonicalization: JSON payload with keys sorted alphabetically and no extra whitespace
+  replay_window_seconds: 300
+  note: Provider publishes reference verifiers in Python and TypeScript, plus Express and FastAPI handlers.
+payload_shape:
+  type: string
+  timestamp: RFC 3339 string
+  payload:
+    task_id: string
+    session_id: string
+    status: string
+    metadata: object
+event_count: 2
+events:
+- name: agent.task.status_update
+  when: Task status changes
+  status_values: [running, idle, stopped]
+- name: test
+  when: Webhook test ping fired from the dashboard
+gaps:
+- >-
+  The catalog covers the legacy v3 task lifecycle only. API v4 exposes run progress through a polled
+  events endpoint (GET /runs/{run_id}/events) rather than webhooks, so a v4 integration has no push
+  channel — it must poll.
+- No AsyncAPI document, no event schema registry, and no published list of v4 run event types.
+- Webhook secrets are dashboard-managed with no API to rotate or list them.

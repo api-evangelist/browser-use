@@ -1,0 +1,144 @@
+generated: '2026-08-29'
+method: probed
+source: >-
+  POST {"jsonrpc":"2.0","id":1,"method":"tools/list"} to https://api.browser-use.com/mcp and
+  https://api.browser-use.com/v3/mcp; docs at https://docs.browser-use.com/cloud/guides/mcp-server
+status: live
+deployment:
+  mode: remote
+  endpoint: https://api.browser-use.com/mcp
+  auth: oauth
+  verified: probed
+  note: >-
+    tools/list answers 200 anonymously, which is how the tool schemas below were captured verbatim.
+    Tool CALLS are protected: /.well-known/oauth-protected-resource names
+    https://api.browser-use.com/mcp as the resource, https://api.browser-use.com as its authorization
+    server, and mcp as the required scope. The documented client configurations instead pass an
+    x-browser-use-api-key header, so both an OAuth bearer and a project API key are accepted. There is
+    no first-party stdio package — nothing here needs npx or a local install.
+servers:
+- id: browser-use-mcp
+  name: Browser Use MCP
+  endpoint: https://api.browser-use.com/mcp
+  transport: http
+  http_status: 200
+  server_info:
+    name: browser-use-web-automation
+    version: 1.0.0
+    description: >-
+      AI-powered web browser automation for scraping, data extraction, form filling, and general web
+      tasks
+  protocol_version: 2024-11-05
+  auth:
+    oauth:
+      authorization_server: https://api.browser-use.com
+      scope: mcp
+      metadata: well-known/browser-use-oauth-authorization-server.json
+    api_key:
+      header: x-browser-use-api-key
+  tools_file: mcp/browser-use-mcp-tools.json
+  tool_count: 6
+  tools:
+  - name: browser_task
+    summary: >-
+      Create a browser automation task; spins up a full cloud browser and executes steps. The tool
+      description instructs the client to check list_skills first.
+    parameters: ["task", "max_steps", "profile_id", "model", "proxy_country"]
+    required: ["task"]
+  - name: monitor_task
+    summary: >-
+      Get current status and progress of a browser automation task, including the most recent step
+      with full agent reasoning (evaluation, memory, actions).
+    parameters: ["task_id"]
+    required: ["task_id"]
+  - name: list_browser_profiles
+    summary: >-
+      List all available cloud browser profiles for the authenticated project.
+    parameters: []
+    required: []
+  - name: list_skills
+    summary: >-
+      Find a pre-built skill that already performs the requested website action before falling back to
+      a full browser_task.
+    parameters: []
+    required: []
+  - name: get_cookies
+    summary: >-
+      Extract cookies from a browser profile for authenticated skill execution.
+    parameters: ["profile_id", "domains"]
+    required: ["profile_id"]
+  - name: execute_skill
+    summary: >-
+      Execute a skill with provided parameters; skills run without browser overhead.
+    parameters: ["skill_id", "parameters", "session_id"]
+    required: ["skill_id"]
+- id: browser-use-mcp-v3
+  name: Browser Use MCP (v3 session API)
+  endpoint: https://api.browser-use.com/v3/mcp
+  transport: http
+  http_status: 200
+  documented_at: https://docs.browser-use.com/cloud/guides/mcp-server
+  auth:
+    api_key:
+      header: x-browser-use-api-key
+  tools_file: mcp/browser-use-v3-mcp-tools.json
+  tool_count: 7
+  tools:
+  - name: run_session
+    summary: Create a new browser agent session and run a task.
+    parameters: ["task", "model", "profile_id", "workspace_id", "keep_alive", "output_schema", "proxy_country"]
+    required: ["task"]
+  - name: send_task
+    summary: Send a follow-up task to an existing keep-alive session.
+    parameters: ["session_id", "task", "keep_alive", "output_schema"]
+    required: ["session_id", "task"]
+  - name: get_session
+    summary: Get current status and output of a session.
+    parameters: ["session_id"]
+    required: ["session_id"]
+  - name: get_session_messages
+    summary: Get the agent messages/steps for a session.
+    parameters: ["session_id", "after", "limit"]
+    required: ["session_id"]
+  - name: stop_session
+    summary: >-
+      Stop a running session. strategy "task" stops only the task; "session" destroys the sandbox.
+    parameters: ["session_id", "strategy"]
+    required: ["session_id"]
+  - name: list_sessions
+    summary: List recent sessions for the authenticated project, with status and cost info.
+    parameters: ["page", "page_size"]
+    required: []
+  - name: list_browser_profiles
+    summary: List all available cloud browser profiles for the authenticated project.
+    parameters: []
+    required: []
+- id: browser-use-docs-mcp
+  name: Browser Use Documentation MCP (Mintlify)
+  endpoint: https://docs.browser-use.com/mcp
+  transport: http-sse
+  http_status: 200
+  auth:
+    none: true
+  tool_count: 2
+  tools:
+  - name: search_browser_use
+    summary: Search the Browser Use knowledge base for docs, code examples, API references and guides.
+  - name: fetch_browser_use
+    summary: Fetch a full Browser Use documentation page by URL.
+  note: >-
+    This is the Mintlify docs server, not a product surface. Recorded because it is a real anonymous
+    MCP endpoint an agent can call, but it operates on documentation, not on the Browser Use account.
+client_configuration:
+  documented: https://docs.browser-use.com/cloud/guides/mcp-server
+  claude_code: >-
+    claude mcp add -t http -H "x-browser-use-api-key: YOUR_API_KEY" browser-use
+    https://api.browser-use.com/v3/mcp
+  note: >-
+    The published docs page still configures the /v3/mcp endpoint. The /mcp endpoint carries the newer
+    skills-aware tool set and is the resource named by the OAuth protected-resource metadata.
+gaps:
+- >-
+  Two live product MCP endpoints with different tool sets and no published deprecation note on either.
+  A client following the docs gets the v3 session tools; a client following the well-known OAuth
+  metadata gets the skills tools.

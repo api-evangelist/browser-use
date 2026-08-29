@@ -1,0 +1,12 @@
+{
+  "resource": "https://api.browser-use.com/mcp",
+  "authorization_servers": [
+    "https://api.browser-use.com"
+  ],
+  "bearer_methods_supported": [
+    "header"
+  ],
+  "scopes_supported": [
+    "mcp"
+  ]
+}

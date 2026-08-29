@@ -1,15 +1,70 @@
-generated: '2026-07-11'
-method: derived
-source: openapi/browser-use-openapi.yml
+generated: '2026-08-29'
+method: searched
+source: https://browser-use.com/auth.md
+docs: https://browser-use.com/auth.md
 summary:
   types:
   - apiKey
+  - oauth2
   api_key_in:
   - header
+  note: >-
+    Browser Use publishes two authentication paths. The REST APIs (v2, v3, v4) and both Cloud SDKs use
+    a project API key in the X-Browser-Use-API-Key header; keys are prefixed bu_ and are minted in the
+    Cloud dashboard. The hosted MCP resource is additionally protected by an OAuth 2.0 authorization
+    server that advertises Authorization Code with PKCE and Device Authorization, dynamic client
+    registration, and a single published scope, mcp.
 schemes:
-- name: ApiKeyAuth
+- name: APIKeyHeader
   type: apiKey
   in: header
   parameter: X-Browser-Use-API-Key
+  key_prefix: bu_
+  issued_at: https://cloud.browser-use.com/settings?tab=api-keys&new=1
+  applies_to:
+  - https://api.browser-use.com/api/v4
+  - https://api.browser-use.com/api/v3
+  - https://api.browser-use.com/api/v2
+  - https://api.browser-use.com/mcp
+  - https://api.browser-use.com/v3/mcp
   sources:
-  - openapi/browser-use-openapi.yml
+  - openapi/browser-use-api-v2-openapi.json
+  - openapi/browser-use-api-v3-openapi.json
+  - openapi/browser-use-api-v4-openapi.json
+  - https://browser-use.com/auth.md
+- name: BrowserUseOAuth
+  type: oauth2
+  applies_to:
+  - https://api.browser-use.com/mcp
+  metadata: well-known/browser-use-oauth-authorization-server.json
+  protected_resource: well-known/browser-use-oauth-protected-resource.json
+  issuer: https://api.browser-use.com
+  authorization_endpoint: https://api.browser-use.com/oauth/authorize
+  token_endpoint: https://api.browser-use.com/oauth/token
+  registration_endpoint: https://api.browser-use.com/oauth/register
+  revocation_endpoint: https://api.browser-use.com/oauth/revoke
+  grant_types:
+  - authorization_code
+  - urn:ietf:params:oauth:grant-type:device_code
+  pkce:
+  - S256
+  scopes:
+  - mcp
+  token_endpoint_auth_methods:
+  - none
+  sources:
+  - https://browser-use.com/.well-known/oauth-authorization-server
+  - https://api.browser-use.com/.well-known/oauth-protected-resource
+  - https://browser-use.com/auth.md
+guidance:
+  published: >-
+    "Do not put API keys in prompts, source control, browser-delivered code, or logs. Isolate keys by
+    environment, store them in a secret manager, and revoke keys that are no longer needed."
+  source: https://browser-use.com/auth.md
+gaps:
+- >-
+  The OpenAPI documents declare only the APIKeyHeader scheme; the OAuth 2.0 path is documented in
+  auth.md and in the well-known metadata but is not represented in any securityScheme.
+- >-
+  No finer-grained REST scopes are advertised. Browser Use states this explicitly: "Finer-grained REST
+  API OAuth scopes are not currently advertised by the public authorization metadata."

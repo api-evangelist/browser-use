@@ -1,0 +1,76 @@
+generated: '2026-08-29'
+method: probed
+source: live GET of /.well-known/* on every apis.yml and OpenAPI servers[] host
+note: >-
+  browser-use.com is a Next.js app whose catch-all answers 404 with an HTML body for unmatched
+  /.well-known paths — those rows are honest 404s, not soft-200s. The two OAuth documents and the
+  Mintlify-served agent-card / agent-skills documents are real, machine-readable JSON.
+hosts:
+- host: browser-use.com
+  documents:
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    file: browser-use-oauth-authorization-server.json
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    file: browser-use-oauth-protected-resource.json
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: api.browser-use.com
+  documents:
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    file: browser-use-oauth-authorization-server.json
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    file: browser-use-oauth-protected-resource.json
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: docs.browser-use.com
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 200
+    file: ../a2a/browser-use-agent-card.json
+  - path: /.well-known/agent-skills/index.json
+    status: 200
+    file: browser-use-agent-skills-index.json
+  - path: /.well-known/agent-skills/browser/skill.md
+    status: 200
+    file: ../skills/browser-use-browser.md
+  - path: /.well-known/security.txt
+    status: 404
+- host: cloud.browser-use.com
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 404
+findings:
+- >-
+  No security.txt (RFC 9116) is served on any Browser Use host, so there is no machine-readable
+  vulnerability-disclosure contact. This is the single cheapest agent-readiness gap on the profile.
+- >-
+  No /.well-known/api-catalog (RFC 9727), even though the provider publishes three versioned OpenAPI
+  documents at predictable URLs and would have a genuinely useful catalog to point at.
+- >-
+  The OAuth authorization-server and protected-resource documents are served identically from both
+  browser-use.com and api.browser-use.com, which is what an MCP client discovering from either host
+  needs.

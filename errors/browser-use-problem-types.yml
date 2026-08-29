@@ -1,0 +1,112 @@
+generated: '2026-08-29'
+method: derived
+source: >-
+  4xx/5xx responses in openapi/browser-use-api-v4-openapi.json, openapi/browser-use-api-v3-openapi.json
+  and openapi/browser-use-api-v2-openapi.json, enriched from https://docs.browser-use.com/cloud/faq
+format: custom
+rfc9457: false
+envelope:
+  content_type: application/json
+  validation_shape:
+    schema: HTTPValidationError
+    example_shape: '{"detail":[{"loc":["body","task"],"msg":"...","type":"..."}]}'
+    note: FastAPI's standard 422 envelope, used across all three API versions.
+  simple_shape: '{"detail":"Not Found"}'
+  note: >-
+    Browser Use does not emit application/problem+json. Typed error schemas exist for the interesting
+    cases (InsufficientCreditsError, TooManyConcurrentActiveSessionsError, SessionNotFoundError,
+    ProfileNotFoundError, SessionTimeoutLimitExceededError) but there is no `type` URI, no `title`, and
+    no machine-stable error code — an agent has to branch on HTTP status plus prose.
+problem_type_count: 17
+problem_types:
+- status: 400
+  title: Invalid request
+  detail: Invalid request (bad session/workspace pairing or file path).
+  operations: 3
+  remediation: Check that the session and workspace belong to the same project and that file paths are workspace-relative.
+- status: 400
+  title: Malformed pagination cursor
+  detail: Malformed pagination cursor.
+  operations: 3
+  remediation: Pass back the opaque cursor exactly as returned; do not construct one.
+- status: 402
+  title: No credits available
+  detail: The project has no credits available.
+  schema: InsufficientCreditsError
+  operations: 1
+  remediation: Top up credits or enable auto-recharge. This, not 429, is the quota wall.
+- status: 402
+  title: Subscription required for additional profiles
+  detail: Subscription required for additional profiles
+  operations: 1
+  remediation: Free projects cap browser profiles at 10; upgrade to add more.
+- status: 403
+  title: Zero Data Retention enabled
+  detail: Zero Data Retention is enabled on the project (V4 unsupported).
+  operations: 15
+  remediation: >-
+    ZDR projects cannot use API v4 at all. This is the widest-reaching error in the contract — it is
+    declared on 15 of 32 v4 operations.
+- status: 403
+  title: Project is not ZDR-enabled
+  detail: Project is not ZDR-enabled.
+  operations: 1
+- status: 403
+  title: Session timeout limit exceeded
+  detail: Session timeout limit exceeded (maximum 4 hours)
+  schema: SessionTimeoutLimitExceededError
+  operations: 1
+  remediation: Request a session timeout of 4 hours or less.
+- status: 404
+  title: Resource not found
+  detail: Run, session, workspace, or profile not found.
+  operations: 16
+- status: 404
+  title: Session not found
+  schema: SessionNotFoundError
+  operations: 4
+- status: 404
+  title: Profile not found
+  schema: ProfileNotFoundError
+  operations: 3
+- status: 409
+  title: Session already has an active run
+  detail: The session already has an active run.
+  operations: 1
+  remediation: Wait for the current run to reach a terminal state, or cancel it, before starting another in the same session.
+- status: 409
+  title: Files would be overwritten
+  detail: One or more files would replace existing workspace files.
+  operations: 1
+  remediation: Rename, or delete the existing workspace file first.
+- status: 409
+  title: Message no longer pending
+  detail: The message is no longer pending and cannot be cancelled.
+  operations: 1
+  remediation: >-
+    This is the boundary of the queue-cancel reversal window — see the reversibility block in
+    conventions/browser-use-conventions.yml.
+- status: 422
+  title: Validation error
+  schema: HTTPValidationError
+  operations: 32
+  remediation: Read detail[].loc to find the offending field.
+- status: 429
+  title: Too many concurrent active sessions
+  schema: TooManyConcurrentActiveSessionsError
+  operations: 1
+  remediation: >-
+    Concurrency, not request rate, is the limit. Read concurrentSessionLimit and activeSessionCount from
+    the v3 billing account endpoint. See rate-limits/browser-use-rate-limits.yml.
+- status: 429
+  title: Session message queue full
+  detail: The session message queue is full.
+  operations: 1
+- status: 502
+  title: Control plane unreachable
+  detail: The request could not be forwarded to the control plane.
+  operations: 1
+  remediation: Retry with backoff; this is an upstream failure, not a client error.
+gaps:
+- No stable error codes or type URIs. Two different 429s and four different 404 wordings are only distinguishable by prose.
+- No public error-code reference page in the documentation.
