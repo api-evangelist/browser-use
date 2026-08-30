@@ -46,6 +46,15 @@ tags:
   - Web Scraping
   - Headless Browsers
   - Agent Infrastructure
+  - MCP
+  - Cloud Browsers
+tags_raw:
+  - AI Automation
+  - Browser Automation
+  - Web Agents
+  - Web Scraping
+  - Headless Browsers
+  - Agent Infrastructure
   - Model Context Protocol
   - Cloud Browsers
 url: >-
@@ -124,6 +133,9 @@ apis:
   humanURL: https://browser-use.com/mcp
   baseURL: https://api.browser-use.com/mcp
   tags:
+  - MCP
+  - Agent Infrastructure
+  tags_raw:
   - Model Context Protocol
   - Agent Infrastructure
   properties:
