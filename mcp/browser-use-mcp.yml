@@ -172,3 +172,19 @@ gaps:
 - Two live product MCP endpoints with different tool sets and no published deprecation note on either.
   A client following the docs gets the v3 session tools; a client following the well-known OAuth metadata
   gets the skills tools.
+tools_count: 6
+tools:
+- name: browser_task
+  description: ''
+- name: list_browser_profiles
+  description: ''
+- name: monitor_task
+  description: ''
+- name: list_skills
+  description: ''
+- name: get_cookies
+  description: ''
+- name: execute_skill
+  description: ''
+tools_source: live tools/list via initialize handshake, 2026-09-11 (signals/audit_mcp_authorship.py --probe)
+authorship: provider
