@@ -63,73 +63,13 @@ created: '2026-03-27'
 modified: '2026-08-29'
 specificationVersion: '0.23'
 apis:
-- aid: browser-use:browser-use-api-v4
-  name: Browser Use Public API v4
-  description: >-
-    The current Browser Use Cloud REST API for long-horizon agent runs — create and monitor runs,
-    continue conversations in sessions with a message queue, persist files in workspaces, launch and
-    stop stealth cloud browsers, and manage authenticated browser profiles. 32 operations, OpenAPI
-    3.1, API-key auth via the X-Browser-Use-API-Key header.
-  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
-  baseURL: https://api.browser-use.com/api/v4
-  tags:
-  - Web Agents
-  - Browser Automation
-  - Cloud Browsers
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-api-v4-openapi.json
-  - type: APIReference
-    url: https://browser-use.com/api
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v4-overview
-  - type: Overlay
-    url: overlays/browser-use-api-v4-overlay.yaml
-  - type: DataModel
-    url: data-model/browser-use-data-model.yml
-- aid: browser-use:browser-use-api-v3
-  name: Browser Use Public API v3
-  description: >-
-    The session-based Browser Use Cloud REST API — agent sessions with streamed messages, standalone
-    CDP browsers, persistent workspaces and files, browser profiles, billing account balance, and an
-    x402 machine-payment balance endpoint. 27 operations, OpenAPI 3.1.
-  humanURL: https://docs.browser-use.com/cloud/api-reference
-  baseURL: https://api.browser-use.com/api/v3
-  tags:
-  - Browser Automation
-  - Sessions
-  - Workspaces
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-api-v3-openapi.json
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-reference
-- aid: browser-use:browser-use-api-v2
-  name: Browser Use Public API v2
-  description: >-
-    The step-priced Browser Use Cloud REST API — tasks and task logs, sessions with public share
-    links, presigned file upload/download URLs, browser profiles, standalone browsers, and the Skills
-    surface that turns a website workflow into a callable deterministic endpoint, plus the skills
-    marketplace. 44 operations, OpenAPI 3.1.
-  humanURL: https://docs.browser-use.com/cloud/api-v2-overview
-  baseURL: https://api.browser-use.com/api/v2
-  tags:
-  - Browser Automation
-  - Skills
-  - Marketplace
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-api-v2-openapi.json
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v2-overview
 - aid: browser-use:browser-use-mcp
   name: Browser Use MCP Server
   description: >-
-    Browser Use's hosted remote Model Context Protocol server. An anonymous tools/list returns six
-    real tools — browser_task, monitor_task, list_skills, execute_skill, get_cookies and
-    list_browser_profiles — while calls are protected by the Browser Use OAuth authorization server
-    (mcp scope) or an X-Browser-Use-API-Key header. A second, v3-shaped server is documented at
-    /v3/mcp with seven session-oriented tools.
+    Browser Use's hosted remote Model Context Protocol server. An anonymous tools/list returns six real
+    tools — browser_task, monitor_task, list_skills, execute_skill, get_cookies and list_browser_profiles
+    — while calls are protected by the Browser Use OAuth authorization server (mcp scope) or an X-Browser-Use-API-Key
+    header. A second, v3-shaped server is documented at /v3/mcp with seven session-oriented tools.
   humanURL: https://browser-use.com/mcp
   baseURL: https://api.browser-use.com/mcp
   tags:
@@ -145,7 +85,229 @@ apis:
     url: mcp/browser-use-tool-crosswalk.yml
   - type: Documentation
     url: https://docs.browser-use.com/cloud/guides/mcp-server
+- aid: browser-use:browser-use-billing-api
+  name: Browser Use Billing API
+  description: The Billing API from Browser Use — 1 operation(s) for billing.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Billing
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-billing-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-browsers-api
+  name: Browser Use Browsers API
+  description: The Browsers API from Browser Use — 3 operation(s) for browsers.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Browsers
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-browsers-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-files-api
+  name: Browser Use Files API
+  description: The Files API from Browser Use — 3 operation(s) for files.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Files
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-files-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-profiles-api
+  name: Browser Use Profiles API
+  description: The Profiles API from Browser Use — 2 operation(s) for profiles.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Profiles
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-profiles-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-runs-api
+  name: Browser Use Runs API
+  description: The Runs API from Browser Use — 6 operation(s) for runs.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Runs
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-runs-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-sessions-api
+  name: Browser Use Sessions API
+  description: The Sessions API from Browser Use — 8 operation(s) for sessions.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Sessions
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-sessions-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-skills-api
+  name: Browser Use Skills API
+  description: The Skills API from Browser Use — 8 operation(s) for skills.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Skills
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-skills-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-skills-marketplace-api
+  name: Browser Use Skills Marketplace API
+  description: The Skills Marketplace API from Browser Use — 4 operation(s) for skills marketplace.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Skills Marketplace
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-skills-marketplace-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-tasks-api
+  name: Browser Use Tasks API
+  description: The Tasks API from Browser Use — 4 operation(s) for tasks.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Tasks
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-tasks-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-workspaces-api
+  name: Browser Use Workspaces API
+  description: The Workspaces API from Browser Use — 5 operation(s) for workspaces.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - Workspaces
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-workspaces-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-x402-api
+  name: Browser Use X402 API
+  description: The x402 API from Browser Use — 1 operation(s) for x402.
+  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
+  baseURL: https://api.browser-use.com/api/v4
+  tags:
+  - x402
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-x402-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
 common:
+  - type: Overlay
+    url: overlays/browser-use-api-v4-overlay.yaml
   - type: Website
     url: https://browser-use.com
   - type: DeveloperPortal
