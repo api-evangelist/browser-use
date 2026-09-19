@@ -44,7 +44,7 @@ tags:
   - Browser Automation
   - Web Agents
   - Web Scraping
-  - Headless Browsers
+  - Headless Browser
   - Agent Infrastructure
   - MCP
   - Cloud Browsers
@@ -111,6 +111,8 @@ apis:
   humanURL: https://docs.browser-use.com/cloud/api-v4-overview
   baseURL: https://api.browser-use.com/api/v4
   tags:
+  - Browser
+  tags_raw:
   - Browsers
   properties:
   - type: OpenAPI
@@ -131,6 +133,8 @@ apis:
   humanURL: https://docs.browser-use.com/cloud/api-v4-overview
   baseURL: https://api.browser-use.com/api/v4
   tags:
+  - File
+  tags_raw:
   - Files
   properties:
   - type: OpenAPI
@@ -251,6 +255,8 @@ apis:
   humanURL: https://docs.browser-use.com/cloud/api-v4-overview
   baseURL: https://api.browser-use.com/api/v4
   tags:
+  - Task
+  tags_raw:
   - Tasks
   properties:
   - type: OpenAPI
@@ -271,6 +277,8 @@ apis:
   humanURL: https://docs.browser-use.com/cloud/api-v4-overview
   baseURL: https://api.browser-use.com/api/v4
   tags:
+  - Workspace
+  tags_raw:
   - Workspaces
   properties:
   - type: OpenAPI
