@@ -39,6 +39,10 @@ accessModel:
   generated: '2026-08-29'
   method: derived
 image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/browser-use.png
+x-docs-platform: mintlify
+x-docs-platform-confidence: medium
+x-docs-platform-checked: 2026-09-21
+x-docs-hosting: vercel
 tags:
   - AI Automation
   - Browser Automation
