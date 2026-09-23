@@ -1,0 +1,1155 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Public API v4 Runs API
+  summary: Browser Use agent runs API (v4)
+  version: 4.0.0
+servers:
+- url: https://api.browser-use.com/api/v4
+  description: Production server
+tags:
+- name: Runs
+paths:
+  /runs:
+    post:
+      tags:
+      - Runs
+      summary: Create Run
+      operationId: create_run_runs_post
+      security:
+      - APIKeyHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunCreateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunCreateResponse'
+        '402':
+          description: The project has no credits available.
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '409':
+          description: The session already has an active run.
+        '400':
+          description: Invalid request (bad session/workspace pairing or file path).
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      tags:
+      - Runs
+      summary: List Runs
+      operationId: list_runs_runs_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 50
+          title: Limit
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Keyset cursor from a prior response.
+          title: Cursor
+        description: Keyset cursor from a prior response.
+      - name: sessionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunListResponse'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '400':
+          description: Malformed pagination cursor.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /runs/{run_id}/attachments:
+    get:
+      tags:
+      - Runs
+      summary: List Run Attachments
+      description: 'The upload files attached to a run, for rendering attachment chips.
+
+        Ordered to match the run''s attached_file_ids.'
+      operationId: list_run_attachments_runs__run_id__attachments_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunAttachmentsResponse'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /runs/{run_id}:
+    get:
+      tags:
+      - Runs
+      summary: Get Run
+      operationId: get_run_runs__run_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunSummary'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /runs/{run_id}/status:
+    get:
+      tags:
+      - Runs
+      summary: Get Run Status
+      description: 'Minimal status poll (see RunStatusResponse). POLL rate bucket: selects
+
+        ONLY the status/project columns — a 2s poll never drags the task/result
+
+        text (TOAST reads) that GET /runs/{id} pays. Poll until terminal, then
+
+        fetch the full summary once.'
+      operationId: get_run_status_runs__run_id__status_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunStatusResponse'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /runs/{run_id}/cancel:
+    post:
+      tags:
+      - Runs
+      summary: Cancel Run
+      description: 'Cancel an in-flight run.
+
+
+        Idempotent: a run already in a terminal state (completed / failed /
+
+        cancelled) is returned as-is. Once cancelled, the gateway refuses
+
+        every subsequent `chat_completions` call from the worker — so the
+
+        project cannot be billed further regardless of whether the worker
+
+        subprocess notices the cancel itself.
+
+
+        The worker keeps running for at most one more bcode step
+
+        (consuming no LLM tokens because CP 409s them) and then exits when
+
+        bcode realizes the next tool call has no model behind it.'
+      operationId: cancel_run_runs__run_id__cancel_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunSummary'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '502':
+          description: The request could not be forwarded to the control plane.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /runs/{run_id}/events:
+    get:
+      tags:
+      - Runs
+      summary: Get Run Events
+      description: 'Paginated event read. `after` is the event id cursor — clients
+
+        doing periodic polls pass back the highest id they''ve seen to get only
+
+        the delta. Default 0 returns from the start.'
+      operationId: get_run_events_runs__run_id__events_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 200
+          title: Limit
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: After
+      - name: include_output
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: true
+          title: Include Output
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunEventsResponse'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    InlineSecretSource:
+      properties:
+        type:
+          type: string
+          const: inline
+          title: Type
+        value:
+          type: string
+          maxLength: 4096
+          minLength: 1
+          format: password
+          title: Value
+          description: The secret itself. Limited to 4096 bytes once encoded for encryption; non-ASCII characters cost more than one byte each.
+          writeOnly: true
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - value
+      title: InlineSecretSource
+      description: A value the caller supplies directly with the run.
+    RunBrowserSettings:
+      properties:
+        profileId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Profileid
+          description: ID of a browser profile to load into the session. Profiles persist cookies, local storage, and other browser state across sessions.
+        proxyCountryCode:
+          anyOf:
+          - $ref: '#/components/schemas/ProxyCountryCode'
+          - type: 'null'
+          description: ISO country code to proxy the browser through. Defaults to US. Pass null to run without a proxy.
+          default: us
+        customProxy:
+          anyOf:
+          - $ref: '#/components/schemas/CustomProxy'
+          - type: 'null'
+          description: Custom proxy for the browser. Overrides proxyCountryCode. Requires an active subscription. Never stored or inherited by follow-up runs; pass it on each run that should use it.
+        screenWidth:
+          anyOf:
+          - type: integer
+            maximum: 6144.0
+            minimum: 320.0
+          - type: 'null'
+          title: Screenwidth
+          description: Custom screen width in pixels for the browser.
+        screenHeight:
+          anyOf:
+          - type: integer
+            maximum: 3456.0
+            minimum: 320.0
+          - type: 'null'
+          title: Screenheight
+          description: Custom screen height in pixels for the browser.
+        record:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Record
+          description: 'Record the browser session to an mp4, retrievable via GET /browsers/{id} once the browser stops. API runs default to off; pass true to enable. Like other browser settings, this only applies when a new browser is provisioned: a follow-up that reuses the session''s live browser keeps that browser''s recording state. Ignored (always off) for Zero Data Retention projects.'
+      additionalProperties: false
+      type: object
+      title: RunBrowserSettings
+      description: 'Browser config, owned by the browser row (never the run). Follow-ups:
+
+        omitted fields inherit the session''s prior browser; explicit values apply
+
+        only to newly provisioned browsers (a live browser is reused as-is).
+
+        Profile is the exception: a different profile → 400; an explicit value
+
+        mismatching the live browser''s profile (incl. null vs a profiled browser)
+
+        declines reuse and provisions fresh. A live browser already matching the
+
+        requested profile is reused.'
+    RunCreateResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+        model:
+          type: string
+          title: Model
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        workspaceId:
+          type: string
+          format: uuid
+          title: Workspaceid
+        eventsUrl:
+          type: string
+          title: Eventsurl
+        missingFileIds:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Missingfileids
+      type: object
+      required:
+      - id
+      - status
+      - model
+      - sessionId
+      - workspaceId
+      - eventsUrl
+      title: RunCreateResponse
+    RunSummary:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        task:
+          type: string
+          title: Task
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        model:
+          type: string
+          title: Model
+        contextLimit:
+          type: integer
+          title: Contextlimit
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+        result:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Result
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        workspaceId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Workspaceid
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Attachedfileids
+        judgement:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Judgement
+        totalInputTokens:
+          type: integer
+          title: Totalinputtokens
+        totalOutputTokens:
+          type: integer
+          title: Totaloutputtokens
+        totalCostUsd:
+          type: string
+          title: Totalcostusd
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - task
+      - title
+      - model
+      - contextLimit
+      - status
+      - result
+      - error
+      - sessionId
+      - workspaceId
+      - totalInputTokens
+      - totalOutputTokens
+      - totalCostUsd
+      - createdAt
+      - updatedAt
+      title: RunSummary
+    RunAttachment:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+          description: Filename shown to the user, e.g. "data.csv".
+        contentType:
+          type: string
+          title: Contenttype
+        sizeBytes:
+          type: integer
+          title: Sizebytes
+        status:
+          type: string
+          enum:
+          - pending
+          - uploaded
+          title: Status
+          description: '"pending" | "uploaded".'
+      type: object
+      required:
+      - id
+      - name
+      - contentType
+      - sizeBytes
+      - status
+      title: RunAttachment
+    RunAttachmentsResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/RunAttachment'
+          type: array
+          title: Attachments
+      type: object
+      required:
+      - attachments
+      title: RunAttachmentsResponse
+    RunEvent:
+      properties:
+        runId:
+          type: string
+          format: uuid
+          title: Runid
+        id:
+          type: integer
+          title: Id
+        ts:
+          type: string
+          format: date-time
+          title: Ts
+        type:
+          type: string
+          title: Type
+        data:
+          additionalProperties: true
+          type: object
+          title: Data
+      type: object
+      required:
+      - runId
+      - id
+      - ts
+      - type
+      - data
+      title: RunEvent
+    SecretBinding:
+      properties:
+        alias:
+          type: string
+          title: Alias
+          description: Name the agent refers to this secret by, e.g. "github_password".
+        source:
+          $ref: '#/components/schemas/InlineSecretSource'
+        allowedDomains:
+          items:
+            type: string
+          type: array
+          maxItems: 10
+          minItems: 1
+          title: Alloweddomains
+          description: Hosts the secret may be typed into, e.g. ["github.com"]. A host covers its subdomains. Bare hostnames only — no scheme, port, path, or wildcard.
+      additionalProperties: false
+      type: object
+      required:
+      - alias
+      - source
+      - allowedDomains
+      title: SecretBinding
+      description: 'One credential this run may have typed into a browser field.
+
+
+        The value never reaches the agent. It is encrypted at rest, kept out of the
+
+        worker payload, and typed straight into the focused field by the server when
+
+        the agent asks for the alias by name — and only while the page it is typing
+
+        into is on one of `allowedDomains`.
+
+
+        Run-scoped: bindings die with the run, so a follow-up run that needs the same
+
+        credential must send it again.'
+    RunStatusResponse:
+      properties:
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+      type: object
+      required:
+      - status
+      title: RunStatusResponse
+      description: 'Minimal poll target: just the run''s status. Poll this until terminal
+
+        (cheap indexed lookup, tiny payload — never the task/result text), then
+
+        fetch the full RunSummary once via GET /runs/{id}. Mirrors v2''s
+
+        GET /tasks/{id}/status.'
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    RunCreateRequest:
+      properties:
+        task:
+          type: string
+          minLength: 1
+          title: Task
+        model:
+          type: string
+          enum:
+          - glm-5.2
+          - grok-4.5
+          - kimi-k3
+          - minimax-m3
+          - claude-opus-4.7
+          - claude-opus-4.8
+          - claude-opus-5
+          - claude-fable-5
+          - claude-sonnet-5
+          - gpt-5.5
+          - gpt-5.6
+          - gpt-5.6-sol
+          - gpt-5.6-terra
+          - gpt-5.6-luna
+          - gemini-3.6-flash
+          - gemini-3.5-flash
+          - gemini-3.1-pro
+          - gemini-3-flash
+          title: Model
+          default: gpt-5.6-luna
+        modelParams:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Modelparams
+          description: 'Optional provider-native request parameters for the selected model, written with the provider''s own field names and values and forwarded unchanged (e.g. {"reasoning": {"effort": "high"}} for OpenAI, {"thinking": {"type": "adaptive"}} for Anthropic, {"thinkingConfig": {"thinkingLevel": "high"}} for Google). Supported paths and values are per-model; an unsupported path, value, or a model that accepts no parameters at all is rejected with 422. Omitting this field applies the model''s default parameters (gpt-5.6-luna defaults to {"reasoning": {"effort": "xhigh"}}); passing {} opts out of that default and leaves the provider''s own defaults in place.'
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+        workspaceId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Workspaceid
+        browserSettings:
+          anyOf:
+          - $ref: '#/components/schemas/RunBrowserSettings'
+          - type: 'null'
+        agentmail:
+          type: boolean
+          title: Agentmail
+          description: If true, provisions a persistent temporary email inbox (via AgentMail) for the run workspace. The agent receives the email address in its context and can send, receive, read, and reply to email. Set false to disable AgentMail for this run.
+          default: false
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+            maxItems: 20
+          - type: 'null'
+          title: Attachedfileids
+        secretBindings:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SecretBinding'
+            type: array
+            maxItems: 10
+          - type: 'null'
+          title: Secretbindings
+          description: Credentials this run may use without ever seeing them. The agent can ask the server to type a binding by alias on one of its allowed domains; it cannot read the value. Bindings are not persisted past the run.
+        judge:
+          anyOf:
+          - $ref: '#/components/schemas/RunJudgeSettings'
+          - type: 'null'
+        maxCostUsd:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Maxcostusd
+      additionalProperties: false
+      type: object
+      required:
+      - task
+      title: RunCreateRequest
+    CustomProxy:
+      properties:
+        host:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Host
+          description: Host of the proxy.
+        port:
+          type: integer
+          maximum: 65535.0
+          minimum: 1.0
+          title: Port
+          description: Port of the proxy.
+        username:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Username
+          description: Username for proxy authentication.
+        password:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Password
+          description: Password for proxy authentication.
+        ignoreCertErrors:
+          type: boolean
+          title: Ignore Certificate Errors
+          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
+          default: false
+      type: object
+      required:
+      - host
+      - port
+      title: CustomProxy
+      description: Request model for creating a custom proxy.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    RunListResponse:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/RunSummary'
+          type: array
+          title: Runs
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - runs
+      title: RunListResponse
+    ProxyCountryCode:
+      type: string
+      enum:
+      - ad
+      - ae
+      - af
+      - ag
+      - ai
+      - al
+      - am
+      - an
+      - ao
+      - aq
+      - ar
+      - as
+      - at
+      - au
+      - aw
+      - az
+      - ba
+      - bb
+      - bd
+      - be
+      - bf
+      - bg
+      - bh
+      - bi
+      - bj
+      - bl
+      - bm
+      - bn
+      - bo
+      - bq
+      - br
+      - bs
+      - bt
+      - bv
+      - bw
+      - by
+      - bz
+      - ca
+      - cc
+      - cd
+      - cf
+      - cg
+      - ch
+      - ci
+      - ck
+      - cl
+      - cm
+      - co
+      - cr
+      - cs
+      - cu
+      - cv
+      - cw
+      - cx
+      - cy
+      - cz
+      - de
+      - dj
+      - dk
+      - dm
+      - do
+      - dz
+      - ec
+      - ee
+      - eg
+      - eh
+      - er
+      - es
+      - et
+      - fi
+      - fj
+      - fk
+      - fm
+      - fo
+      - fr
+      - ga
+      - gd
+      - ge
+      - gf
+      - gg
+      - gh
+      - gi
+      - gl
+      - gm
+      - gn
+      - gp
+      - gq
+      - gr
+      - gs
+      - gt
+      - gu
+      - gw
+      - gy
+      - hk
+      - hm
+      - hn
+      - hr
+      - ht
+      - hu
+      - id
+      - ie
+      - il
+      - im
+      - in
+      - iq
+      - ir
+      - is
+      - it
+      - je
+      - jm
+      - jo
+      - jp
+      - ke
+      - kg
+      - kh
+      - ki
+      - km
+      - kn
+      - kp
+      - kr
+      - kw
+      - ky
+      - kz
+      - la
+      - lb
+      - lc
+      - li
+      - lk
+      - lr
+      - ls
+      - lt
+      - lu
+      - lv
+      - ly
+      - ma
+      - mc
+      - md
+      - me
+      - mf
+      - mg
+      - mh
+      - mk
+      - ml
+      - mm
+      - mn
+      - mo
+      - mp
+      - mq
+      - mr
+      - ms
+      - mt
+      - mu
+      - mv
+      - mw
+      - mx
+      - my
+      - mz
+      - na
+      - nc
+      - ne
+      - nf
+      - ng
+      - ni
+      - nl
+      - 'no'
+      - np
+      - nr
+      - nu
+      - nz
+      - om
+      - pa
+      - pe
+      - pf
+      - pg
+      - ph
+      - pk
+      - pl
+      - pm
+      - pn
+      - pr
+      - ps
+      - pt
+      - pw
+      - py
+      - qa
+      - re
+      - ro
+      - rs
+      - ru
+      - rw
+      - sa
+      - sb
+      - sc
+      - sd
+      - se
+      - sg
+      - sh
+      - si
+      - sj
+      - sk
+      - sl
+      - sm
+      - sn
+      - so
+      - sr
+      - ss
+      - st
+      - sv
+      - sx
+      - sy
+      - sz
+      - tc
+      - td
+      - tf
+      - tg
+      - th
+      - tj
+      - tk
+      - tl
+      - tm
+      - tn
+      - to
+      - tr
+      - tt
+      - tv
+      - tw
+      - tz
+      - ua
+      - ug
+      - uk
+      - us
+      - uy
+      - uz
+      - va
+      - vc
+      - ve
+      - vg
+      - vi
+      - vn
+      - vu
+      - wf
+      - ws
+      - xk
+      - ye
+      - yt
+      - za
+      - zm
+      - zw
+      title: ProxyCountryCode
+    RunEventsResponse:
+      properties:
+        events:
+          items:
+            $ref: '#/components/schemas/RunEvent'
+          type: array
+          title: Events
+        nextAfter:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Nextafter
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - events
+      title: RunEventsResponse
+    RunJudgeSettings:
+      properties:
+        context:
+          anyOf:
+          - type: string
+            maxLength: 10000
+          - type: 'null'
+          title: Context
+      additionalProperties: false
+      type: object
+      title: RunJudgeSettings
+      description: 'Opt-in LLM judgement of the finished run. Presence of this object turns
+
+        the judge on (send {} for defaults); CP judges the run''s trajectory after
+
+        it goes terminal and surfaces the verdict as RunSummary.judgement (null
+
+        until it lands). The judge''s LLM call is billed to the run.'
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

@@ -1,0 +1,126 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Public API v3 X402 API
+  summary: Browser Use session-based agent API (v3)
+  version: 3.0.0
+servers:
+- url: https://api.browser-use.com/api/v3
+  description: Production server
+tags:
+- name: X402
+paths:
+  /x402/balance:
+    post:
+      tags:
+      - X402
+      summary: X402 Balance
+      description: Read a wallet-derived project's credit balance auth by off-chain wallet signature
+      operationId: x402_balance_x402_balance_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/X402BalanceRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/X402BalanceResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    X402BalanceRequest:
+      properties:
+        address:
+          type: string
+          title: Address
+          description: EVM wallet address that signed the message (0x...).
+        issued_at:
+          type: string
+          title: Issued At
+          description: ISO-8601 UTC timestamp included in the signed message.
+        nonce:
+          type: string
+          title: Nonce
+          description: Random single-use nonce included in the signed message.
+        signature:
+          type: string
+          title: Signature
+          description: EIP-191 personal_sign signature of the canonical message.
+      type: object
+      required:
+      - address
+      - issued_at
+      - nonce
+      - signature
+      title: X402BalanceRequest
+      description: Wallet-signature auth payload for a free, read-only balance check
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    X402BalanceResponse:
+      properties:
+        wallet:
+          type: string
+          title: Wallet
+          description: Lowercased wallet address (verified from the signature).
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+          description: Wallet-derived project the balance belongs to.
+        total_credits_usd:
+          type: number
+          title: Total Credits Usd
+          description: Total spendable credit balance in USD.
+        additional_credits_usd:
+          type: number
+          title: Additional Credits Usd
+          description: Standalone (x402 top-up / one_off) credit balance in USD.
+      type: object
+      required:
+      - wallet
+      - project_id
+      - total_credits_usd
+      - additional_credits_usd
+      title: X402BalanceResponse
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

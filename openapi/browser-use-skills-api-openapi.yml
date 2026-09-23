@@ -1,0 +1,1196 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Public API v2 Skills API
+  summary: Browser Use API for running web agents (v2)
+  version: 2.0.0
+servers:
+- url: https://api.browser-use.com/api/v2
+  description: Production server
+tags:
+- name: Skills
+paths:
+  /skills:
+    get:
+      tags:
+      - Skills
+      summary: List Skills
+      description: List all skills owned by the authenticated project with optional filtering.
+      operationId: list_skills_skills_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          title: Pagesize
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Pagenumber
+      - name: isPublic
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Ispublic
+      - name: isEnabled
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isenabled
+      - name: category
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/SkillCategory'
+          - type: 'null'
+          title: Category
+      - name: query
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Query
+      - name: fromDate
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Fromdate
+      - name: toDate
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Todate
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Skills
+      summary: Create Skill
+      description: Create a new skill via automated generation.
+      operationId: create_skill_skills_post
+      security:
+      - APIKeyHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSkillRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSkillResponse'
+        '400':
+          description: Concurrent skill creations are not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConcurrentSkillCreationsError'
+        '402':
+          description: Insufficient credits to create skill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientCreditsError'
+        '429':
+          description: Too many concurrent active sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TooManyConcurrentActiveSessionsError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /skills/{skill_id}:
+    get:
+      tags:
+      - Skills
+      summary: Get Skill
+      description: Get details of a specific skill owned by the project.
+      operationId: get_skill_skills__skill_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillResponse'
+        '404':
+          description: Skill not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Skills
+      summary: Delete Skill
+      description: Delete a skill owned by the project.
+      operationId: delete_skill_skills__skill_id__delete
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      responses:
+        '204':
+          description: Successful Response
+        '400':
+          description: Cannot delete skill while it is still generating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CannotDeleteSkillWhileGeneratingError'
+        '404':
+          description: Skill not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Skills
+      summary: Update Skill
+      description: Update skill metadata (name, description, enabled, etc.).
+      operationId: update_skill_skills__skill_id__patch
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSkillRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillResponse'
+        '404':
+          description: Skill not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '403':
+          description: Enabled skills limit exceeded for your plan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnabledSkillsLimitExceededError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /skills/{skill_id}/cancel:
+    post:
+      tags:
+      - Skills
+      summary: Cancel Generation
+      description: Cancel the current in-progress generation for a skill.
+      operationId: cancel_generation_skills__skill_id__cancel_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillResponse'
+        '404':
+          description: Skill not found or no generation found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '400':
+          description: Generation is not cancellable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerationNotCancellableError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /skills/{skill_id}/rollback:
+    post:
+      tags:
+      - Skills
+      summary: Rollback Skill
+      description: Rollback to the previous version (cannot be undone).
+      operationId: rollback_skill_skills__skill_id__rollback_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillResponse'
+        '404':
+          description: Skill not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '400':
+          description: Cannot rollback a public skill
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CannotRollbackPublicSkillError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /skills/{skill_id}/execute:
+    post:
+      tags:
+      - Skills
+      summary: Execute Skill
+      description: Execute a skill with the provided parameters.
+      operationId: execute_skill_skills__skill_id__execute_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteSkillRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteSkillResponse'
+        '404':
+          description: Skill not found, no code available, or project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '400':
+          description: Skill is not finished or not enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFinishedError'
+        '402':
+          description: Insufficient credits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsufficientCreditsError'
+        '429':
+          description: Too many concurrent active sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TooManyConcurrentActiveSessionsError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /skills/{skill_id}/refine:
+    post:
+      tags:
+      - Skills
+      summary: Refine Skill
+      description: Refine a skill based on feedback.
+      operationId: refine_skill_skills__skill_id__refine_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefineSkillRequest'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefineSkillResponse'
+        '404':
+          description: Skill not found or no code available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '400':
+          description: Skill is not finished or is public
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFinishedError'
+        '429':
+          description: Too many concurrent active sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TooManyConcurrentActiveSessionsError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /skills/{skill_id}/executions:
+    get:
+      tags:
+      - Skills
+      summary: List Skill Executions
+      description: List executions for a specific skill.
+      operationId: list_skill_executions_skills__skill_id__executions_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          title: Pagesize
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Pagenumber
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillExecutionListResponse'
+        '404':
+          description: Skill not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /skills/{skill_id}/executions/{execution_id}/output:
+    get:
+      tags:
+      - Skills
+      summary: Get Skill Execution Output
+      description: Get presigned URL for downloading skill execution output.
+      operationId: get_skill_execution_output_skills__skill_id__executions__execution_id__output_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: skill_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Skill Id
+      - name: execution_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Execution Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillExecutionOutputResponse'
+        '404':
+          description: Skill or execution not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillNotFoundError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    SkillExecutionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SkillExecutionView'
+          type: array
+          title: Items
+          description: List of executions
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: SkillExecutionListResponse
+      description: Response for listing skill executions.
+    ParameterSchema:
+      properties:
+        name:
+          type: string
+          title: Name
+        type:
+          $ref: '#/components/schemas/ParameterType'
+        required:
+          type: boolean
+          title: Required
+          default: true
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        default:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Default
+        cookieDomain:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cookiedomain
+      type: object
+      required:
+      - name
+      - type
+      title: ParameterSchema
+      description: Schema for a skill parameter.
+    ConcurrentSkillCreationsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Concurrent skill creations are not allowed. Please wait for the current skill creation to finish or cancel it.
+      type: object
+      title: ConcurrentSkillCreationsError
+      description: Error response when concurrent skill creations are attempted
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    EnabledSkillsLimitExceededError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Enabled skills limit exceeded for your plan
+      type: object
+      title: EnabledSkillsLimitExceededError
+      description: Error response when trying to enable more skills than allowed by plan
+    SkillExecutionOutputResponse:
+      properties:
+        downloadUrl:
+          type: string
+          title: Downloadurl
+          description: Presigned URL for downloading the execution output (valid for 5 minutes)
+      type: object
+      required:
+      - downloadUrl
+      title: SkillExecutionOutputResponse
+      description: Response containing presigned URL for downloading execution output.
+    CannotRollbackPublicSkillError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Cannot rollback a public skill. Please make the skill private first.
+      type: object
+      title: CannotRollbackPublicSkillError
+      description: Error response when trying to rollback a public skill
+    ExecuteSkillResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          description: Whether the skill execution was successful
+        result:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Result
+          description: Output of the skill execution
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+          description: Error message if the skill execution failed
+        stderr:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stderr
+          description: Standard error output of the skill execution
+        latencyMs:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Latency in ms
+          description: Latency of the skill execution in milliseconds
+      type: object
+      required:
+      - success
+      title: ExecuteSkillResponse
+      description: Response from executing a skill.
+    SkillNotFinishedError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Skill is not finished
+      type: object
+      title: SkillNotFinishedError
+      description: Error response when skill is not finished
+    SkillCategory:
+      type: string
+      enum:
+      - search
+      - e_commerce
+      - financial
+      - news
+      - real_estate
+      - social_media
+      - travel
+      - marketplace
+      - lead_generation
+      - seo
+      - jobs
+      - developer
+      - media
+      - automation
+      - integration
+      - other
+      title: SkillCategory
+      description: Skill category.
+    CreateSkillRequest:
+      properties:
+        title:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Title
+          description: Optional title for the skill (will be generated if not provided)
+        description:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Description
+          description: Optional description for the skill (will be generated if not provided)
+        goal:
+          type: string
+          maxLength: 1000
+          title: Goal
+          description: Goal of the skill (description of what the skill does and what the user should expect from it)
+        agentPrompt:
+          type: string
+          minLength: 10
+          title: Agentprompt
+          description: Prompt for the agent to use when generating the skill automatically
+      type: object
+      required:
+      - goal
+      - agentPrompt
+      title: CreateSkillRequest
+      description: Request to create a new skill via automated generation.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    SkillsGenerationStatus:
+      type: string
+      enum:
+      - recording
+      - generating
+      - failed
+      - finished
+      - cancelled
+      - timed_out
+      title: SkillsGenerationStatus
+      description: Status of skill generation.
+    SkillNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Skill not found
+      type: object
+      title: SkillNotFoundError
+      description: Error response when a skill is not found
+    InsufficientCreditsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Insufficient credits
+      type: object
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
+    ParameterType:
+      type: string
+      enum:
+      - string
+      - number
+      - boolean
+      - object
+      - array
+      - cookie
+      title: ParameterType
+      description: Type of a skill parameter.
+    RefineSkillRequest:
+      properties:
+        feedback:
+          type: string
+          minLength: 10
+          title: Feedback
+          description: Feedback describing what to improve
+        testOutput:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Testoutput
+          description: Last skill test output to include in refinement context
+        testLogs:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Testlogs
+          description: Last skill test logs to include in refinement context
+      type: object
+      required:
+      - feedback
+      title: RefineSkillRequest
+      description: Request to refine an existing skill.
+    TooManyConcurrentActiveSessionsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
+      type: object
+      title: TooManyConcurrentActiveSessionsError
+      description: Error response when user has too many concurrent active sessions
+    GenerationNotCancellableError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Generation is not cancellable
+      type: object
+      title: GenerationNotCancellableError
+      description: Error response when generation is not cancellable
+    CannotDeleteSkillWhileGeneratingError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Cannot delete skill while it is still generating
+      type: object
+      title: CannotDeleteSkillWhileGeneratingError
+      description: Error response when a skill cannot be deleted while it is still generating
+    RefineSkillResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the skill
+      type: object
+      required:
+      - id
+      title: RefineSkillResponse
+      description: Response after requesting skill refinement.
+    SkillResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the skill
+        slug:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Slug
+          description: URL-friendly slug for the skill
+        title:
+          type: string
+          title: Title
+          description: Title of the skill (shows up in the public view)
+        description:
+          type: string
+          title: Description
+          description: Description of the skill (shows up in the public view)
+        categories:
+          items:
+            $ref: '#/components/schemas/SkillCategory'
+          type: array
+          title: Categories
+          description: Categories of the skill
+        domains:
+          items:
+            type: string
+          type: array
+          title: Domains
+          description: Domains/websites this skill interacts with
+        goal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Goal
+          description: Goal of the skill (not shown in the public view)
+        agentPrompt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Agent Prompt
+          description: Prompt for the agent to use when generating the skill automatically (not shown in the public view)
+        status:
+          $ref: '#/components/schemas/SkillsGenerationStatus'
+          title: Status
+          description: Status of the skill
+        parameters:
+          items:
+            $ref: '#/components/schemas/ParameterSchema'
+          type: array
+          title: Parameters
+          description: Input parameters of the skill
+        outputSchema:
+          additionalProperties: true
+          type: object
+          title: Output Schema
+          description: Output schema of the skill
+        isEnabled:
+          type: boolean
+          title: Enabled
+          description: Whether the skill is enabled
+        isPublic:
+          type: boolean
+          title: Is Public
+          description: Whether the skill is publicly available
+        iconUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon URL
+          description: URL of the custom skill icon
+        firstPublishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: First Published At
+          description: When the skill was first published
+        lastPublishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Published At
+          description: When the skill was last published
+        currentVersion:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Version
+          description: Current version of the skill
+        currentVersionStartedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Current Version Started At
+          description: When the current version started generating
+        currentVersionFinishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Current Version Finished At
+          description: When the current version finished generating
+        code:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Code (base64 encoded) - ENTERPRISE ONLY
+          description: Base64 encoded generated code (contact support@browser-use.com to get access) - ENTERPRISE ONLY
+        clonedFromSkillId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Cloned From Skill ID
+          description: Unique identifier for the skill this skill was cloned from
+        createdAt:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updated At
+          description: Last update timestamp
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - categories
+      - domains
+      - status
+      - parameters
+      - outputSchema
+      - isEnabled
+      - isPublic
+      - currentVersion
+      - createdAt
+      - updatedAt
+      title: SkillResponse
+      description: Skill information returned by the API.
+    SkillListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SkillResponse'
+          type: array
+          title: Items
+          description: List of skills
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: SkillListResponse
+      description: Response for listing skills.
+    SkillExecutionView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+          description: Unique identifier for the execution
+        skillId:
+          type: string
+          format: uuid
+          title: Skillid
+          description: ID of the skill that was executed
+        status:
+          type: string
+          title: Status
+          description: Execution status (running, completed, failed)
+        success:
+          type: boolean
+          title: Success
+          description: Whether the execution succeeded
+        startedAt:
+          type: string
+          format: date-time
+          title: Startedat
+          description: When the execution started
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finishedat
+          description: When the execution finished
+        latencyMs:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Latencyms
+          description: Execution latency in milliseconds
+        hasOutput:
+          type: boolean
+          title: Hasoutput
+          description: Whether output is available for download
+      type: object
+      required:
+      - id
+      - skillId
+      - status
+      - success
+      - startedAt
+      - finishedAt
+      - latencyMs
+      - hasOutput
+      title: SkillExecutionView
+      description: View for a skill execution.
+    ExecuteSkillRequest:
+      properties:
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+          description: Parameters to pass to the skill handler
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+          description: Optional session ID (UUID) for IP persistence.
+      type: object
+      title: ExecuteSkillRequest
+      description: Request to execute a skill.
+    UpdateSkillRequest:
+      properties:
+        title:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Title
+          description: Display name for the skill (shows up in the public view)
+        description:
+          anyOf:
+          - type: string
+            maxLength: 1000
+          - type: 'null'
+          title: Description
+          description: Description of what the skill does (shows up in the public view)
+        categories:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SkillCategory'
+            type: array
+          - type: 'null'
+          title: Categories
+          description: Categories to assign to the skill
+        domains:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Domains
+          description: Domains/websites this skill interacts with
+        isEnabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isenabled
+          description: Whether the skill is enabled for execution
+      type: object
+      title: UpdateSkillRequest
+      description: Request to update skill metadata.
+    CreateSkillResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the created skill
+      type: object
+      required:
+      - id
+      title: CreateSkillResponse
+      description: Response after creating a skill.
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

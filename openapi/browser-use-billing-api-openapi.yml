@@ -1,0 +1,195 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Billing API
+  version: '1.0'
+  description: 'Operations tagged Billing across 2 of this provider''s published API definitions: browser-use-api-v2-openapi.json, browser-use-api-v3-openapi.json. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.browser-use.com/api/v2
+  description: Production server
+- url: https://api.browser-use.com/api/v3
+  description: Production server
+tags:
+- name: Billing
+paths:
+  /billing/account:
+    get:
+      tags:
+      - Billing
+      summary: Get Account Billing
+      description: Get authenticated account information including credit balance and account details.
+      operationId: get_account_billing_billing_account_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountView'
+        '404':
+          description: Project for a given API key not found!
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountNotFoundError'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+    servers:
+    - url: https://api.browser-use.com/api/v2
+      description: Production server
+components:
+  schemas:
+    PlanInfo:
+      properties:
+        planName:
+          type: string
+          title: Plan Name
+          description: The name of the plan
+        subscriptionStatus:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subscription Status
+          description: The status of the subscription
+        subscriptionId:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subscription ID
+          description: The ID of the subscription
+        subscriptionCurrentPeriodEnd:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subscription Current Period End
+          description: The end of the current period
+        subscriptionCanceledAt:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subscription Canceled At
+          description: The date the subscription was canceled
+      type: object
+      required:
+      - planName
+      - subscriptionStatus
+      - subscriptionId
+      - subscriptionCurrentPeriodEnd
+      - subscriptionCanceledAt
+      title: PlanInfo
+      description: View model for plan information
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    AccountNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Account not found
+      type: object
+      title: AccountNotFoundError
+      description: Error response when an account is not found
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    AccountView:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: The name of the user
+        totalCreditsBalanceUsd:
+          type: number
+          title: Credits Balance USD
+          description: The total credits balance in USD
+        monthlyCreditsBalanceUsd:
+          type: number
+          title: Monthly Credits Balance USD
+          description: Monthly subscription credits balance in USD
+        additionalCreditsBalanceUsd:
+          type: number
+          title: Additional Credits Balance USD
+          description: Additional top-up credits balance in USD
+        rateLimit:
+          type: integer
+          title: Rate Limit
+          description: Legacy alias for the concurrent browser session limit
+        concurrentSessionLimit:
+          type: integer
+          title: Concurrent Session Limit
+          description: The maximum number of concurrent browser sessions for the project
+        activeSessionCount:
+          type: integer
+          title: Active Session Count
+          description: The number of browser sessions currently active for the project
+        planInfo:
+          $ref: '#/components/schemas/PlanInfo'
+          title: Plan Info
+          description: The plan information
+        isFreeTier:
+          type: boolean
+          title: Is Free Tier
+          description: Whether the account is on the free tier
+          default: false
+        projectId:
+          type: string
+          format: uuid
+          title: Project ID
+          description: The ID of the project
+        tracingDisabled:
+          type: boolean
+          title: Tracing Disabled
+          description: Whether third-party LLM tracing is disabled for this project
+          default: false
+      type: object
+      required:
+      - totalCreditsBalanceUsd
+      - monthlyCreditsBalanceUsd
+      - additionalCreditsBalanceUsd
+      - rateLimit
+      - concurrentSessionLimit
+      - activeSessionCount
+      - planInfo
+      - projectId
+      title: AccountView
+      description: View model for account information.
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key
+x-refined-from:
+- browser-use-api-v2-openapi.json
+- browser-use-api-v3-openapi.json

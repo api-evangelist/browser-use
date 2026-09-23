@@ -1,0 +1,817 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Workspaces API
+  version: '1.0'
+  description: 'Operations tagged Workspaces across 2 of this provider''s published API definitions: browser-use-api-v3-openapi.json, browser-use-api-v4-openapi.json. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.browser-use.com/api/v3
+  description: Production server
+- url: https://api.browser-use.com/api/v4
+  description: Production server
+tags:
+- name: Workspaces
+paths:
+  /workspaces:
+    get:
+      tags:
+      - Workspaces
+      summary: List Workspaces
+      description: Get paginated list of workspaces.
+      operationId: list_workspaces_workspaces_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          title: Pagesize
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Pagenumber
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Workspaces
+      summary: Create Workspace
+      description: Create a new workspace for persistent shared file storage across sessions.
+      operationId: create_workspace_workspaces_post
+      security:
+      - APIKeyHeader: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceCreateRequest'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceView'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    servers:
+    - url: https://api.browser-use.com/api/v3
+      description: Production server
+  /workspaces/{workspace_id}:
+    get:
+      tags:
+      - Workspaces
+      summary: Get Workspace
+      description: Get workspace details.
+      operationId: get_workspace_workspaces__workspace_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceView'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      tags:
+      - Workspaces
+      summary: Update Workspace
+      description: Update a workspace's name.
+      operationId: update_workspace_workspaces__workspace_id__patch
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceView'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Workspaces
+      summary: Delete Workspace
+      description: Delete a workspace and its S3 data.
+      operationId: delete_workspace_workspaces__workspace_id__delete
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    servers:
+    - url: https://api.browser-use.com/api/v3
+      description: Production server
+  /workspaces/{workspace_id}/files:
+    get:
+      tags:
+      - Workspaces
+      summary: List Workspace Files
+      description: List files in a workspace's S3 prefix.
+      operationId: list_workspace_files_workspaces__workspace_id__files_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      - name: prefix
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ''
+          title: Prefix
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cursor
+      - name: includeUrls
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Includeurls
+      - name: shallow
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Shallow
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Workspaces
+      summary: Delete Workspace File
+      description: Delete a single file from a workspace.
+      operationId: delete_workspace_file_workspaces__workspace_id__files_delete
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+          description: Relative file path to delete
+          title: Path
+        description: Relative file path to delete
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    servers:
+    - url: https://api.browser-use.com/api/v3
+      description: Production server
+  /workspaces/{workspace_id}/size:
+    get:
+      tags:
+      - Workspaces
+      summary: Get Workspace Size
+      description: Get current storage usage for a workspace.
+      operationId: get_workspace_size_workspaces__workspace_id__size_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    servers:
+    - url: https://api.browser-use.com/api/v3
+      description: Production server
+  /workspaces/{workspace_id}/files/upload:
+    post:
+      tags:
+      - Workspaces
+      summary: Upload Workspace Files
+      description: Get presigned PUT URLs for uploading files to a workspace.
+      operationId: upload_workspace_files_workspaces__workspace_id__files_upload_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Workspace Id
+      - name: prefix
+        in: query
+        required: false
+        schema:
+          type: string
+          description: Directory prefix to upload into (e.g. "uploads/")
+          default: ''
+          title: Prefix
+        description: Directory prefix to upload into (e.g. "uploads/")
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileUploadRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileUploadResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    servers:
+    - url: https://api.browser-use.com/api/v3
+      description: Production server
+components:
+  schemas:
+    WorkspaceCreateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+          description: Optional name for the workspace
+      type: object
+      title: WorkspaceCreateRequest
+      description: Request model for creating a new workspace.
+    FileInfo:
+      properties:
+        path:
+          type: string
+          title: Path
+          description: File path relative to the session workspace root.
+        size:
+          type: integer
+          title: Size
+          description: File size in bytes.
+        lastModified:
+          type: string
+          format: date-time
+          title: Lastmodified
+          description: When the file was last modified.
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+          description: Presigned download URL (60s expiry). Only included when `includeUrls=true`.
+      type: object
+      required:
+      - path
+      - size
+      - lastModified
+      title: FileInfo
+      description: A file in a session's workspace.
+    FileUploadResponseItem:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Original filename as requested.
+        uploadUrl:
+          type: string
+          title: Uploadurl
+          description: Presigned PUT URL. Upload the file by sending a PUT request to this URL with the file content and matching Content-Type header. Expires after 5 minutes.
+        path:
+          type: string
+          title: Path
+          description: Path where the file will be stored in the workspace, e.g. "uploads/data.csv".
+      type: object
+      required:
+      - name
+      - uploadUrl
+      - path
+      title: FileUploadResponseItem
+      description: Presigned upload URL for a single file.
+    WorkspaceListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/WorkspaceView'
+          type: array
+          title: Items
+          description: List of workspace views for the current page
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: WorkspaceListResponse
+      description: Response model for paginated workspace list requests.
+    FileUploadItem:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+          description: Filename, e.g. "data.csv"
+        contentType:
+          type: string
+          maxLength: 255
+          title: Contenttype
+          description: MIME type, e.g. "text/csv"
+          default: application/octet-stream
+        size:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Size
+          description: File size in bytes (required for workspace uploads)
+      type: object
+      required:
+      - name
+      title: FileUploadItem
+      description: A single file to upload.
+    WorkspaceUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+          description: Optional name for the workspace
+      type: object
+      title: WorkspaceUpdateRequest
+      description: Request model for updating a workspace.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    FileUploadResponse:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/FileUploadResponseItem'
+          type: array
+          title: Files
+      type: object
+      required:
+      - files
+      title: FileUploadResponse
+      description: Presigned upload URLs for the requested files.
+    WorkspaceView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the workspace
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+          description: Optional name for the workspace
+        createdAt:
+          type: string
+          format: date-time
+          title: Created At
+          description: Timestamp when the workspace was created
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updated At
+          description: Timestamp when the workspace was last updated
+      type: object
+      required:
+      - id
+      - createdAt
+      - updatedAt
+      title: WorkspaceView
+      description: View model for a workspace — persistent shared storage across sessions.
+    FileUploadRequest:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/FileUploadItem'
+          type: array
+          maxItems: 10
+          minItems: 1
+          title: Files
+      type: object
+      required:
+      - files
+      title: FileUploadRequest
+      description: Request body for generating presigned upload URLs.
+    FileListResponse:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/FileInfo'
+          type: array
+          title: Files
+        folders:
+          items:
+            type: string
+          type: array
+          title: Folders
+          description: Immediate sub-folder names at this prefix level
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+          description: Cursor for the next page. Pass as the `cursor` query parameter to fetch the next page.
+        hasMore:
+          type: boolean
+          title: Hasmore
+          description: Whether there are more files beyond this page.
+          default: false
+      type: object
+      required:
+      - files
+      title: FileListResponse
+      description: Paginated file listing with optional presigned download URLs.
+    WorkspaceCreateRequest_2:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+      type: object
+      title: WorkspaceCreateRequest
+    WorkspaceFileInfo:
+      properties:
+        path:
+          type: string
+          title: Path
+          description: File path relative to the workspace root
+        size:
+          type: integer
+          title: Size
+          description: File size in bytes
+        lastModified:
+          type: string
+          format: date-time
+          title: Lastmodified
+          description: When the file was last modified
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+          description: Presigned download URL (60s expiry). Only included when `includeUrls=true`.
+      type: object
+      required:
+      - path
+      - size
+      - lastModified
+      title: WorkspaceFileInfo
+      description: 'A file the agent has produced for the workspace. Shape mirrors V3
+
+        files (FileInfo) so a single UI component can render both.'
+    WorkspaceFileUploadResponseItem:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+          description: Upload id. Pass THIS in RunCreateRequest.attachedFileIds to attach the file to a run.
+        name:
+          type: string
+          title: Name
+          description: Original filename from the request
+        storedName:
+          type: string
+          title: Storedname
+          description: Sanitized filename the object is stored under, e.g. "data.csv".
+        path:
+          type: string
+          title: Path
+          description: Path within the workspace, e.g. "uploads/data.csv"
+        willOverride:
+          type: boolean
+          title: Willoverride
+          description: True if a file with this stored_name already exists in the workspace and uploading will replace it. Surface a warning to the user.
+        uploadUrl:
+          type: string
+          title: Uploadurl
+          description: Presigned PUT URL (5 min expiry). PUT the file bytes with the matching Content-Type and Content-Length headers.
+      type: object
+      required:
+      - id
+      - name
+      - storedName
+      - path
+      - willOverride
+      - uploadUrl
+      title: WorkspaceFileUploadResponseItem
+    WorkspaceFileUploadResponse:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/WorkspaceFileUploadResponseItem'
+          type: array
+          title: Files
+      type: object
+      required:
+      - files
+      title: WorkspaceFileUploadResponse
+    WorkspaceFileUploadRequest:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/WorkspaceFileUploadItem'
+          type: array
+          maxItems: 10
+          minItems: 1
+          title: Files
+        allowOverrides:
+          type: boolean
+          title: Allowoverrides
+          description: When false, return 409 before reserving storage if any uploaded filename would replace an existing workspace file.
+          default: true
+      type: object
+      required:
+      - files
+      title: WorkspaceFileUploadRequest
+    WorkspaceFileListResponse:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/WorkspaceFileInfo'
+          type: array
+          title: Files
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - files
+      title: WorkspaceFileListResponse
+    WorkspaceUpdateRequest_2:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+      type: object
+      title: WorkspaceUpdateRequest
+    WorkspaceFileUploadItem:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+          description: Filename, e.g. "data.csv"
+        contentType:
+          type: string
+          maxLength: 255
+          title: Contenttype
+          description: MIME type, e.g. "text/csv"
+          default: application/octet-stream
+        size:
+          type: integer
+          maximum: 52428800.0
+          minimum: 1.0
+          title: Size
+          description: Exact file size in bytes; the presigned URL is pinned to it.
+      type: object
+      required:
+      - name
+      - size
+      title: WorkspaceFileUploadItem
+    WorkspaceInfo:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        archived:
+          type: boolean
+          title: Archived
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - archived
+      - createdAt
+      - updatedAt
+      title: WorkspaceInfo
+    WorkspaceSizeInfo:
+      properties:
+        usedBytes:
+          type: integer
+          minimum: 0.0
+          title: Usedbytes
+          description: Current workspace storage usage in bytes.
+        maxBytes:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Maxbytes
+          description: Maximum workspace storage allowed in bytes.
+      type: object
+      required:
+      - usedBytes
+      - maxBytes
+      title: WorkspaceSizeInfo
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key
+x-refined-from:
+- browser-use-api-v3-openapi.json
+- browser-use-api-v4-openapi.json
