@@ -213,6 +213,62 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    ExecuteSkillRequest:
+      properties:
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+          description: Parameters to pass to the skill handler
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+          description: Optional session ID (UUID) for IP persistence.
+      type: object
+      title: ExecuteSkillRequest
+      description: Request to execute a skill.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    SkillNotFinishedError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Skill is not finished
+      type: object
+      title: SkillNotFinishedError
+      description: Error response when skill is not finished
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     SkillCategory:
       type: string
       enum:
@@ -234,15 +290,41 @@ components:
       - other
       title: SkillCategory
       description: Skill category.
-    InsufficientCreditsError:
+    ExecuteSkillResponse:
       properties:
-        detail:
-          type: string
-          title: Detail
-          default: Insufficient credits
+        success:
+          type: boolean
+          title: Success
+          description: Whether the skill execution was successful
+        result:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Result
+          description: Output of the skill execution
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+          description: Error message if the skill execution failed
+        stderr:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stderr
+          description: Standard error output of the skill execution
+        latencyMs:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Latency in ms
+          description: Latency of the skill execution in milliseconds
       type: object
-      title: InsufficientCreditsError
-      description: Error response when there are insufficient credits
+      required:
+      - success
+      title: ExecuteSkillResponse
+      description: Response from executing a skill.
     SkillResponse:
       properties:
         id:
@@ -391,49 +473,6 @@ components:
       - updatedAt
       title: SkillResponse
       description: Skill information returned by the API.
-    ParameterType:
-      type: string
-      enum:
-      - string
-      - number
-      - boolean
-      - object
-      - array
-      - cookie
-      title: ParameterType
-      description: Type of a skill parameter.
-    ParameterSchema:
-      properties:
-        name:
-          type: string
-          title: Name
-        type:
-          $ref: '#/components/schemas/ParameterType'
-        required:
-          type: boolean
-          title: Required
-          default: true
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Description
-        default:
-          anyOf:
-          - {}
-          - type: 'null'
-          title: Default
-        cookieDomain:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Cookiedomain
-      type: object
-      required:
-      - name
-      - type
-      title: ParameterSchema
-      description: Schema for a skill parameter.
     MarketplaceSkillResponse:
       properties:
         id:
@@ -535,6 +574,58 @@ components:
       - updatedAt
       title: MarketplaceSkillResponse
       description: Skill information returned by the API.
+    ParameterSchema:
+      properties:
+        name:
+          type: string
+          title: Name
+        type:
+          $ref: '#/components/schemas/ParameterType'
+        required:
+          type: boolean
+          title: Required
+          default: true
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        default:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Default
+        cookieDomain:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cookiedomain
+      type: object
+      required:
+      - name
+      - type
+      title: ParameterSchema
+      description: Schema for a skill parameter.
+    InsufficientCreditsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Insufficient credits
+      type: object
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
+    ParameterType:
+      type: string
+      enum:
+      - string
+      - number
+      - boolean
+      - object
+      - array
+      - cookie
+      title: ParameterType
+      description: Type of a skill parameter.
     MarketplaceSkillListResponse:
       properties:
         items:
@@ -563,53 +654,6 @@ components:
       - pageSize
       title: MarketplaceSkillListResponse
       description: Response for listing skills.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    ExecuteSkillRequest:
-      properties:
-        parameters:
-          additionalProperties: true
-          type: object
-          title: Parameters
-          description: Parameters to pass to the skill handler
-        sessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Sessionid
-          description: Optional session ID (UUID) for IP persistence.
-      type: object
-      title: ExecuteSkillRequest
-      description: Request to execute a skill.
     SkillsGenerationStatus:
       type: string
       enum:
@@ -630,50 +674,6 @@ components:
       type: object
       title: SkillNotFoundError
       description: Error response when a skill is not found
-    SkillNotFinishedError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Skill is not finished
-      type: object
-      title: SkillNotFinishedError
-      description: Error response when skill is not finished
-    ExecuteSkillResponse:
-      properties:
-        success:
-          type: boolean
-          title: Success
-          description: Whether the skill execution was successful
-        result:
-          anyOf:
-          - {}
-          - type: 'null'
-          title: Result
-          description: Output of the skill execution
-        error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Error
-          description: Error message if the skill execution failed
-        stderr:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Stderr
-          description: Standard error output of the skill execution
-        latencyMs:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Latency in ms
-          description: Latency of the skill execution in milliseconds
-      type: object
-      required:
-      - success
-      title: ExecuteSkillResponse
-      description: Response from executing a skill.
   securitySchemes:
     APIKeyHeader:
       type: apiKey

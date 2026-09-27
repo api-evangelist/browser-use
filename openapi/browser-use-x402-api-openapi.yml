@@ -63,6 +63,32 @@ components:
       - signature
       title: X402BalanceRequest
       description: Wallet-signature auth payload for a free, read-only balance check
+    X402BalanceResponse:
+      properties:
+        wallet:
+          type: string
+          title: Wallet
+          description: Lowercased wallet address (verified from the signature).
+        project_id:
+          type: string
+          format: uuid
+          title: Project Id
+          description: Wallet-derived project the balance belongs to.
+        total_credits_usd:
+          type: number
+          title: Total Credits Usd
+          description: Total spendable credit balance in USD.
+        additional_credits_usd:
+          type: number
+          title: Additional Credits Usd
+          description: Standalone (x402 top-up / one_off) credit balance in USD.
+      type: object
+      required:
+      - wallet
+      - project_id
+      - total_credits_usd
+      - additional_credits_usd
+      title: X402BalanceResponse
     ValidationError:
       properties:
         loc:
@@ -93,32 +119,6 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    X402BalanceResponse:
-      properties:
-        wallet:
-          type: string
-          title: Wallet
-          description: Lowercased wallet address (verified from the signature).
-        project_id:
-          type: string
-          format: uuid
-          title: Project Id
-          description: Wallet-derived project the balance belongs to.
-        total_credits_usd:
-          type: number
-          title: Total Credits Usd
-          description: Total spendable credit balance in USD.
-        additional_credits_usd:
-          type: number
-          title: Additional Credits Usd
-          description: Standalone (x402 top-up / one_off) credit balance in USD.
-      type: object
-      required:
-      - wallet
-      - project_id
-      - total_credits_usd
-      - additional_credits_usd
-      title: X402BalanceResponse
   securitySchemes:
     APIKeyHeader:
       type: apiKey

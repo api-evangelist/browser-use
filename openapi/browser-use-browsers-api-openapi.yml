@@ -324,144 +324,6 @@ paths:
       description: Production server
 components:
   schemas:
-    SessionTimeoutLimitExceededError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Maximum session timeout is 4 hours (240 minutes).
-      type: object
-      title: SessionTimeoutLimitExceededError
-      description: Error response when session timeout exceeds the maximum allowed limit
-    UpdateBrowserSessionRequest:
-      properties:
-        action:
-          $ref: '#/components/schemas/BrowserSessionUpdateAction'
-          title: Action
-          description: The action to perform on the session
-      type: object
-      required:
-      - action
-      title: UpdateBrowserSessionRequest
-      description: Request model for updating browser session state.
-    BrowserDownloadListResponse:
-      properties:
-        files:
-          items:
-            $ref: '#/components/schemas/BrowserDownloadFile'
-          type: array
-          title: Files
-          description: List of files downloaded by the browser
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-          description: Cursor for the next page. Pass as the `cursor` query parameter to fetch the next page.
-        hasMore:
-          type: boolean
-          title: Hasmore
-          description: Whether there are more files beyond this page.
-          default: false
-      type: object
-      required:
-      - files
-      title: BrowserDownloadListResponse
-      description: Paginated list of browser downloads with optional presigned URLs.
-    CreateBrowserSessionRequest:
-      properties:
-        profileId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Profile ID
-          description: The ID of the profile to use for the session
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          title: Proxy Country Code
-          description: Country code for proxy location. Defaults to US. Set to null to disable proxy.
-          default: us
-        metadata:
-          anyOf:
-          - additionalProperties:
-              type: string
-            type: object
-          - type: 'null'
-          title: Metadata
-          description: Labels for this browser. Up to 10 key-value pairs. Filterable on the browsers list and in the dashboard history.
-        timeout:
-          type: integer
-          title: Timeout
-          description: The timeout for the session in minutes. All users can use up to 240 minutes (4 hours). Browser sessions are charged $0.02/hour.
-          default: 60
-          ge: 1
-          le: 240
-        browserScreenWidth:
-          anyOf:
-          - type: integer
-            maximum: 6144.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Width
-          description: Custom screen width in pixels for the browser.
-        browserScreenHeight:
-          anyOf:
-          - type: integer
-            maximum: 3456.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Height
-          description: Custom screen height in pixels for the browser.
-        allowResizing:
-          type: boolean
-          title: Allow Resizing
-          description: Whether to allow the browser to be resized during the session (not recommended since it reduces stealthiness).
-          default: false
-        customProxy:
-          anyOf:
-          - $ref: '#/components/schemas/CustomProxy'
-          - type: 'null'
-          title: Custom Proxy
-          description: Custom proxy settings to use for the session. If not provided, our proxies will be used. Custom proxies are available on any active subscription.
-        enableRecording:
-          type: boolean
-          title: Enable Recording
-          description: If True, enables session recording. Defaults to False.
-          default: false
-      type: object
-      title: CreateBrowserSessionRequest
-      description: Request model for creating a browser session.
-    BrowserDownloadFile:
-      properties:
-        path:
-          type: string
-          title: Path
-          description: File name (basename relative to the session downloads prefix)
-        size:
-          type: integer
-          title: Size
-          description: File size in bytes
-        lastModified:
-          type: string
-          format: date-time
-          title: Lastmodified
-          description: When the file was last modified in S3
-        url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Url
-          description: Presigned download URL (15 min expiry). Only included when `includeUrls=true`.
-      type: object
-      required:
-      - path
-      - size
-      - lastModified
-      title: BrowserDownloadFile
-      description: A single file the browser downloaded during the session.
     BrowserSessionItemView:
       properties:
         id:
@@ -548,93 +410,117 @@ components:
       - startedAt
       title: BrowserSessionItemView
       description: View model for representing a browser session in list views.
-    ValidationError:
+    UpdateBrowserSessionRequest:
       properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
+        action:
+          $ref: '#/components/schemas/BrowserSessionUpdateAction'
+          title: Action
+          description: The action to perform on the session
       type: object
       required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    ProfileNotFoundError:
+      - action
+      title: UpdateBrowserSessionRequest
+      description: Request model for updating browser session state.
+    BrowserDownloadFile:
       properties:
-        detail:
+        path:
           type: string
-          title: Detail
-          default: Profile not found
-      type: object
-      title: ProfileNotFoundError
-      description: Error response when a profile is not found
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    BrowserSessionStatus:
-      type: string
-      enum:
-      - active
-      - stopped
-      title: BrowserSessionStatus
-      description: "Enumeration of possible browser session states\n\nAttributes:\n    ACTIVE: Session is currently active and running (browser is running)\n    STOPPED: Session has been stopped and is no longer active (browser is stopped)"
-    CustomProxy:
-      properties:
-        host:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Host
-          description: Host of the proxy.
-        port:
+          title: Path
+          description: File name (basename relative to the session downloads prefix)
+        size:
           type: integer
-          maximum: 65535.0
-          minimum: 1.0
-          title: Port
-          description: Port of the proxy.
-        username:
+          title: Size
+          description: File size in bytes
+        lastModified:
+          type: string
+          format: date-time
+          title: Lastmodified
+          description: When the file was last modified in S3
+        url:
           anyOf:
           - type: string
-            maxLength: 255
-            minLength: 1
           - type: 'null'
-          title: Username
-          description: Username for proxy authentication.
-        password:
+          title: Url
+          description: Presigned download URL (15 min expiry). Only included when `includeUrls=true`.
+      type: object
+      required:
+      - path
+      - size
+      - lastModified
+      title: BrowserDownloadFile
+      description: A single file the browser downloaded during the session.
+    CreateBrowserSessionRequest:
+      properties:
+        profileId:
           anyOf:
           - type: string
-            maxLength: 255
-            minLength: 1
+            format: uuid
           - type: 'null'
-          title: Password
-          description: Password for proxy authentication.
-        ignoreCertErrors:
+          title: Profile ID
+          description: The ID of the profile to use for the session
+        proxyCountryCode:
+          anyOf:
+          - $ref: '#/components/schemas/ProxyCountryCode'
+          - type: 'null'
+          title: Proxy Country Code
+          description: Country code for proxy location. Defaults to US. Set to null to disable proxy.
+          default: us
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Metadata
+          description: Labels for this browser. Up to 10 key-value pairs. Filterable on the browsers list and in the dashboard history.
+        timeout:
+          type: integer
+          title: Timeout
+          description: The timeout for the session in minutes. All users can use up to 240 minutes (4 hours). Browser sessions are charged $0.02/hour.
+          default: 60
+          ge: 1
+          le: 240
+        browserScreenWidth:
+          anyOf:
+          - type: integer
+            maximum: 6144.0
+            minimum: 320.0
+          - type: 'null'
+          title: Browser Screen Width
+          description: Custom screen width in pixels for the browser.
+        browserScreenHeight:
+          anyOf:
+          - type: integer
+            maximum: 3456.0
+            minimum: 320.0
+          - type: 'null'
+          title: Browser Screen Height
+          description: Custom screen height in pixels for the browser.
+        allowResizing:
           type: boolean
-          title: Ignore Certificate Errors
-          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
+          title: Allow Resizing
+          description: Whether to allow the browser to be resized during the session (not recommended since it reduces stealthiness).
+          default: false
+        customProxy:
+          anyOf:
+          - $ref: '#/components/schemas/CustomProxy'
+          - type: 'null'
+          title: Custom Proxy
+          description: Custom proxy settings to use for the session. If not provided, our proxies will be used. Custom proxies are available on any active subscription.
+        enableRecording:
+          type: boolean
+          title: Enable Recording
+          description: If True, enables session recording. Defaults to False.
           default: false
       type: object
-      required:
-      - host
-      - port
-      title: CustomProxy
-      description: Request model for creating a custom proxy.
+      title: CreateBrowserSessionRequest
+      description: Request model for creating a browser session.
+    BrowserSessionUpdateAction:
+      type: string
+      enum:
+      - stop
+      title: BrowserSessionUpdateAction
+      description: "Available actions that can be performed on a browser session\n\nAttributes:\n    STOP: Stop the browser session (cannot be undone)"
     BrowserSessionView:
       properties:
         id:
@@ -726,43 +612,6 @@ components:
       - startedAt
       title: BrowserSessionView
       description: View model for representing a browser session.
-    BrowserSessionListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/BrowserSessionItemView'
-          type: array
-          title: Items
-          description: List of browser session views for the current page
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: BrowserSessionListResponse
-      description: Response model for paginated browser session list requests.
-    TooManyConcurrentActiveSessionsError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
-      type: object
-      title: TooManyConcurrentActiveSessionsError
-      description: Error response when user has too many concurrent active sessions
     SessionNotFoundError:
       properties:
         detail:
@@ -772,6 +621,52 @@ components:
       type: object
       title: SessionNotFoundError
       description: Error response when a session is not found
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    BrowserSessionStatus:
+      type: string
+      enum:
+      - active
+      - stopped
+      title: BrowserSessionStatus
+      description: "Enumeration of possible browser session states\n\nAttributes:\n    ACTIVE: Session is currently active and running (browser is running)\n    STOPPED: Session has been stopped and is no longer active (browser is stopped)"
+    ProfileNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Profile not found
+      type: object
+      title: ProfileNotFoundError
+      description: Error response when a profile is not found
     ProxyCountryCode:
       type: string
       enum:
@@ -1024,12 +919,117 @@ components:
       - zm
       - zw
       title: ProxyCountryCode
-    BrowserSessionUpdateAction:
-      type: string
-      enum:
-      - stop
-      title: BrowserSessionUpdateAction
-      description: "Available actions that can be performed on a browser session\n\nAttributes:\n    STOP: Stop the browser session (cannot be undone)"
+    CustomProxy:
+      properties:
+        host:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Host
+          description: Host of the proxy.
+        port:
+          type: integer
+          maximum: 65535.0
+          minimum: 1.0
+          title: Port
+          description: Port of the proxy.
+        username:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Username
+          description: Username for proxy authentication.
+        password:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Password
+          description: Password for proxy authentication.
+        ignoreCertErrors:
+          type: boolean
+          title: Ignore Certificate Errors
+          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
+          default: false
+      type: object
+      required:
+      - host
+      - port
+      title: CustomProxy
+      description: Request model for creating a custom proxy.
+    BrowserSessionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/BrowserSessionItemView'
+          type: array
+          title: Items
+          description: List of browser session views for the current page
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: BrowserSessionListResponse
+      description: Response model for paginated browser session list requests.
+    TooManyConcurrentActiveSessionsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
+      type: object
+      title: TooManyConcurrentActiveSessionsError
+      description: Error response when user has too many concurrent active sessions
+    SessionTimeoutLimitExceededError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Maximum session timeout is 4 hours (240 minutes).
+      type: object
+      title: SessionTimeoutLimitExceededError
+      description: Error response when session timeout exceeds the maximum allowed limit
+    BrowserDownloadListResponse:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/BrowserDownloadFile'
+          type: array
+          title: Files
+          description: List of files downloaded by the browser
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+          description: Cursor for the next page. Pass as the `cursor` query parameter to fetch the next page.
+        hasMore:
+          type: boolean
+          title: Hasmore
+          description: Whether there are more files beyond this page.
+          default: false
+      type: object
+      required:
+      - files
+      title: BrowserDownloadListResponse
+      description: Paginated list of browser downloads with optional presigned URLs.
     CreateBrowserSessionRequest_2:
       properties:
         profileId:

@@ -171,37 +171,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    DownloadUrlGenerationError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Failed to generate download URL
-      type: object
-      title: DownloadUrlGenerationError
-      description: Error response when download URL generation fails
-    TaskOutputFileResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the file
-        fileName:
-          type: string
-          title: File Name
-          description: Name of the file
-        downloadUrl:
-          type: string
-          title: Download URL
-          description: URL to download the file
-      type: object
-      required:
-      - id
-      - fileName
-      - downloadUrl
-      title: TaskOutputFileResponse
-      description: Response model for output file requests.
     InternalServerError:
       properties:
         detail:
@@ -211,15 +180,63 @@ components:
       type: object
       title: InternalServerError
       description: Error response for internal server errors
-    UnsupportedContentTypeError:
+    DownloadUrlGenerationError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Unsupported content type
+          default: Failed to generate download URL
       type: object
-      title: UnsupportedContentTypeError
-      description: Error response for unsupported content types
+      title: DownloadUrlGenerationError
+      description: Error response when download URL generation fails
+    TaskNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Task not found
+      type: object
+      title: TaskNotFoundError
+      description: Error response when a task is not found
+    SessionNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Session not found
+      type: object
+      title: SessionNotFoundError
+      description: Error response when a session is not found
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     OutputFileNotFoundError:
       properties:
         detail:
@@ -229,6 +246,15 @@ components:
       type: object
       title: OutputFileNotFoundError
       description: Error response when an output file is not found
+    UnsupportedContentTypeError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Unsupported content type
+      type: object
+      title: UnsupportedContentTypeError
+      description: Error response for unsupported content types
     UploadFilePresignedUrlResponse:
       properties:
         url:
@@ -263,45 +289,6 @@ components:
       - expiresIn
       title: UploadFilePresignedUrlResponse
       description: Response model for a presigned upload URL.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    TaskNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Task not found
-      type: object
-      title: TaskNotFoundError
-      description: Error response when a task is not found
     UploadFileRequest:
       properties:
         fileName:
@@ -341,15 +328,28 @@ components:
       - sizeBytes
       title: UploadFileRequest
       description: Request model for uploading a file to the user's files bucket.
-    SessionNotFoundError:
+    TaskOutputFileResponse:
       properties:
-        detail:
+        id:
           type: string
-          title: Detail
-          default: Session not found
+          format: uuid
+          title: ID
+          description: Unique identifier for the file
+        fileName:
+          type: string
+          title: File Name
+          description: Name of the file
+        downloadUrl:
+          type: string
+          title: Download URL
+          description: URL to download the file
       type: object
-      title: SessionNotFoundError
-      description: Error response when a session is not found
+      required:
+      - id
+      - fileName
+      - downloadUrl
+      title: TaskOutputFileResponse
+      description: Response model for output file requests.
   securitySchemes:
     APIKeyHeader:
       type: apiKey

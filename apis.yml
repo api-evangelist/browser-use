@@ -52,6 +52,7 @@ tags:
   - Agent Infrastructure
   - MCP
   - Cloud Browsers
+  - A2A
 tags_raw:
   - AI Automation
   - Browser Automation
@@ -61,6 +62,7 @@ tags_raw:
   - Agent Infrastructure
   - Model Context Protocol
   - Cloud Browsers
+  - A2A
 url: >-
   https://raw.githubusercontent.com/api-evangelist/browser-use/refs/heads/main/apis.yml
 created: '2026-03-27'
@@ -412,3 +414,10 @@ x-enrichment:
   status: enriched
   artifacts_added: 35
   pass: local-v1
+x-a2a:
+  verified: true
+  probed: '2026-09-26'
+  url: "https://docs.browser-use.com/.well-known/agent-card.json"
+  grade: "conformant"
+  protocol_version: "0.3"
+  control: 404

@@ -44,6 +44,45 @@ paths:
       description: Production server
 components:
   schemas:
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    AccountNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Account not found
+      type: object
+      title: AccountNotFoundError
+      description: Error response when an account is not found
     PlanInfo:
       properties:
         planName:
@@ -83,45 +122,6 @@ components:
       - subscriptionCanceledAt
       title: PlanInfo
       description: View model for plan information
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    AccountNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Account not found
-      type: object
-      title: AccountNotFoundError
-      description: Error response when an account is not found
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
     AccountView:
       properties:
         name:
