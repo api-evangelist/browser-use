@@ -175,16 +175,30 @@ gaps:
 tools_count: 6
 tools:
 - name: browser_task
-  description: ''
+  description: 'Create a browser automation task. This spins up a full cloud browser and executes steps.
+    IMPORTANT: Before using this tool, FIRST check if a skill can accomplish the task: 1) Call list_skills
+    with a relevant query 2) If a matching skill exi'
 - name: list_browser_profiles
-  description: ''
+  description: 'List all available cloud browser profiles for the authenticated project. Profiles store
+    persistent authentication (cookies, sessions) for websites requiring login. Use this tool BEFORE attempting
+    any authenticated tasks such as: posting on'
 - name: monitor_task
-  description: ''
+  description: Get current status and progress of a browser automation task, including the most recent
+    step with full agent reasoning (evaluation, memory, actions). Returns immediately with a snapshot
+    of the current state. Call this tool repeatedly to tra
 - name: list_skills
-  description: ''
+  description: 'PRIORITY: When the user asks to perform an action on a website (post to X, send email,
+    etc.), FIRST check if a skill exists using this tool before falling back to browser_task. Skills are
+    fast, pre-built automation workflows that execute in'
 - name: get_cookies
-  description: ''
+  description: 'Extract cookies from a browser profile for authenticated skill execution. When to use:
+    A skill has parameters with type="cookie" and you need to pass authentication cookies to execute_skill.
+    The cookie_domain field in the skill''s parameter'
 - name: execute_skill
-  description: ''
+  description: 'Execute a skill with provided parameters. Skills are fast automation workflows that run
+    in milliseconds without browser overhead. IMPORTANT: Before calling this tool: 1) Use list_skills
+    to find the skill and check its parameters 2) If any p'
 tools_source: live tools/list via initialize handshake, 2026-09-11 (signals/audit_mcp_authorship.py --probe)
 authorship: provider
+descriptions_source: live tools/list (authorship probe or saved capture); filled by backfill-tools-from-authorship.py
+  --descriptions, 2026-09-28
