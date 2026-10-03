@@ -37,32 +37,27 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    X402BalanceRequest:
+    ValidationError:
       properties:
-        address:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
           type: string
-          title: Address
-          description: EVM wallet address that signed the message (0x...).
-        issued_at:
+          title: Message
+        type:
           type: string
-          title: Issued At
-          description: ISO-8601 UTC timestamp included in the signed message.
-        nonce:
-          type: string
-          title: Nonce
-          description: Random single-use nonce included in the signed message.
-        signature:
-          type: string
-          title: Signature
-          description: EIP-191 personal_sign signature of the canonical message.
+          title: Error Type
       type: object
       required:
-      - address
-      - issued_at
-      - nonce
-      - signature
-      title: X402BalanceRequest
-      description: Wallet-signature auth payload for a free, read-only balance check
+      - loc
+      - msg
+      - type
+      title: ValidationError
     X402BalanceResponse:
       properties:
         wallet:
@@ -89,27 +84,6 @@ components:
       - total_credits_usd
       - additional_credits_usd
       title: X402BalanceResponse
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
     HTTPValidationError:
       properties:
         detail:
@@ -119,6 +93,32 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    X402BalanceRequest:
+      properties:
+        address:
+          type: string
+          title: Address
+          description: EVM wallet address that signed the message (0x...).
+        issued_at:
+          type: string
+          title: Issued At
+          description: ISO-8601 UTC timestamp included in the signed message.
+        nonce:
+          type: string
+          title: Nonce
+          description: Random single-use nonce included in the signed message.
+        signature:
+          type: string
+          title: Signature
+          description: EIP-191 personal_sign signature of the canonical message.
+      type: object
+      required:
+      - address
+      - issued_at
+      - nonce
+      - signature
+      title: X402BalanceRequest
+      description: Wallet-signature auth payload for a free, read-only balance check
   securitySchemes:
     APIKeyHeader:
       type: apiKey

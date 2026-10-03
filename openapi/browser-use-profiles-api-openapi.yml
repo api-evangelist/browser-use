@@ -243,36 +243,6 @@ components:
       type: object
       title: ProfileCreateRequest
       description: Request model for creating a new profile.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
     ProfileListResponse:
       properties:
         items:
@@ -301,43 +271,6 @@ components:
       - pageSize
       title: ProfileListResponse
       description: Response model for paginated profile list requests.
-    ProfileNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Profile not found
-      type: object
-      title: ProfileNotFoundError
-      description: Error response when a profile is not found
-    ProfileUpdateRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Name
-          description: Optional name for the profile
-        userId:
-          anyOf:
-          - type: string
-            maxLength: 255
-          - type: 'null'
-          title: User ID
-          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
-      type: object
-      title: ProfileUpdateRequest
-      description: Request model for updating a profile.
-    InsufficientCreditsError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Insufficient credits
-      type: object
-      title: InsufficientCreditsError
-      description: Error response when there are insufficient credits
     ProfileView:
       properties:
         id:
@@ -394,6 +327,73 @@ components:
         We recommend that you create a separate profile for each user of your app.
 
         You can assign a user_id to each profile to easily identify which user the profile belongs to.'
+    ProfileNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Profile not found
+      type: object
+      title: ProfileNotFoundError
+      description: Error response when a profile is not found
+    ProfileUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+          description: Optional name for the profile
+        userId:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: User ID
+          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
+      type: object
+      title: ProfileUpdateRequest
+      description: Request model for updating a profile.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    InsufficientCreditsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Insufficient credits
+      type: object
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
   securitySchemes:
     APIKeyHeader:
       type: apiKey

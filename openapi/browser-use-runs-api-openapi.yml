@@ -321,6 +321,116 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    RunCreateRequest:
+      properties:
+        task:
+          type: string
+          minLength: 1
+          title: Task
+        model:
+          type: string
+          enum:
+          - glm-5.2
+          - grok-4.5
+          - kimi-k3
+          - minimax-m3
+          - claude-opus-4.7
+          - claude-opus-4.8
+          - claude-opus-5
+          - claude-fable-5
+          - claude-sonnet-5
+          - gpt-5.5
+          - gpt-5.6
+          - gpt-5.6-sol
+          - gpt-5.6-terra
+          - gpt-5.6-luna
+          - gemini-3.6-flash
+          - gemini-3.5-flash
+          - gemini-3.1-pro
+          - gemini-3-flash
+          title: Model
+          default: gpt-5.6-luna
+        modelParams:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Modelparams
+          description: 'Optional provider-native request parameters for the selected model, written with the provider''s own field names and values and forwarded unchanged (e.g. {"reasoning": {"effort": "high"}} for OpenAI, {"thinking": {"type": "adaptive"}} for Anthropic, {"thinkingConfig": {"thinkingLevel": "high"}} for Google). Supported paths and values are per-model; an unsupported path, value, or a model that accepts no parameters at all is rejected with 422. Omitting this field applies the model''s default parameters (gpt-5.6-luna defaults to {"reasoning": {"effort": "xhigh"}}); passing {} opts out of that default and leaves the provider''s own defaults in place.'
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+        workspaceId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Workspaceid
+        browserSettings:
+          anyOf:
+          - $ref: '#/components/schemas/RunBrowserSettings'
+          - type: 'null'
+        agentmail:
+          type: boolean
+          title: Agentmail
+          description: If true, provisions a persistent temporary email inbox (via AgentMail) for the run workspace. The agent receives the email address in its context and can send, receive, read, and reply to email. Set false to disable AgentMail for this run.
+          default: false
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+            maxItems: 20
+          - type: 'null'
+          title: Attachedfileids
+        secretBindings:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SecretBinding'
+            type: array
+            maxItems: 10
+          - type: 'null'
+          title: Secretbindings
+          description: Credentials this run may use without ever seeing them. The agent can ask the server to type a binding by alias on one of its allowed domains; it cannot read the value. Bindings are not persisted past the run.
+        judge:
+          anyOf:
+          - $ref: '#/components/schemas/RunJudgeSettings'
+          - type: 'null'
+        maxCostUsd:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Maxcostusd
+      additionalProperties: false
+      type: object
+      required:
+      - task
+      title: RunCreateRequest
+    RunJudgeSettings:
+      properties:
+        context:
+          anyOf:
+          - type: string
+            maxLength: 10000
+          - type: 'null'
+          title: Context
+      additionalProperties: false
+      type: object
+      title: RunJudgeSettings
+      description: 'Opt-in LLM judgement of the finished run. Presence of this object turns
+
+        the judge on (send {} for defaults); CP judges the run''s trajectory after
+
+        it goes terminal and surfaces the verdict as RunSummary.judgement (null
+
+        until it lands). The judge''s LLM call is billed to the run.'
     RunAttachmentsResponse:
       properties:
         attachments:
@@ -332,34 +442,237 @@ components:
       required:
       - attachments
       title: RunAttachmentsResponse
-    RunEvent:
+    SecretBinding:
       properties:
-        runId:
+        alias:
           type: string
-          format: uuid
-          title: Runid
-        id:
-          type: integer
-          title: Id
-        ts:
-          type: string
-          format: date-time
-          title: Ts
-        type:
-          type: string
-          title: Type
-        data:
-          additionalProperties: true
-          type: object
-          title: Data
+          title: Alias
+          description: Name the agent refers to this secret by, e.g. "github_password".
+        source:
+          $ref: '#/components/schemas/InlineSecretSource'
+        allowedDomains:
+          items:
+            type: string
+          type: array
+          maxItems: 10
+          minItems: 1
+          title: Alloweddomains
+          description: Hosts the secret may be typed into, e.g. ["github.com"]. A host covers its subdomains. Bare hostnames only — no scheme, port, path, or wildcard.
+      additionalProperties: false
       type: object
       required:
-      - runId
+      - alias
+      - source
+      - allowedDomains
+      title: SecretBinding
+      description: 'One credential this run may have typed into a browser field.
+
+
+        The value never reaches the agent. It is encrypted at rest, kept out of the
+
+        worker payload, and typed straight into the focused field by the server when
+
+        the agent asks for the alias by name — and only while the page it is typing
+
+        into is on one of `allowedDomains`.
+
+
+        Run-scoped: bindings die with the run, so a follow-up run that needs the same
+
+        credential must send it again.'
+    RunEventsResponse:
+      properties:
+        events:
+          items:
+            $ref: '#/components/schemas/RunEvent'
+          type: array
+          title: Events
+        nextAfter:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Nextafter
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - events
+      title: RunEventsResponse
+    RunListResponse:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/RunSummary'
+          type: array
+          title: Runs
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - runs
+      title: RunListResponse
+    RunStatusResponse:
+      properties:
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+      type: object
+      required:
+      - status
+      title: RunStatusResponse
+      description: 'Minimal poll target: just the run''s status. Poll this until terminal
+
+        (cheap indexed lookup, tiny payload — never the task/result text), then
+
+        fetch the full RunSummary once via GET /runs/{id}. Mirrors v2''s
+
+        GET /tasks/{id}/status.'
+    RunAttachment:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+          description: Filename shown to the user, e.g. "data.csv".
+        contentType:
+          type: string
+          title: Contenttype
+        sizeBytes:
+          type: integer
+          title: Sizebytes
+        status:
+          type: string
+          enum:
+          - pending
+          - uploaded
+          title: Status
+          description: '"pending" | "uploaded".'
+      type: object
+      required:
       - id
-      - ts
-      - type
-      - data
-      title: RunEvent
+      - name
+      - contentType
+      - sizeBytes
+      - status
+      title: RunAttachment
+    RunSummary:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        task:
+          type: string
+          title: Task
+        title:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Title
+        model:
+          type: string
+          title: Model
+        contextLimit:
+          type: integer
+          title: Contextlimit
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+        result:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Result
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        workspaceId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Workspaceid
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Attachedfileids
+        judgement:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Judgement
+        totalInputTokens:
+          type: integer
+          title: Totalinputtokens
+        totalOutputTokens:
+          type: integer
+          title: Totaloutputtokens
+        totalCostUsd:
+          type: string
+          title: Totalcostusd
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updatedat
+      type: object
+      required:
+      - id
+      - task
+      - title
+      - model
+      - contextLimit
+      - status
+      - result
+      - error
+      - sessionId
+      - workspaceId
+      - totalInputTokens
+      - totalOutputTokens
+      - totalCostUsd
+      - createdAt
+      - updatedAt
+      title: RunSummary
     InlineSecretSource:
       properties:
         type:
@@ -381,44 +694,6 @@ components:
       - value
       title: InlineSecretSource
       description: A value the caller supplies directly with the run.
-    RunJudgeSettings:
-      properties:
-        context:
-          anyOf:
-          - type: string
-            maxLength: 10000
-          - type: 'null'
-          title: Context
-      additionalProperties: false
-      type: object
-      title: RunJudgeSettings
-      description: 'Opt-in LLM judgement of the finished run. Presence of this object turns
-
-        the judge on (send {} for defaults); CP judges the run''s trajectory after
-
-        it goes terminal and surfaces the verdict as RunSummary.judgement (null
-
-        until it lands). The judge''s LLM call is billed to the run.'
-    RunListResponse:
-      properties:
-        runs:
-          items:
-            $ref: '#/components/schemas/RunSummary'
-          type: array
-          title: Runs
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-        hasMore:
-          type: boolean
-          title: Hasmore
-          default: false
-      type: object
-      required:
-      - runs
-      title: RunListResponse
     HTTPValidationError:
       properties:
         detail:
@@ -531,6 +806,55 @@ components:
       - workspaceId
       - eventsUrl
       title: RunCreateResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    RunEvent:
+      properties:
+        runId:
+          type: string
+          format: uuid
+          title: Runid
+        id:
+          type: integer
+          title: Id
+        ts:
+          type: string
+          format: date-time
+          title: Ts
+        type:
+          type: string
+          title: Type
+        data:
+          additionalProperties: true
+          type: object
+          title: Data
+      type: object
+      required:
+      - runId
+      - id
+      - ts
+      - type
+      - data
+      title: RunEvent
     CustomProxy:
       properties:
         host:
@@ -572,238 +896,6 @@ components:
       - port
       title: CustomProxy
       description: Request model for creating a custom proxy.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    RunAttachment:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        name:
-          type: string
-          title: Name
-          description: Filename shown to the user, e.g. "data.csv".
-        contentType:
-          type: string
-          title: Contenttype
-        sizeBytes:
-          type: integer
-          title: Sizebytes
-        status:
-          type: string
-          enum:
-          - pending
-          - uploaded
-          title: Status
-          description: '"pending" | "uploaded".'
-      type: object
-      required:
-      - id
-      - name
-      - contentType
-      - sizeBytes
-      - status
-      title: RunAttachment
-    SecretBinding:
-      properties:
-        alias:
-          type: string
-          title: Alias
-          description: Name the agent refers to this secret by, e.g. "github_password".
-        source:
-          $ref: '#/components/schemas/InlineSecretSource'
-        allowedDomains:
-          items:
-            type: string
-          type: array
-          maxItems: 10
-          minItems: 1
-          title: Alloweddomains
-          description: Hosts the secret may be typed into, e.g. ["github.com"]. A host covers its subdomains. Bare hostnames only — no scheme, port, path, or wildcard.
-      additionalProperties: false
-      type: object
-      required:
-      - alias
-      - source
-      - allowedDomains
-      title: SecretBinding
-      description: 'One credential this run may have typed into a browser field.
-
-
-        The value never reaches the agent. It is encrypted at rest, kept out of the
-
-        worker payload, and typed straight into the focused field by the server when
-
-        the agent asks for the alias by name — and only while the page it is typing
-
-        into is on one of `allowedDomains`.
-
-
-        Run-scoped: bindings die with the run, so a follow-up run that needs the same
-
-        credential must send it again.'
-    RunSummary:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        task:
-          type: string
-          title: Task
-        title:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Title
-        model:
-          type: string
-          title: Model
-        contextLimit:
-          type: integer
-          title: Contextlimit
-        status:
-          type: string
-          enum:
-          - queued
-          - dispatching
-          - running
-          - completed
-          - failed
-          - cancelled
-          title: Status
-        result:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Result
-        error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Error
-        sessionId:
-          type: string
-          format: uuid
-          title: Sessionid
-        workspaceId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Workspaceid
-        attachedFileIds:
-          anyOf:
-          - items:
-              type: string
-              format: uuid
-            type: array
-          - type: 'null'
-          title: Attachedfileids
-        judgement:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Judgement
-        totalInputTokens:
-          type: integer
-          title: Totalinputtokens
-        totalOutputTokens:
-          type: integer
-          title: Totaloutputtokens
-        totalCostUsd:
-          type: string
-          title: Totalcostusd
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-        updatedAt:
-          type: string
-          format: date-time
-          title: Updatedat
-      type: object
-      required:
-      - id
-      - task
-      - title
-      - model
-      - contextLimit
-      - status
-      - result
-      - error
-      - sessionId
-      - workspaceId
-      - totalInputTokens
-      - totalOutputTokens
-      - totalCostUsd
-      - createdAt
-      - updatedAt
-      title: RunSummary
-    RunEventsResponse:
-      properties:
-        events:
-          items:
-            $ref: '#/components/schemas/RunEvent'
-          type: array
-          title: Events
-        nextAfter:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Nextafter
-        hasMore:
-          type: boolean
-          title: Hasmore
-          default: false
-      type: object
-      required:
-      - events
-      title: RunEventsResponse
-    RunStatusResponse:
-      properties:
-        status:
-          type: string
-          enum:
-          - queued
-          - dispatching
-          - running
-          - completed
-          - failed
-          - cancelled
-          title: Status
-      type: object
-      required:
-      - status
-      title: RunStatusResponse
-      description: 'Minimal poll target: just the run''s status. Poll this until terminal
-
-        (cheap indexed lookup, tiny payload — never the task/result text), then
-
-        fetch the full RunSummary once via GET /runs/{id}. Mirrors v2''s
-
-        GET /tasks/{id}/status.'
     ProxyCountryCode:
       type: string
       enum:
@@ -1056,98 +1148,6 @@ components:
       - zm
       - zw
       title: ProxyCountryCode
-    RunCreateRequest:
-      properties:
-        task:
-          type: string
-          minLength: 1
-          title: Task
-        model:
-          type: string
-          enum:
-          - glm-5.2
-          - grok-4.5
-          - kimi-k3
-          - minimax-m3
-          - claude-opus-4.7
-          - claude-opus-4.8
-          - claude-opus-5
-          - claude-fable-5
-          - claude-sonnet-5
-          - gpt-5.5
-          - gpt-5.6
-          - gpt-5.6-sol
-          - gpt-5.6-terra
-          - gpt-5.6-luna
-          - gemini-3.6-flash
-          - gemini-3.5-flash
-          - gemini-3.1-pro
-          - gemini-3-flash
-          title: Model
-          default: gpt-5.6-luna
-        modelParams:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Modelparams
-          description: 'Optional provider-native request parameters for the selected model, written with the provider''s own field names and values and forwarded unchanged (e.g. {"reasoning": {"effort": "high"}} for OpenAI, {"thinking": {"type": "adaptive"}} for Anthropic, {"thinkingConfig": {"thinkingLevel": "high"}} for Google). Supported paths and values are per-model; an unsupported path, value, or a model that accepts no parameters at all is rejected with 422. Omitting this field applies the model''s default parameters (gpt-5.6-luna defaults to {"reasoning": {"effort": "xhigh"}}); passing {} opts out of that default and leaves the provider''s own defaults in place.'
-        sessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Sessionid
-        workspaceId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Workspaceid
-        browserSettings:
-          anyOf:
-          - $ref: '#/components/schemas/RunBrowserSettings'
-          - type: 'null'
-        agentmail:
-          type: boolean
-          title: Agentmail
-          description: If true, provisions a persistent temporary email inbox (via AgentMail) for the run workspace. The agent receives the email address in its context and can send, receive, read, and reply to email. Set false to disable AgentMail for this run.
-          default: false
-        attachedFileIds:
-          anyOf:
-          - items:
-              type: string
-              format: uuid
-            type: array
-            maxItems: 20
-          - type: 'null'
-          title: Attachedfileids
-        secretBindings:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/SecretBinding'
-            type: array
-            maxItems: 10
-          - type: 'null'
-          title: Secretbindings
-          description: Credentials this run may use without ever seeing them. The agent can ask the server to type a binding by alias on one of its allowed domains; it cannot read the value. Bindings are not persisted past the run.
-        judge:
-          anyOf:
-          - $ref: '#/components/schemas/RunJudgeSettings'
-          - type: 'null'
-        maxCostUsd:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          - type: 'null'
-          title: Maxcostusd
-      additionalProperties: false
-      type: object
-      required:
-      - task
-      title: RunCreateRequest
   securitySchemes:
     APIKeyHeader:
       type: apiKey
