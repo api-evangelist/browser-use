@@ -224,25 +224,6 @@ paths:
       description: Production server
 components:
   schemas:
-    ProfileCreateRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Name
-          description: Optional name for the profile
-        userId:
-          anyOf:
-          - type: string
-            maxLength: 255
-          - type: 'null'
-          title: User ID
-          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
-      type: object
-      title: ProfileCreateRequest
-      description: Request model for creating a new profile.
     ProfileListResponse:
       properties:
         items:
@@ -271,6 +252,34 @@ components:
       - pageSize
       title: ProfileListResponse
       description: Response model for paginated profile list requests.
+    ProfileCreateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+          description: Optional name for the profile
+        userId:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: User ID
+          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
+      type: object
+      title: ProfileCreateRequest
+      description: Request model for creating a new profile.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     ProfileView:
       properties:
         id:
@@ -336,34 +345,15 @@ components:
       type: object
       title: ProfileNotFoundError
       description: Error response when a profile is not found
-    ProfileUpdateRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Name
-          description: Optional name for the profile
-        userId:
-          anyOf:
-          - type: string
-            maxLength: 255
-          - type: 'null'
-          title: User ID
-          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
-      type: object
-      title: ProfileUpdateRequest
-      description: Request model for updating a profile.
-    HTTPValidationError:
+    InsufficientCreditsError:
       properties:
         detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
+          type: string
           title: Detail
+          default: Insufficient credits
       type: object
-      title: HTTPValidationError
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
     ValidationError:
       properties:
         loc:
@@ -385,15 +375,25 @@ components:
       - msg
       - type
       title: ValidationError
-    InsufficientCreditsError:
+    ProfileUpdateRequest:
       properties:
-        detail:
-          type: string
-          title: Detail
-          default: Insufficient credits
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+          description: Optional name for the profile
+        userId:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: User ID
+          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
       type: object
-      title: InsufficientCreditsError
-      description: Error response when there are insufficient credits
+      title: ProfileUpdateRequest
+      description: Request model for updating a profile.
   securitySchemes:
     APIKeyHeader:
       type: apiKey

@@ -213,6 +213,284 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    SkillNotFinishedError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Skill is not finished
+      type: object
+      title: SkillNotFinishedError
+      description: Error response when skill is not finished
+    SkillCategory:
+      type: string
+      enum:
+      - search
+      - e_commerce
+      - financial
+      - news
+      - real_estate
+      - social_media
+      - travel
+      - marketplace
+      - lead_generation
+      - seo
+      - jobs
+      - developer
+      - media
+      - automation
+      - integration
+      - other
+      title: SkillCategory
+      description: Skill category.
+    SkillsGenerationStatus:
+      type: string
+      enum:
+      - recording
+      - generating
+      - failed
+      - finished
+      - cancelled
+      - timed_out
+      title: SkillsGenerationStatus
+      description: Status of skill generation.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    SkillNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Skill not found
+      type: object
+      title: SkillNotFoundError
+      description: Error response when a skill is not found
+    ExecuteSkillRequest:
+      properties:
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+          description: Parameters to pass to the skill handler
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+          description: Optional session ID (UUID) for IP persistence.
+      type: object
+      title: ExecuteSkillRequest
+      description: Request to execute a skill.
+    ParameterSchema:
+      properties:
+        name:
+          type: string
+          title: Name
+        type:
+          $ref: '#/components/schemas/ParameterType'
+        required:
+          type: boolean
+          title: Required
+          default: true
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        default:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Default
+        cookieDomain:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Cookiedomain
+      type: object
+      required:
+      - name
+      - type
+      title: ParameterSchema
+      description: Schema for a skill parameter.
+    MarketplaceSkillResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the skill
+        slug:
+          type: string
+          title: Slug
+          description: URL-friendly slug for the skill
+        title:
+          type: string
+          title: Title
+          description: Title of the skill (shows up in the public view)
+        description:
+          type: string
+          title: Description
+          description: Description of the skill (shows up in the public view)
+        categories:
+          items:
+            $ref: '#/components/schemas/SkillCategory'
+          type: array
+          title: Categories
+          description: Categories of the skill
+        domains:
+          items:
+            type: string
+          type: array
+          title: Domains
+          description: Domains/websites this skill interacts with
+        parameters:
+          items:
+            $ref: '#/components/schemas/ParameterSchema'
+          type: array
+          title: Parameters
+          description: Input parameters of the skill
+        outputSchema:
+          additionalProperties: true
+          type: object
+          title: Output Schema
+          description: Output schema of the skill
+        currentVersion:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Current Version
+          description: Current version of the skill
+        isOfficial:
+          type: boolean
+          title: Is Official
+          description: Whether the skill is official (verified by Browser Use)
+        cloneCount:
+          type: integer
+          title: Clone Count
+          description: Number of times this skill has been cloned
+        iconUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon URL
+          description: URL of the custom skill icon
+        firstPublishedAt:
+          type: string
+          format: date-time
+          title: First Published At
+          description: When the skill was first published
+        lastPublishedAt:
+          type: string
+          format: date-time
+          title: Last Published At
+          description: When the skill was last published
+        createdAt:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          title: Updated At
+          description: Last update timestamp
+      type: object
+      required:
+      - id
+      - slug
+      - title
+      - description
+      - categories
+      - domains
+      - parameters
+      - outputSchema
+      - currentVersion
+      - isOfficial
+      - cloneCount
+      - firstPublishedAt
+      - lastPublishedAt
+      - createdAt
+      - updatedAt
+      title: MarketplaceSkillResponse
+      description: Skill information returned by the API.
+    MarketplaceSkillListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/MarketplaceSkillResponse'
+          type: array
+          title: Items
+          description: List of skills
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: MarketplaceSkillListResponse
+      description: Response for listing skills.
+    InsufficientCreditsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Insufficient credits
+      type: object
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ParameterType:
+      type: string
+      enum:
+      - string
+      - number
+      - boolean
+      - object
+      - array
+      - cookie
+      title: ParameterType
+      description: Type of a skill parameter.
     SkillResponse:
       properties:
         id:
@@ -361,32 +639,6 @@ components:
       - updatedAt
       title: SkillResponse
       description: Skill information returned by the API.
-    ExecuteSkillRequest:
-      properties:
-        parameters:
-          additionalProperties: true
-          type: object
-          title: Parameters
-          description: Parameters to pass to the skill handler
-        sessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Sessionid
-          description: Optional session ID (UUID) for IP persistence.
-      type: object
-      title: ExecuteSkillRequest
-      description: Request to execute a skill.
-    SkillNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Skill not found
-      type: object
-      title: SkillNotFoundError
-      description: Error response when a skill is not found
     ExecuteSkillResponse:
       properties:
         success:
@@ -422,258 +674,6 @@ components:
       - success
       title: ExecuteSkillResponse
       description: Response from executing a skill.
-    SkillCategory:
-      type: string
-      enum:
-      - search
-      - e_commerce
-      - financial
-      - news
-      - real_estate
-      - social_media
-      - travel
-      - marketplace
-      - lead_generation
-      - seo
-      - jobs
-      - developer
-      - media
-      - automation
-      - integration
-      - other
-      title: SkillCategory
-      description: Skill category.
-    MarketplaceSkillListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/MarketplaceSkillResponse'
-          type: array
-          title: Items
-          description: List of skills
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: MarketplaceSkillListResponse
-      description: Response for listing skills.
-    SkillsGenerationStatus:
-      type: string
-      enum:
-      - recording
-      - generating
-      - failed
-      - finished
-      - cancelled
-      - timed_out
-      title: SkillsGenerationStatus
-      description: Status of skill generation.
-    MarketplaceSkillResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the skill
-        slug:
-          type: string
-          title: Slug
-          description: URL-friendly slug for the skill
-        title:
-          type: string
-          title: Title
-          description: Title of the skill (shows up in the public view)
-        description:
-          type: string
-          title: Description
-          description: Description of the skill (shows up in the public view)
-        categories:
-          items:
-            $ref: '#/components/schemas/SkillCategory'
-          type: array
-          title: Categories
-          description: Categories of the skill
-        domains:
-          items:
-            type: string
-          type: array
-          title: Domains
-          description: Domains/websites this skill interacts with
-        parameters:
-          items:
-            $ref: '#/components/schemas/ParameterSchema'
-          type: array
-          title: Parameters
-          description: Input parameters of the skill
-        outputSchema:
-          additionalProperties: true
-          type: object
-          title: Output Schema
-          description: Output schema of the skill
-        currentVersion:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Current Version
-          description: Current version of the skill
-        isOfficial:
-          type: boolean
-          title: Is Official
-          description: Whether the skill is official (verified by Browser Use)
-        cloneCount:
-          type: integer
-          title: Clone Count
-          description: Number of times this skill has been cloned
-        iconUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Icon URL
-          description: URL of the custom skill icon
-        firstPublishedAt:
-          type: string
-          format: date-time
-          title: First Published At
-          description: When the skill was first published
-        lastPublishedAt:
-          type: string
-          format: date-time
-          title: Last Published At
-          description: When the skill was last published
-        createdAt:
-          type: string
-          format: date-time
-          title: Created At
-          description: Creation timestamp
-        updatedAt:
-          type: string
-          format: date-time
-          title: Updated At
-          description: Last update timestamp
-      type: object
-      required:
-      - id
-      - slug
-      - title
-      - description
-      - categories
-      - domains
-      - parameters
-      - outputSchema
-      - currentVersion
-      - isOfficial
-      - cloneCount
-      - firstPublishedAt
-      - lastPublishedAt
-      - createdAt
-      - updatedAt
-      title: MarketplaceSkillResponse
-      description: Skill information returned by the API.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    ParameterType:
-      type: string
-      enum:
-      - string
-      - number
-      - boolean
-      - object
-      - array
-      - cookie
-      title: ParameterType
-      description: Type of a skill parameter.
-    SkillNotFinishedError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Skill is not finished
-      type: object
-      title: SkillNotFinishedError
-      description: Error response when skill is not finished
-    ParameterSchema:
-      properties:
-        name:
-          type: string
-          title: Name
-        type:
-          $ref: '#/components/schemas/ParameterType'
-        required:
-          type: boolean
-          title: Required
-          default: true
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Description
-        default:
-          anyOf:
-          - {}
-          - type: 'null'
-          title: Default
-        cookieDomain:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Cookiedomain
-      type: object
-      required:
-      - name
-      - type
-      title: ParameterSchema
-      description: Schema for a skill parameter.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    InsufficientCreditsError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Insufficient credits
-      type: object
-      title: InsufficientCreditsError
-      description: Error response when there are insufficient credits
   securitySchemes:
     APIKeyHeader:
       type: apiKey

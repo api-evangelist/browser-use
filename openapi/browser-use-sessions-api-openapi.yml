@@ -670,173 +670,6 @@ paths:
       description: Production server
 components:
   schemas:
-    UpdateSessionRequest:
-      properties:
-        action:
-          $ref: '#/components/schemas/SessionUpdateAction'
-          title: Action
-          description: The action to perform on the session
-      type: object
-      required:
-      - action
-      title: UpdateSessionRequest
-      description: Request model for updating session state.
-    ProfileNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Profile not found
-      type: object
-      title: ProfileNotFoundError
-      description: Error response when a profile is not found
-    CreateSessionRequest:
-      properties:
-        profileId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Profile ID
-          description: The ID of the profile to use for the session
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          title: Proxy Country Code
-          description: Country code for proxy location. Defaults to US. Set to null to disable proxy.
-          default: us
-        startUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Start URL
-          description: URL to navigate to when the session starts.
-        browserScreenWidth:
-          anyOf:
-          - type: integer
-            maximum: 6144.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Width
-          description: Custom screen width in pixels for the browser.
-        browserScreenHeight:
-          anyOf:
-          - type: integer
-            maximum: 3456.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Height
-          description: Custom screen height in pixels for the browser.
-        persistMemory:
-          type: boolean
-          title: Persist Memory
-          description: If True (default), tasks in this session share memory and history with each other, allowing follow-up tasks to continue from previous context. If False, each task runs as a standalone task without any previous task context.
-          default: true
-        keepAlive:
-          type: boolean
-          title: Keep Alive
-          description: If True (default), the browser session stays alive after tasks complete, allowing follow-up tasks. If False, the session is closed immediately after task completion. Set to False for simple one-off tasks to reduce session idle time.
-          default: true
-        customProxy:
-          anyOf:
-          - $ref: '#/components/schemas/CustomProxy'
-          - type: 'null'
-          title: Custom Proxy
-          description: Custom proxy settings to use for the session. If not provided, our proxies will be used. Custom proxies are available on any active subscription.
-        enableRecording:
-          type: boolean
-          title: Enable Recording
-          description: If True, enables session recording. Defaults to False.
-          default: false
-      type: object
-      title: CreateSessionRequest
-      description: Request model for creating a session.
-    CustomProxy:
-      properties:
-        host:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Host
-          description: Host of the proxy.
-        port:
-          type: integer
-          maximum: 65535.0
-          minimum: 1.0
-          title: Port
-          description: Port of the proxy.
-        username:
-          anyOf:
-          - type: string
-            maxLength: 255
-            minLength: 1
-          - type: 'null'
-          title: Username
-          description: Username for proxy authentication.
-        password:
-          anyOf:
-          - type: string
-            maxLength: 255
-            minLength: 1
-          - type: 'null'
-          title: Password
-          description: Password for proxy authentication.
-        ignoreCertErrors:
-          type: boolean
-          title: Ignore Certificate Errors
-          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
-          default: false
-      type: object
-      required:
-      - host
-      - port
-      title: CustomProxy
-      description: Request model for creating a custom proxy.
-    SessionUpdateAction:
-      type: string
-      enum:
-      - stop
-      title: SessionUpdateAction
-      description: "Available actions that can be performed on a session\n\nAttributes:\n    STOP: Stop the session and all its associated tasks (cannot be undone)"
-    TaskStatus:
-      type: string
-      enum:
-      - created
-      - started
-      - finished
-      - failed
-      - stopped
-      title: TaskStatus
-      description: "Enumeration of possible task execution states\n\nAttributes:\n        CREATED: Task has been created but not yet started.\n    STARTED: Task has been started and is currently running.\n    FINISHED: Task has finished and the agent has completed the task.\n    FAILED: Task execution failed due to an error.\n    STOPPED: Task execution has been manually stopped (cannot be resumed)."
-    SessionListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SessionItemView'
-          type: array
-          title: Items
-          description: List of session views for the current page
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: SessionListResponse
-      description: Response model for paginated session list requests.
     TooManyConcurrentActiveSessionsError:
       properties:
         detail:
@@ -846,324 +679,6 @@ components:
       type: object
       title: TooManyConcurrentActiveSessionsError
       description: Error response when user has too many concurrent active sessions
-    SessionView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the session
-        status:
-          $ref: '#/components/schemas/SessionStatus'
-          title: Status
-          description: Current status of the session (active/stopped)
-        liveUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Live URL
-          description: URL where the browser can be viewed live in real-time
-        recordingUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Recording URL
-          description: Presigned URL to download the session recording (available after session ends, if recording was enabled)
-        startedAt:
-          type: string
-          format: date-time
-          title: Started At
-          description: Timestamp when the session was created and started
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Timestamp when the session was stopped (None if still active)
-        tasks:
-          items:
-            $ref: '#/components/schemas/TaskItemView'
-          type: array
-          title: Tasks
-          description: List of tasks associated with this session
-        publicShareUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Public Share URL
-          description: Optional URL to access the public share of the session
-        persistMemory:
-          type: boolean
-          title: Persist Memory
-          description: Whether tasks in this session share memory and history with each other
-          default: true
-        keepAlive:
-          type: boolean
-          title: Keep Alive
-          description: Whether the browser session stays alive after tasks complete
-          default: true
-        proxyUsedMb:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Used MB
-          description: Amount of proxy data used in MB
-          default: '0'
-        proxyCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Cost
-          description: Cost of proxy usage in USD
-          default: '0'
-      type: object
-      required:
-      - id
-      - status
-      - startedAt
-      - tasks
-      title: SessionView
-      description: View model for representing a (browser) session with its associated tasks.
-    TaskItemView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the task
-        sessionId:
-          type: string
-          format: uuid
-          title: Session ID
-          description: ID of the session this task belongs to
-        llm:
-          type: string
-          title: LLM
-          description: The LLM model used for this task represented as a string
-        task:
-          type: string
-          title: Task
-          description: The task prompt/instruction given to the agent
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-        createdAt:
-          type: string
-          format: date-time
-          title: Created At
-          description: Naive UTC timestamp when the task was created
-        startedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Started At
-          description: Naive UTC timestamp when the task was started (None if task has not started yet)
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Naive UTC timestamp when the task completed (None if still running)
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-          description: Optional additional metadata associated with the task set by the user
-          default: {}
-        output:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Output
-          description: Final output/result of the task
-        browserUseVersion:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Browser Use Version
-          description: Version of browser-use used for this task (older tasks may not have this set)
-        isSuccess:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Is Success
-          description: Whether the task was successful (self-reported by the agent)
-        judgement:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Judgement
-          description: Stringified JSON object containing the full report from the judge
-        judgeVerdict:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Judge Verdict
-          description: Judge verdict - True if the judge found the task to be successful, False otherwise (None if judge is not enabled)
-        cost:
-          anyOf:
-          - type: string
-            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          - type: 'null'
-          title: Cost
-          description: Total cost of the task in USD. This is the sum of all step costs incurred during task execution.
-        suggestions:
-          anyOf:
-          - items:
-              additionalProperties: true
-              type: object
-            type: array
-          - type: 'null'
-          title: Suggestions
-          description: List of actionable suggestions for improving task configuration based on detected issues during execution.
-      type: object
-      required:
-      - id
-      - sessionId
-      - llm
-      - task
-      - status
-      - createdAt
-      title: TaskItemView
-      description: View model for representing a task with its execution details
-    SessionItemView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the session
-        status:
-          $ref: '#/components/schemas/SessionStatus'
-          title: Status
-          description: Current status of the session (active/stopped)
-        liveUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Live URL
-          description: URL where the browser can be viewed live in real-time
-        recordingUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Recording URL
-          description: Presigned URL to download the session recording (available after session ends, if recording was enabled)
-        startedAt:
-          type: string
-          format: date-time
-          title: Started At
-          description: Timestamp when the session was created and started
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Timestamp when the session was stopped (None if still active)
-        persistMemory:
-          type: boolean
-          title: Persist Memory
-          description: Whether tasks in this session share memory and history with each other
-        keepAlive:
-          type: boolean
-          title: Keep Alive
-          description: Whether the browser session stays alive after tasks complete
-        proxyUsedMb:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Used MB
-          description: Amount of proxy data used in MB
-          default: '0'
-        proxyCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Cost
-          description: Cost of proxy usage in USD
-          default: '0'
-      type: object
-      required:
-      - id
-      - status
-      - startedAt
-      - persistMemory
-      - keepAlive
-      title: SessionItemView
-      description: View model for representing a (browser) session.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    ShareView:
-      properties:
-        shareToken:
-          type: string
-          title: Share Token
-          description: Token to access the public share
-        shareUrl:
-          type: string
-          title: Share URL
-          description: URL to access the public share
-        viewCount:
-          type: integer
-          title: View Count
-          description: Number of times the public share has been viewed
-        lastViewedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Last Viewed At
-          description: Timestamp of the last time the public share was viewed (None if never viewed)
-      type: object
-      required:
-      - shareToken
-      - shareUrl
-      - viewCount
-      title: ShareView
-      description: View model for representing a public share of a session.
-    ShareNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Public share not found
-      type: object
-      title: ShareNotFoundError
-      description: Error response when a public share is not found
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    SessionStatus:
-      type: string
-      enum:
-      - active
-      - stopped
-      title: SessionStatus
-      description: "Enumeration of possible agent session states\n\nAttributes:\n    ACTIVE: Agent session is currently active and running\n    STOPPED: Agent session has been stopped and is no longer active"
     ProxyCountryCode:
       type: string
       enum:
@@ -1416,6 +931,221 @@ components:
       - zm
       - zw
       title: ProxyCountryCode
+    SessionUpdateAction:
+      type: string
+      enum:
+      - stop
+      title: SessionUpdateAction
+      description: "Available actions that can be performed on a session\n\nAttributes:\n    STOP: Stop the session and all its associated tasks (cannot be undone)"
+    TaskStatus:
+      type: string
+      enum:
+      - created
+      - started
+      - finished
+      - failed
+      - stopped
+      title: TaskStatus
+      description: "Enumeration of possible task execution states\n\nAttributes:\n        CREATED: Task has been created but not yet started.\n    STARTED: Task has been started and is currently running.\n    FINISHED: Task has finished and the agent has completed the task.\n    FAILED: Task execution failed due to an error.\n    STOPPED: Task execution has been manually stopped (cannot be resumed)."
+    ShareNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Public share not found
+      type: object
+      title: ShareNotFoundError
+      description: Error response when a public share is not found
+    ShareView:
+      properties:
+        shareToken:
+          type: string
+          title: Share Token
+          description: Token to access the public share
+        shareUrl:
+          type: string
+          title: Share URL
+          description: URL to access the public share
+        viewCount:
+          type: integer
+          title: View Count
+          description: Number of times the public share has been viewed
+        lastViewedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Viewed At
+          description: Timestamp of the last time the public share was viewed (None if never viewed)
+      type: object
+      required:
+      - shareToken
+      - shareUrl
+      - viewCount
+      title: ShareView
+      description: View model for representing a public share of a session.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    SessionItemView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the session
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+          title: Status
+          description: Current status of the session (active/stopped)
+        liveUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Live URL
+          description: URL where the browser can be viewed live in real-time
+        recordingUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Recording URL
+          description: Presigned URL to download the session recording (available after session ends, if recording was enabled)
+        startedAt:
+          type: string
+          format: date-time
+          title: Started At
+          description: Timestamp when the session was created and started
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+          description: Timestamp when the session was stopped (None if still active)
+        persistMemory:
+          type: boolean
+          title: Persist Memory
+          description: Whether tasks in this session share memory and history with each other
+        keepAlive:
+          type: boolean
+          title: Keep Alive
+          description: Whether the browser session stays alive after tasks complete
+        proxyUsedMb:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Proxy Used MB
+          description: Amount of proxy data used in MB
+          default: '0'
+        proxyCost:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Proxy Cost
+          description: Cost of proxy usage in USD
+          default: '0'
+      type: object
+      required:
+      - id
+      - status
+      - startedAt
+      - persistMemory
+      - keepAlive
+      title: SessionItemView
+      description: View model for representing a (browser) session.
+    SessionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SessionItemView'
+          type: array
+          title: Items
+          description: List of session views for the current page
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: SessionListResponse
+      description: Response model for paginated session list requests.
+    CustomProxy:
+      properties:
+        host:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Host
+          description: Host of the proxy.
+        port:
+          type: integer
+          maximum: 65535.0
+          minimum: 1.0
+          title: Port
+          description: Port of the proxy.
+        username:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Username
+          description: Username for proxy authentication.
+        password:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Password
+          description: Password for proxy authentication.
+        ignoreCertErrors:
+          type: boolean
+          title: Ignore Certificate Errors
+          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
+          default: false
+      type: object
+      required:
+      - host
+      - port
+      title: CustomProxy
+      description: Request model for creating a custom proxy.
+    UpdateSessionRequest:
+      properties:
+        action:
+          $ref: '#/components/schemas/SessionUpdateAction'
+          title: Action
+          description: The action to perform on the session
+      type: object
+      required:
+      - action
+      title: UpdateSessionRequest
+      description: Request model for updating session state.
+    ProfileNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Profile not found
+      type: object
+      title: ProfileNotFoundError
+      description: Error response when a profile is not found
     SessionNotFoundError:
       properties:
         detail:
@@ -1425,60 +1155,390 @@ components:
       type: object
       title: SessionNotFoundError
       description: Error response when a session is not found
-    BuModel:
+    SessionView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the session
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+          title: Status
+          description: Current status of the session (active/stopped)
+        liveUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Live URL
+          description: URL where the browser can be viewed live in real-time
+        recordingUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Recording URL
+          description: Presigned URL to download the session recording (available after session ends, if recording was enabled)
+        startedAt:
+          type: string
+          format: date-time
+          title: Started At
+          description: Timestamp when the session was created and started
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+          description: Timestamp when the session was stopped (None if still active)
+        tasks:
+          items:
+            $ref: '#/components/schemas/TaskItemView'
+          type: array
+          title: Tasks
+          description: List of tasks associated with this session
+        publicShareUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Public Share URL
+          description: Optional URL to access the public share of the session
+        persistMemory:
+          type: boolean
+          title: Persist Memory
+          description: Whether tasks in this session share memory and history with each other
+          default: true
+        keepAlive:
+          type: boolean
+          title: Keep Alive
+          description: Whether the browser session stays alive after tasks complete
+          default: true
+        proxyUsedMb:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Proxy Used MB
+          description: Amount of proxy data used in MB
+          default: '0'
+        proxyCost:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Proxy Cost
+          description: Cost of proxy usage in USD
+          default: '0'
+      type: object
+      required:
+      - id
+      - status
+      - startedAt
+      - tasks
+      title: SessionView
+      description: View model for representing a (browser) session with its associated tasks.
+    CreateSessionRequest:
+      properties:
+        profileId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Profile ID
+          description: The ID of the profile to use for the session
+        proxyCountryCode:
+          anyOf:
+          - $ref: '#/components/schemas/ProxyCountryCode'
+          - type: 'null'
+          title: Proxy Country Code
+          description: Country code for proxy location. Defaults to US. Set to null to disable proxy.
+          default: us
+        startUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Start URL
+          description: URL to navigate to when the session starts.
+        browserScreenWidth:
+          anyOf:
+          - type: integer
+            maximum: 6144.0
+            minimum: 320.0
+          - type: 'null'
+          title: Browser Screen Width
+          description: Custom screen width in pixels for the browser.
+        browserScreenHeight:
+          anyOf:
+          - type: integer
+            maximum: 3456.0
+            minimum: 320.0
+          - type: 'null'
+          title: Browser Screen Height
+          description: Custom screen height in pixels for the browser.
+        persistMemory:
+          type: boolean
+          title: Persist Memory
+          description: If True (default), tasks in this session share memory and history with each other, allowing follow-up tasks to continue from previous context. If False, each task runs as a standalone task without any previous task context.
+          default: true
+        keepAlive:
+          type: boolean
+          title: Keep Alive
+          description: If True (default), the browser session stays alive after tasks complete, allowing follow-up tasks. If False, the session is closed immediately after task completion. Set to False for simple one-off tasks to reduce session idle time.
+          default: true
+        customProxy:
+          anyOf:
+          - $ref: '#/components/schemas/CustomProxy'
+          - type: 'null'
+          title: Custom Proxy
+          description: Custom proxy settings to use for the session. If not provided, our proxies will be used. Custom proxies are available on any active subscription.
+        enableRecording:
+          type: boolean
+          title: Enable Recording
+          description: If True, enables session recording. Defaults to False.
+          default: false
+      type: object
+      title: CreateSessionRequest
+      description: Request model for creating a session.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    TaskItemView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the task
+        sessionId:
+          type: string
+          format: uuid
+          title: Session ID
+          description: ID of the session this task belongs to
+        llm:
+          type: string
+          title: LLM
+          description: The LLM model used for this task represented as a string
+        task:
+          type: string
+          title: Task
+          description: The task prompt/instruction given to the agent
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        createdAt:
+          type: string
+          format: date-time
+          title: Created At
+          description: Naive UTC timestamp when the task was created
+        startedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Started At
+          description: Naive UTC timestamp when the task was started (None if task has not started yet)
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+          description: Naive UTC timestamp when the task completed (None if still running)
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Optional additional metadata associated with the task set by the user
+          default: {}
+        output:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Output
+          description: Final output/result of the task
+        browserUseVersion:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Browser Use Version
+          description: Version of browser-use used for this task (older tasks may not have this set)
+        isSuccess:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Success
+          description: Whether the task was successful (self-reported by the agent)
+        judgement:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Judgement
+          description: Stringified JSON object containing the full report from the judge
+        judgeVerdict:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Judge Verdict
+          description: Judge verdict - True if the judge found the task to be successful, False otherwise (None if judge is not enabled)
+        cost:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Cost
+          description: Total cost of the task in USD. This is the sum of all step costs incurred during task execution.
+        suggestions:
+          anyOf:
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          - type: 'null'
+          title: Suggestions
+          description: List of actionable suggestions for improving task configuration based on detected issues during execution.
+      type: object
+      required:
+      - id
+      - sessionId
+      - llm
+      - task
+      - status
+      - createdAt
+      title: TaskItemView
+      description: View model for representing a task with its execution details
+    SessionStatus:
       type: string
       enum:
-      - bu-mini
-      - bu-max
-      - bu-ultra
-      - gemini-3-flash
-      - claude-opus-4.6
-      - claude-opus-4.7
-      - claude-sonnet-5
-      - claude-opus-4.8
-      - gpt-5.4-mini
-      - glm-5.2
-      - minimax-m3
-      - claude-haiku-4.5
-      - gpt-5.2
-      - gpt-5-mini
-      - gpt-5.5
-      - gpt-5.6-sol
-      - gpt-5.6-terra
-      - gpt-5.6-luna
-      - gemini-3-pro
-      - gemini-3.1-pro
-      - gemini-3.5-flash
-      title: BuModel
-      description: 'The model to use for the agent. Each model has different capabilities and pricing.
+      - active
+      - stopped
+      title: SessionStatus
+      description: "Enumeration of possible agent session states\n\nAttributes:\n    ACTIVE: Agent session is currently active and running\n    STOPPED: Agent session has been stopped and is no longer active"
+    MessageResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+          description: Unique message identifier.
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+          description: ID of the session this message belongs to.
+        role:
+          type: string
+          title: Role
+          description: 'Message role: "human" for user-submitted tasks, "ai" for agent actions and responses.'
+        data:
+          type: string
+          title: Data
+          description: Raw message content. Format depends on the message type — may be plain text, JSON, or structured action data.
+        type:
+          type: string
+          title: Type
+          description: 'Message category. Common values: `user_message`, `assistant_message`, `browser_action`, `file_operation`, `code_execution`, `integration`, `planning`, `completion`, `browser_action_result`, `browser_action_error`.'
+          default: ''
+        summary:
+          type: string
+          title: Summary
+          description: 'One-liner human-readable description of the message (e.g. "Navigating to google.com", "Clicking element #5"). Useful for building activity feeds.'
+          default: ''
+        screenshotUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Screenshoturl
+          description: Browser screenshot captured at the time of this message. Presigned URL, expires after 5 minutes.
+        hidden:
+          type: boolean
+          title: Hidden
+          description: Whether this message should be hidden from the user in a chat UI.
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+          description: When this message was created.
+      type: object
+      required:
+      - id
+      - sessionId
+      - role
+      - data
+      - createdAt
+      title: MessageResponse
+      description: 'A single message from the session''s message stream.
 
 
-        - `bu-mini` / `gemini-3-flash`: Gemini 3 Flash — fast and cost-effective. Best for simple, well-defined tasks like form filling or data extraction.
-
-        - `bu-max` / `claude-sonnet-4.6` (legacy aliases) / `claude-sonnet-5`: Claude Sonnet 5 — balanced performance. Best for multi-step workflows that require reasoning and decision-making.
-
-        - `bu-ultra` / `claude-opus-4.6`: Claude Opus 4.6 — capable general-purpose Opus tier.
-
-        - `claude-opus-4.7`: Claude Opus 4.7 — most capable. Best for complex tasks that require advanced reasoning, long-horizon planning, or handling ambiguous instructions.
-
-        - `claude-opus-4.8`: Claude Opus 4.8 — most capable Opus-tier model, state-of-the-art on long-horizon agentic work.
-
-        - `gpt-5.4-mini`: GPT-5.4 mini — OpenAI''s fast and efficient model. Best for tasks that benefit from OpenAI''s capabilities.
-
-        - `glm-5.2`: Z.ai GLM 5.2 — capable, low-cost open model. Best for cost-sensitive agentic tasks.
-
-        - `minimax-m3`: MiniMax M3 — fast, very low-cost model. Best for simple, high-volume tasks.
+        Messages represent the agent''s actions, observations, and decisions as it executes a task.'
+    StopStrategy:
+      type: string
+      enum:
+      - task
+      - session
+      title: StopStrategy
+      description: 'Strategy for stopping a session.
 
 
-        Additional provider models (e.g. `gemini-3.5-flash`, `gpt-5.2`, and `gpt-5-mini`)
+        - `task`: Stop the currently running task but keep the session alive in idle state. You can dispatch another task to the same session afterwards.
 
-        are selectable only with `use_own_key=true`, where your own provider key serves
-
-        them. The GPT-5.6 family is native when either Browser Use''s direct OpenAI key
-
-        or Amazon Bedrock route is configured. GPT-5.5 becomes native only through the
-
-        Bedrock rollout.'
+        - `session`: Stop the session entirely and destroy the sandbox. The session cannot be reused after this.'
+    StopSessionRequest:
+      properties:
+        strategy:
+          $ref: '#/components/schemas/StopStrategy'
+          description: How to stop the session. Use "task" to stop only the current task and keep the session alive, or "session" to destroy the sandbox entirely.
+          default: session
+      type: object
+      title: StopSessionRequest
+    ThinkingLevel:
+      type: string
+      enum:
+      - disabled
+      - low
+      - medium
+      - high
+      title: ThinkingLevel
+      description: Provider-neutral model reasoning depth.
+    SessionListResponse_2:
+      properties:
+        sessions:
+          items:
+            $ref: '#/components/schemas/SessionResponse'
+          type: array
+          title: Sessions
+          description: List of sessions.
+        total:
+          type: integer
+          title: Total
+          description: Total number of sessions matching the query.
+        page:
+          type: integer
+          title: Page
+          description: Current page number (1-indexed).
+        pageSize:
+          type: integer
+          title: Pagesize
+          description: Number of sessions per page.
+      type: object
+      required:
+      - sessions
+      - total
+      - page
+      - pageSize
+      title: SessionListResponse
     SessionResponse:
       properties:
         id:
@@ -1666,14 +1726,23 @@ components:
         Poll this endpoint to track task progress. The `status` field indicates the session lifecycle stage,
 
         and `output` contains the agent''s structured result once the task completes.'
-    StopSessionRequest:
+    MessageListResponse:
       properties:
-        strategy:
-          $ref: '#/components/schemas/StopStrategy'
-          description: How to stop the session. Use "task" to stop only the current task and keep the session alive, or "session" to destroy the sandbox entirely.
-          default: session
+        messages:
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+          type: array
+          title: Messages
+          description: List of messages in chronological order.
+        hasMore:
+          type: boolean
+          title: Hasmore
+          description: Whether there are more messages available beyond this page. Use cursor-based pagination with the `after` or `before` query parameters to fetch more.
       type: object
-      title: StopSessionRequest
+      required:
+      - messages
+      - hasMore
+      title: MessageListResponse
     RunTaskRequest:
       properties:
         task:
@@ -1815,42 +1884,60 @@ components:
         - **`sessionId` + `task`**: dispatches the task to an existing idle session.
 
         - **`sessionId` + no `task`**: returns 422 — a task is required when targeting an existing session.'
-    ThinkingLevel:
+    BuModel:
       type: string
       enum:
-      - disabled
-      - low
-      - medium
-      - high
-      title: ThinkingLevel
-      description: Provider-neutral model reasoning depth.
-    SessionListResponse_2:
-      properties:
-        sessions:
-          items:
-            $ref: '#/components/schemas/SessionResponse'
-          type: array
-          title: Sessions
-          description: List of sessions.
-        total:
-          type: integer
-          title: Total
-          description: Total number of sessions matching the query.
-        page:
-          type: integer
-          title: Page
-          description: Current page number (1-indexed).
-        pageSize:
-          type: integer
-          title: Pagesize
-          description: Number of sessions per page.
-      type: object
-      required:
-      - sessions
-      - total
-      - page
-      - pageSize
-      title: SessionListResponse
+      - bu-mini
+      - bu-max
+      - bu-ultra
+      - gemini-3-flash
+      - claude-opus-4.6
+      - claude-opus-4.7
+      - claude-sonnet-5
+      - claude-opus-4.8
+      - gpt-5.4-mini
+      - glm-5.2
+      - minimax-m3
+      - claude-haiku-4.5
+      - gpt-5.2
+      - gpt-5-mini
+      - gpt-5.5
+      - gpt-5.6-sol
+      - gpt-5.6-terra
+      - gpt-5.6-luna
+      - gemini-3-pro
+      - gemini-3.1-pro
+      - gemini-3.5-flash
+      title: BuModel
+      description: 'The model to use for the agent. Each model has different capabilities and pricing.
+
+
+        - `bu-mini` / `gemini-3-flash`: Gemini 3 Flash — fast and cost-effective. Best for simple, well-defined tasks like form filling or data extraction.
+
+        - `bu-max` / `claude-sonnet-4.6` (legacy aliases) / `claude-sonnet-5`: Claude Sonnet 5 — balanced performance. Best for multi-step workflows that require reasoning and decision-making.
+
+        - `bu-ultra` / `claude-opus-4.6`: Claude Opus 4.6 — capable general-purpose Opus tier.
+
+        - `claude-opus-4.7`: Claude Opus 4.7 — most capable. Best for complex tasks that require advanced reasoning, long-horizon planning, or handling ambiguous instructions.
+
+        - `claude-opus-4.8`: Claude Opus 4.8 — most capable Opus-tier model, state-of-the-art on long-horizon agentic work.
+
+        - `gpt-5.4-mini`: GPT-5.4 mini — OpenAI''s fast and efficient model. Best for tasks that benefit from OpenAI''s capabilities.
+
+        - `glm-5.2`: Z.ai GLM 5.2 — capable, low-cost open model. Best for cost-sensitive agentic tasks.
+
+        - `minimax-m3`: MiniMax M3 — fast, very low-cost model. Best for simple, high-volume tasks.
+
+
+        Additional provider models (e.g. `gemini-3.5-flash`, `gpt-5.2`, and `gpt-5-mini`)
+
+        are selectable only with `use_own_key=true`, where your own provider key serves
+
+        them. The GPT-5.6 family is native when either Browser Use''s direct OpenAI key
+
+        or Amazon Bedrock route is configured. GPT-5.5 becomes native only through the
+
+        Bedrock rollout.'
     BuAgentSessionStatus:
       type: string
       enum:
@@ -1875,93 +1962,22 @@ components:
         - `timed_out`: Session was cleaned up due to inactivity timeout.
 
         - `error`: Sandbox failed to start or encountered an unrecoverable error.'
-    StopStrategy:
-      type: string
-      enum:
-      - task
-      - session
-      title: StopStrategy
-      description: 'Strategy for stopping a session.
-
-
-        - `task`: Stop the currently running task but keep the session alive in idle state. You can dispatch another task to the same session afterwards.
-
-        - `session`: Stop the session entirely and destroy the sandbox. The session cannot be reused after this.'
-    MessageResponse:
+    QueueListResponse:
       properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-          description: Unique message identifier.
-        sessionId:
-          type: string
-          format: uuid
-          title: Sessionid
-          description: ID of the session this message belongs to.
-        role:
-          type: string
-          title: Role
-          description: 'Message role: "human" for user-submitted tasks, "ai" for agent actions and responses.'
-        data:
-          type: string
-          title: Data
-          description: Raw message content. Format depends on the message type — may be plain text, JSON, or structured action data.
-        type:
-          type: string
-          title: Type
-          description: 'Message category. Common values: `user_message`, `assistant_message`, `browser_action`, `file_operation`, `code_execution`, `integration`, `planning`, `completion`, `browser_action_result`, `browser_action_error`.'
-          default: ''
-        summary:
-          type: string
-          title: Summary
-          description: 'One-liner human-readable description of the message (e.g. "Navigating to google.com", "Clicking element #5"). Useful for building activity feeds.'
-          default: ''
-        screenshotUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Screenshoturl
-          description: Browser screenshot captured at the time of this message. Presigned URL, expires after 5 minutes.
-        hidden:
-          type: boolean
-          title: Hidden
-          description: Whether this message should be hidden from the user in a chat UI.
-          default: false
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-          description: When this message was created.
-      type: object
-      required:
-      - id
-      - sessionId
-      - role
-      - data
-      - createdAt
-      title: MessageResponse
-      description: 'A single message from the session''s message stream.
-
-
-        Messages represent the agent''s actions, observations, and decisions as it executes a task.'
-    MessageListResponse:
-      properties:
-        messages:
+        queue:
           items:
-            $ref: '#/components/schemas/MessageResponse'
+            $ref: '#/components/schemas/QueuedMessage'
           type: array
-          title: Messages
-          description: List of messages in chronological order.
-        hasMore:
-          type: boolean
-          title: Hasmore
-          description: Whether there are more messages available beyond this page. Use cursor-based pagination with the `after` or `before` query parameters to fetch more.
+          title: Queue
+        steeringCutoffs:
+          items:
+            $ref: '#/components/schemas/SteeringCutoff'
+          type: array
+          title: Steeringcutoffs
       type: object
       required:
-      - messages
-      - hasMore
-      title: MessageListResponse
+      - queue
+      title: QueueListResponse
     QueuedMessage:
       properties:
         id:
@@ -2019,6 +2035,95 @@ components:
       - createdAt
       title: QueuedMessage
       description: One message on a session's queue (a v4_session_input row).
+    SteeringCutoff:
+      properties:
+        sourceRunId:
+          type: string
+          format: uuid
+          title: Sourcerunid
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+      type: object
+      required:
+      - sourceRunId
+      - createdAt
+      title: SteeringCutoff
+      description: 'Earliest accepted steer for one interrupted source run.
+
+
+        The queue endpoint returns these compact boundaries separately from message
+
+        rows so a remount can keep every interrupted transcript frozen without
+
+        re-sending the full historical steering-message payload.'
+    SessionListResponse_3:
+      properties:
+        sessions:
+          items:
+            $ref: '#/components/schemas/SessionInfo'
+          type: array
+          title: Sessions
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - sessions
+      title: SessionListResponse
+      description: 'One entry per session (the session''s most recent run), most-recent first.
+
+
+        A V4 session is a conversation: every follow-up run reuses the same
+
+        public_session_id. GET /api/v4/runs returns one row per RUN, so callers that
+
+        want a list of distinct *sessions* (e.g. the recent-sessions panel) should
+
+        use this instead of de-duplicating runs client-side.'
+    QueueMessageRequest:
+      properties:
+        text:
+          type: string
+          minLength: 1
+          title: Text
+        interrupt:
+          type: boolean
+          title: Interrupt
+          default: false
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+            maxItems: 20
+          - type: 'null'
+          title: Attachedfileids
+      additionalProperties: false
+      type: object
+      required:
+      - text
+      title: QueueMessageRequest
+      description: 'Send a message to a session. If the session is busy the message waits on
+
+        the queue and runs as the next turn; if idle it runs immediately.
+
+
+        Set `interrupt` to make it take effect now: the session''s active run is
+
+        cancelled and this message drains straight after. Interrupt is a no-op when
+
+        the session is already idle, and BEST-EFFORT when busy — if the cancel can''t
+
+        be delivered, the message stays queued and runs after the current turn.'
     SessionInfo:
       properties:
         sessionId:
@@ -2080,111 +2185,6 @@ components:
         show a label + status + time). The heavy per-run fields (result, error,
 
         token/cost totals) live on RunSummary and aren''t repeated here.'
-    QueueMessageRequest:
-      properties:
-        text:
-          type: string
-          minLength: 1
-          title: Text
-        interrupt:
-          type: boolean
-          title: Interrupt
-          default: false
-        attachedFileIds:
-          anyOf:
-          - items:
-              type: string
-              format: uuid
-            type: array
-            maxItems: 20
-          - type: 'null'
-          title: Attachedfileids
-      additionalProperties: false
-      type: object
-      required:
-      - text
-      title: QueueMessageRequest
-      description: 'Send a message to a session. If the session is busy the message waits on
-
-        the queue and runs as the next turn; if idle it runs immediately.
-
-
-        Set `interrupt` to make it take effect now: the session''s active run is
-
-        cancelled and this message drains straight after. Interrupt is a no-op when
-
-        the session is already idle, and BEST-EFFORT when busy — if the cancel can''t
-
-        be delivered, the message stays queued and runs after the current turn.'
-    QueueListResponse:
-      properties:
-        queue:
-          items:
-            $ref: '#/components/schemas/QueuedMessage'
-          type: array
-          title: Queue
-        steeringCutoffs:
-          items:
-            $ref: '#/components/schemas/SteeringCutoff'
-          type: array
-          title: Steeringcutoffs
-      type: object
-      required:
-      - queue
-      title: QueueListResponse
-    SessionListResponse_3:
-      properties:
-        sessions:
-          items:
-            $ref: '#/components/schemas/SessionInfo'
-          type: array
-          title: Sessions
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-        hasMore:
-          type: boolean
-          title: Hasmore
-          default: false
-      type: object
-      required:
-      - sessions
-      title: SessionListResponse
-      description: 'One entry per session (the session''s most recent run), most-recent first.
-
-
-        A V4 session is a conversation: every follow-up run reuses the same
-
-        public_session_id. GET /api/v4/runs returns one row per RUN, so callers that
-
-        want a list of distinct *sessions* (e.g. the recent-sessions panel) should
-
-        use this instead of de-duplicating runs client-side.'
-    SteeringCutoff:
-      properties:
-        sourceRunId:
-          type: string
-          format: uuid
-          title: Sourcerunid
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-      type: object
-      required:
-      - sourceRunId
-      - createdAt
-      title: SteeringCutoff
-      description: 'Earliest accepted steer for one interrupted source run.
-
-
-        The queue endpoint returns these compact boundaries separately from message
-
-        rows so a remount can keep every interrupted transcript frozen without
-
-        re-sending the full historical steering-message payload.'
   securitySchemes:
     APIKeyHeader:
       type: apiKey

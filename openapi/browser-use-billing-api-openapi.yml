@@ -83,6 +83,15 @@ components:
       - subscriptionCanceledAt
       title: PlanInfo
       description: View model for plan information
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     AccountView:
       properties:
         name:
@@ -146,15 +155,6 @@ components:
       - projectId
       title: AccountView
       description: View model for account information.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
     ValidationError:
       properties:
         loc:

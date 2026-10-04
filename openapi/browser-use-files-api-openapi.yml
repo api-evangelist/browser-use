@@ -171,6 +171,51 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    OutputFileNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Output file not found
+      type: object
+      title: OutputFileNotFoundError
+      description: Error response when an output file is not found
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    UnsupportedContentTypeError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Unsupported content type
+      type: object
+      title: UnsupportedContentTypeError
+      description: Error response for unsupported content types
+    SessionNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Session not found
+      type: object
+      title: SessionNotFoundError
+      description: Error response when a session is not found
+    DownloadUrlGenerationError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Failed to generate download URL
+      type: object
+      title: DownloadUrlGenerationError
+      description: Error response when download URL generation fails
     UploadFilePresignedUrlResponse:
       properties:
         url:
@@ -205,6 +250,45 @@ components:
       - expiresIn
       title: UploadFilePresignedUrlResponse
       description: Response model for a presigned upload URL.
+    InternalServerError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: An internal server error occurred
+      type: object
+      title: InternalServerError
+      description: Error response for internal server errors
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    TaskNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Task not found
+      type: object
+      title: TaskNotFoundError
+      description: Error response when a task is not found
     TaskOutputFileResponse:
       properties:
         id:
@@ -227,42 +311,6 @@ components:
       - downloadUrl
       title: TaskOutputFileResponse
       description: Response model for output file requests.
-    InternalServerError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: An internal server error occurred
-      type: object
-      title: InternalServerError
-      description: Error response for internal server errors
-    TaskNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Task not found
-      type: object
-      title: TaskNotFoundError
-      description: Error response when a task is not found
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    DownloadUrlGenerationError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Failed to generate download URL
-      type: object
-      title: DownloadUrlGenerationError
-      description: Error response when download URL generation fails
     UploadFileRequest:
       properties:
         fileName:
@@ -302,54 +350,6 @@ components:
       - sizeBytes
       title: UploadFileRequest
       description: Request model for uploading a file to the user's files bucket.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    OutputFileNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Output file not found
-      type: object
-      title: OutputFileNotFoundError
-      description: Error response when an output file is not found
-    UnsupportedContentTypeError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Unsupported content type
-      type: object
-      title: UnsupportedContentTypeError
-      description: Error response for unsupported content types
-    SessionNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Session not found
-      type: object
-      title: SessionNotFoundError
-      description: Error response when a session is not found
   securitySchemes:
     APIKeyHeader:
       type: apiKey

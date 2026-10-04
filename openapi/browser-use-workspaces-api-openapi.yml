@@ -359,6 +359,136 @@ paths:
       description: Production server
 components:
   schemas:
+    FileListResponse:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/FileInfo'
+          type: array
+          title: Files
+        folders:
+          items:
+            type: string
+          type: array
+          title: Folders
+          description: Immediate sub-folder names at this prefix level
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+          description: Cursor for the next page. Pass as the `cursor` query parameter to fetch the next page.
+        hasMore:
+          type: boolean
+          title: Hasmore
+          description: Whether there are more files beyond this page.
+          default: false
+      type: object
+      required:
+      - files
+      title: FileListResponse
+      description: Paginated file listing with optional presigned download URLs.
+    FileUploadItem:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+          description: Filename, e.g. "data.csv"
+        contentType:
+          type: string
+          maxLength: 255
+          title: Contenttype
+          description: MIME type, e.g. "text/csv"
+          default: application/octet-stream
+        size:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Size
+          description: File size in bytes (required for workspace uploads)
+      type: object
+      required:
+      - name
+      title: FileUploadItem
+      description: A single file to upload.
+    WorkspaceListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/WorkspaceView'
+          type: array
+          title: Items
+          description: List of workspace views for the current page
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: WorkspaceListResponse
+      description: Response model for paginated workspace list requests.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    WorkspaceCreateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+          description: Optional name for the workspace
+      type: object
+      title: WorkspaceCreateRequest
+      description: Request model for creating a new workspace.
+    FileUploadResponse:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/FileUploadResponseItem'
+          type: array
+          title: Files
+      type: object
+      required:
+      - files
+      title: FileUploadResponse
+      description: Presigned upload URLs for the requested files.
+    FileUploadRequest:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/FileUploadItem'
+          type: array
+          maxItems: 10
+          minItems: 1
+          title: Files
+      type: object
+      required:
+      - files
+      title: FileUploadRequest
+      description: Request body for generating presigned upload URLs.
     WorkspaceView:
       properties:
         id:
@@ -389,56 +519,6 @@ components:
       - updatedAt
       title: WorkspaceView
       description: View model for a workspace — persistent shared storage across sessions.
-    WorkspaceCreateRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Name
-          description: Optional name for the workspace
-      type: object
-      title: WorkspaceCreateRequest
-      description: Request model for creating a new workspace.
-    FileUploadItem:
-      properties:
-        name:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Name
-          description: Filename, e.g. "data.csv"
-        contentType:
-          type: string
-          maxLength: 255
-          title: Contenttype
-          description: MIME type, e.g. "text/csv"
-          default: application/octet-stream
-        size:
-          anyOf:
-          - type: integer
-            minimum: 1.0
-          - type: 'null'
-          title: Size
-          description: File size in bytes (required for workspace uploads)
-      type: object
-      required:
-      - name
-      title: FileUploadItem
-      description: A single file to upload.
-    FileUploadResponse:
-      properties:
-        files:
-          items:
-            $ref: '#/components/schemas/FileUploadResponseItem'
-          type: array
-          title: Files
-      type: object
-      required:
-      - files
-      title: FileUploadResponse
-      description: Presigned upload URLs for the requested files.
     WorkspaceUpdateRequest:
       properties:
         name:
@@ -451,58 +531,48 @@ components:
       type: object
       title: WorkspaceUpdateRequest
       description: Request model for updating a workspace.
-    FileUploadRequest:
+    ValidationError:
       properties:
-        files:
+        loc:
           items:
-            $ref: '#/components/schemas/FileUploadItem'
+            anyOf:
+            - type: string
+            - type: integer
           type: array
-          maxItems: 10
-          minItems: 1
-          title: Files
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
       type: object
       required:
-      - files
-      title: FileUploadRequest
-      description: Request body for generating presigned upload URLs.
-    FileListResponse:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    FileUploadResponseItem:
       properties:
-        files:
-          items:
-            $ref: '#/components/schemas/FileInfo'
-          type: array
-          title: Files
-        folders:
-          items:
-            type: string
-          type: array
-          title: Folders
-          description: Immediate sub-folder names at this prefix level
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-          description: Cursor for the next page. Pass as the `cursor` query parameter to fetch the next page.
-        hasMore:
-          type: boolean
-          title: Hasmore
-          description: Whether there are more files beyond this page.
-          default: false
+        name:
+          type: string
+          title: Name
+          description: Original filename as requested.
+        uploadUrl:
+          type: string
+          title: Uploadurl
+          description: Presigned PUT URL. Upload the file by sending a PUT request to this URL with the file content and matching Content-Type header. Expires after 5 minutes.
+        path:
+          type: string
+          title: Path
+          description: Path where the file will be stored in the workspace, e.g. "uploads/data.csv".
       type: object
       required:
-      - files
-      title: FileListResponse
-      description: Paginated file listing with optional presigned download URLs.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
+      - name
+      - uploadUrl
+      - path
+      title: FileUploadResponseItem
+      description: Presigned upload URL for a single file.
     FileInfo:
       properties:
         path:
@@ -531,124 +601,6 @@ components:
       - lastModified
       title: FileInfo
       description: A file in a session's workspace.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    WorkspaceListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/WorkspaceView'
-          type: array
-          title: Items
-          description: List of workspace views for the current page
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: WorkspaceListResponse
-      description: Response model for paginated workspace list requests.
-    FileUploadResponseItem:
-      properties:
-        name:
-          type: string
-          title: Name
-          description: Original filename as requested.
-        uploadUrl:
-          type: string
-          title: Uploadurl
-          description: Presigned PUT URL. Upload the file by sending a PUT request to this URL with the file content and matching Content-Type header. Expires after 5 minutes.
-        path:
-          type: string
-          title: Path
-          description: Path where the file will be stored in the workspace, e.g. "uploads/data.csv".
-      type: object
-      required:
-      - name
-      - uploadUrl
-      - path
-      title: FileUploadResponseItem
-      description: Presigned upload URL for a single file.
-    WorkspaceCreateRequest_2:
-      properties:
-        name:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Name
-      type: object
-      title: WorkspaceCreateRequest
-    WorkspaceFileListResponse:
-      properties:
-        files:
-          items:
-            $ref: '#/components/schemas/WorkspaceFileInfo'
-          type: array
-          title: Files
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-        hasMore:
-          type: boolean
-          title: Hasmore
-          default: false
-      type: object
-      required:
-      - files
-      title: WorkspaceFileListResponse
-    WorkspaceFileUploadRequest:
-      properties:
-        files:
-          items:
-            $ref: '#/components/schemas/WorkspaceFileUploadItem'
-          type: array
-          maxItems: 10
-          minItems: 1
-          title: Files
-        allowOverrides:
-          type: boolean
-          title: Allowoverrides
-          description: When false, return 409 before reserving storage if any uploaded filename would replace an existing workspace file.
-          default: true
-      type: object
-      required:
-      - files
-      title: WorkspaceFileUploadRequest
     WorkspaceSizeInfo:
       properties:
         usedBytes:
@@ -666,16 +618,17 @@ components:
       - usedBytes
       - maxBytes
       title: WorkspaceSizeInfo
-    WorkspaceUpdateRequest_2:
+    WorkspaceFileUploadResponse:
       properties:
-        name:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Name
+        files:
+          items:
+            $ref: '#/components/schemas/WorkspaceFileUploadResponseItem'
+          type: array
+          title: Files
       type: object
-      title: WorkspaceUpdateRequest
+      required:
+      - files
+      title: WorkspaceFileUploadResponse
     WorkspaceFileInfo:
       properties:
         path:
@@ -735,17 +688,89 @@ components:
       - createdAt
       - updatedAt
       title: WorkspaceInfo
-    WorkspaceFileUploadResponse:
+    WorkspaceFileListResponse:
       properties:
         files:
           items:
-            $ref: '#/components/schemas/WorkspaceFileUploadResponseItem'
+            $ref: '#/components/schemas/WorkspaceFileInfo'
           type: array
           title: Files
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
       type: object
       required:
       - files
-      title: WorkspaceFileUploadResponse
+      title: WorkspaceFileListResponse
+    WorkspaceCreateRequest_2:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+      type: object
+      title: WorkspaceCreateRequest
+    WorkspaceFileUploadRequest:
+      properties:
+        files:
+          items:
+            $ref: '#/components/schemas/WorkspaceFileUploadItem'
+          type: array
+          maxItems: 10
+          minItems: 1
+          title: Files
+        allowOverrides:
+          type: boolean
+          title: Allowoverrides
+          description: When false, return 409 before reserving storage if any uploaded filename would replace an existing workspace file.
+          default: true
+      type: object
+      required:
+      - files
+      title: WorkspaceFileUploadRequest
+    WorkspaceUpdateRequest_2:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+      type: object
+      title: WorkspaceUpdateRequest
+    WorkspaceFileUploadItem:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Name
+          description: Filename, e.g. "data.csv"
+        contentType:
+          type: string
+          maxLength: 255
+          title: Contenttype
+          description: MIME type, e.g. "text/csv"
+          default: application/octet-stream
+        size:
+          type: integer
+          maximum: 52428800.0
+          minimum: 1.0
+          title: Size
+          description: Exact file size in bytes; the presigned URL is pinned to it.
+      type: object
+      required:
+      - name
+      - size
+      title: WorkspaceFileUploadItem
     WorkspaceFileUploadResponseItem:
       properties:
         id:
@@ -782,31 +807,6 @@ components:
       - willOverride
       - uploadUrl
       title: WorkspaceFileUploadResponseItem
-    WorkspaceFileUploadItem:
-      properties:
-        name:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Name
-          description: Filename, e.g. "data.csv"
-        contentType:
-          type: string
-          maxLength: 255
-          title: Contenttype
-          description: MIME type, e.g. "text/csv"
-          default: application/octet-stream
-        size:
-          type: integer
-          maximum: 52428800.0
-          minimum: 1.0
-          title: Size
-          description: Exact file size in bytes; the presigned URL is pinned to it.
-      type: object
-      required:
-      - name
-      - size
-      title: WorkspaceFileUploadItem
   securitySchemes:
     APIKeyHeader:
       type: apiKey

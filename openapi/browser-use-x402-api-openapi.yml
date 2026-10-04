@@ -58,6 +58,15 @@ components:
       - msg
       - type
       title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     X402BalanceResponse:
       properties:
         wallet:
@@ -84,15 +93,6 @@ components:
       - total_credits_usd
       - additional_credits_usd
       title: X402BalanceResponse
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
     X402BalanceRequest:
       properties:
         address:
