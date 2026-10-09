@@ -167,3 +167,49 @@ model_token_rates:
       input: '0.36'
       cached_input: '0.072'
       output: '1.44'
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - free
+  - metered
+  - negotiated
+  - subscription
+  units: []
+  plans:
+  - name: Free
+    access: freemium
+    model: free
+    model_how: derived
+    units: []
+    periods: []
+  - name: Pay as you go
+    access: other
+    model: metered
+    model_how: stated
+    units: []
+    periods: []
+  - name: Dev
+    access: other
+    model: subscription
+    model_how: stated
+    units: []
+    periods: []
+  - name: Business
+    access: other
+    model: subscription
+    model_how: stated
+    units: []
+    periods: []
+  - name: Scaleup
+    access: other
+    model: subscription
+    model_how: stated
+    units: []
+    periods: []
+  - name: Enterprise
+    access: negotiated
+    model: negotiated
+    model_how: stated
+    units: []
+    periods: []
