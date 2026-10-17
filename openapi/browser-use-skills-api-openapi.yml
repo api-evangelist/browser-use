@@ -561,36 +561,117 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    SkillCategory:
-      type: string
-      enum:
-      - search
-      - e_commerce
-      - financial
-      - news
-      - real_estate
-      - social_media
-      - travel
-      - marketplace
-      - lead_generation
-      - seo
-      - jobs
-      - developer
-      - media
-      - automation
-      - integration
-      - other
-      title: SkillCategory
-      description: Skill category.
-    HTTPValidationError:
+    CreateSkillResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the created skill
+      type: object
+      required:
+      - id
+      title: CreateSkillResponse
+      description: Response after creating a skill.
+    ExecuteSkillResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          description: Whether the skill execution was successful
+        result:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Result
+          description: Output of the skill execution
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+          description: Error message if the skill execution failed
+        stderr:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Stderr
+          description: Standard error output of the skill execution
+        latencyMs:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Latency in ms
+          description: Latency of the skill execution in milliseconds
+      type: object
+      required:
+      - success
+      title: ExecuteSkillResponse
+      description: Response from executing a skill.
+    ConcurrentSkillCreationsError:
       properties:
         detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
+          type: string
           title: Detail
+          default: Concurrent skill creations are not allowed. Please wait for the current skill creation to finish or cancel it.
       type: object
-      title: HTTPValidationError
+      title: ConcurrentSkillCreationsError
+      description: Error response when concurrent skill creations are attempted
+    InsufficientCreditsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Insufficient credits
+      type: object
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
+    CannotDeleteSkillWhileGeneratingError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Cannot delete skill while it is still generating
+      type: object
+      title: CannotDeleteSkillWhileGeneratingError
+      description: Error response when a skill cannot be deleted while it is still generating
+    CannotRollbackPublicSkillError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Cannot rollback a public skill. Please make the skill private first.
+      type: object
+      title: CannotRollbackPublicSkillError
+      description: Error response when trying to rollback a public skill
+    SkillExecutionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SkillExecutionView'
+          type: array
+          title: Items
+          description: List of executions
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: SkillExecutionListResponse
+      description: Response for listing skill executions.
     ParameterSchema:
       properties:
         name:
@@ -623,27 +704,47 @@ components:
       - type
       title: ParameterSchema
       description: Schema for a skill parameter.
-    ConcurrentSkillCreationsError:
+    SkillCategory:
+      type: string
+      enum:
+      - search
+      - e_commerce
+      - financial
+      - news
+      - real_estate
+      - social_media
+      - travel
+      - marketplace
+      - lead_generation
+      - seo
+      - jobs
+      - developer
+      - media
+      - automation
+      - integration
+      - other
+      title: SkillCategory
+      description: Skill category.
+    EnabledSkillsLimitExceededError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Concurrent skill creations are not allowed. Please wait for the current skill creation to finish or cancel it.
+          default: Enabled skills limit exceeded for your plan
       type: object
-      title: ConcurrentSkillCreationsError
-      description: Error response when concurrent skill creations are attempted
-    RefineSkillResponse:
+      title: EnabledSkillsLimitExceededError
+      description: Error response when trying to enable more skills than allowed by plan
+    SkillExecutionOutputResponse:
       properties:
-        id:
+        downloadUrl:
           type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the skill
+          title: Downloadurl
+          description: Presigned URL for downloading the execution output (valid for 5 minutes)
       type: object
       required:
-      - id
-      title: RefineSkillResponse
-      description: Response after requesting skill refinement.
+      - downloadUrl
+      title: SkillExecutionOutputResponse
+      description: Response containing presigned URL for downloading execution output.
     ParameterType:
       type: string
       enum:
@@ -655,15 +756,6 @@ components:
       - cookie
       title: ParameterType
       description: Type of a skill parameter.
-    EnabledSkillsLimitExceededError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Enabled skills limit exceeded for your plan
-      type: object
-      title: EnabledSkillsLimitExceededError
-      description: Error response when trying to enable more skills than allowed by plan
     CreateSkillRequest:
       properties:
         title:
@@ -696,24 +788,106 @@ components:
       - agentPrompt
       title: CreateSkillRequest
       description: Request to create a new skill via automated generation.
-    TooManyConcurrentActiveSessionsError:
+    ExecuteSkillRequest:
+      properties:
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+          description: Parameters to pass to the skill handler
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+          description: Optional session ID (UUID) for IP persistence.
+      type: object
+      title: ExecuteSkillRequest
+      description: Request to execute a skill.
+    SkillExecutionView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+          description: Unique identifier for the execution
+        skillId:
+          type: string
+          format: uuid
+          title: Skillid
+          description: ID of the skill that was executed
+        status:
+          type: string
+          title: Status
+          description: Execution status (running, completed, failed)
+        success:
+          type: boolean
+          title: Success
+          description: Whether the execution succeeded
+        startedAt:
+          type: string
+          format: date-time
+          title: Startedat
+          description: When the execution started
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finishedat
+          description: When the execution finished
+        latencyMs:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Latencyms
+          description: Execution latency in milliseconds
+        hasOutput:
+          type: boolean
+          title: Hasoutput
+          description: Whether output is available for download
+      type: object
+      required:
+      - id
+      - skillId
+      - status
+      - success
+      - startedAt
+      - finishedAt
+      - latencyMs
+      - hasOutput
+      title: SkillExecutionView
+      description: View for a skill execution.
+    SkillsGenerationStatus:
+      type: string
+      enum:
+      - recording
+      - generating
+      - failed
+      - finished
+      - cancelled
+      - timed_out
+      title: SkillsGenerationStatus
+      description: Status of skill generation.
+    SkillNotFinishedError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
+          default: Skill is not finished
       type: object
-      title: TooManyConcurrentActiveSessionsError
-      description: Error response when user has too many concurrent active sessions
-    InsufficientCreditsError:
+      title: SkillNotFinishedError
+      description: Error response when skill is not finished
+    SkillNotFoundError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Insufficient credits
+          default: Skill not found
       type: object
-      title: InsufficientCreditsError
-      description: Error response when there are insufficient credits
+      title: SkillNotFoundError
+      description: Error response when a skill is not found
     UpdateSkillRequest:
       properties:
         title:
@@ -755,17 +929,43 @@ components:
       type: object
       title: UpdateSkillRequest
       description: Request to update skill metadata.
-    SkillExecutionOutputResponse:
+    HTTPValidationError:
       properties:
-        downloadUrl:
-          type: string
-          title: Downloadurl
-          description: Presigned URL for downloading the execution output (valid for 5 minutes)
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    SkillListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SkillResponse'
+          type: array
+          title: Items
+          description: List of skills
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
       type: object
       required:
-      - downloadUrl
-      title: SkillExecutionOutputResponse
-      description: Response containing presigned URL for downloading execution output.
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: SkillListResponse
+      description: Response for listing skills.
     SkillResponse:
       properties:
         id:
@@ -914,41 +1114,6 @@ components:
       - updatedAt
       title: SkillResponse
       description: Skill information returned by the API.
-    ExecuteSkillResponse:
-      properties:
-        success:
-          type: boolean
-          title: Success
-          description: Whether the skill execution was successful
-        result:
-          anyOf:
-          - {}
-          - type: 'null'
-          title: Result
-          description: Output of the skill execution
-        error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Error
-          description: Error message if the skill execution failed
-        stderr:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Stderr
-          description: Standard error output of the skill execution
-        latencyMs:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Latency in ms
-          description: Latency of the skill execution in milliseconds
-      type: object
-      required:
-      - success
-      title: ExecuteSkillResponse
-      description: Response from executing a skill.
     GenerationNotCancellableError:
       properties:
         detail:
@@ -958,88 +1123,18 @@ components:
       type: object
       title: GenerationNotCancellableError
       description: Error response when generation is not cancellable
-    SkillExecutionView:
+    RefineSkillResponse:
       properties:
         id:
           type: string
           format: uuid
-          title: Id
-          description: Unique identifier for the execution
-        skillId:
-          type: string
-          format: uuid
-          title: Skillid
-          description: ID of the skill that was executed
-        status:
-          type: string
-          title: Status
-          description: Execution status (running, completed, failed)
-        success:
-          type: boolean
-          title: Success
-          description: Whether the execution succeeded
-        startedAt:
-          type: string
-          format: date-time
-          title: Startedat
-          description: When the execution started
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finishedat
-          description: When the execution finished
-        latencyMs:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Latencyms
-          description: Execution latency in milliseconds
-        hasOutput:
-          type: boolean
-          title: Hasoutput
-          description: Whether output is available for download
+          title: ID
+          description: Unique identifier for the skill
       type: object
       required:
       - id
-      - skillId
-      - status
-      - success
-      - startedAt
-      - finishedAt
-      - latencyMs
-      - hasOutput
-      title: SkillExecutionView
-      description: View for a skill execution.
-    SkillsGenerationStatus:
-      type: string
-      enum:
-      - recording
-      - generating
-      - failed
-      - finished
-      - cancelled
-      - timed_out
-      title: SkillsGenerationStatus
-      description: Status of skill generation.
-    ExecuteSkillRequest:
-      properties:
-        parameters:
-          additionalProperties: true
-          type: object
-          title: Parameters
-          description: Parameters to pass to the skill handler
-        sessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Sessionid
-          description: Optional session ID (UUID) for IP persistence.
-      type: object
-      title: ExecuteSkillRequest
-      description: Request to execute a skill.
+      title: RefineSkillResponse
+      description: Response after requesting skill refinement.
     ValidationError:
       properties:
         loc:
@@ -1061,6 +1156,15 @@ components:
       - msg
       - type
       title: ValidationError
+    TooManyConcurrentActiveSessionsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
+      type: object
+      title: TooManyConcurrentActiveSessionsError
+      description: Error response when user has too many concurrent active sessions
     RefineSkillRequest:
       properties:
         feedback:
@@ -1085,110 +1189,6 @@ components:
       - feedback
       title: RefineSkillRequest
       description: Request to refine an existing skill.
-    SkillExecutionListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SkillExecutionView'
-          type: array
-          title: Items
-          description: List of executions
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: SkillExecutionListResponse
-      description: Response for listing skill executions.
-    CannotRollbackPublicSkillError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Cannot rollback a public skill. Please make the skill private first.
-      type: object
-      title: CannotRollbackPublicSkillError
-      description: Error response when trying to rollback a public skill
-    SkillNotFinishedError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Skill is not finished
-      type: object
-      title: SkillNotFinishedError
-      description: Error response when skill is not finished
-    CannotDeleteSkillWhileGeneratingError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Cannot delete skill while it is still generating
-      type: object
-      title: CannotDeleteSkillWhileGeneratingError
-      description: Error response when a skill cannot be deleted while it is still generating
-    SkillNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Skill not found
-      type: object
-      title: SkillNotFoundError
-      description: Error response when a skill is not found
-    CreateSkillResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the created skill
-      type: object
-      required:
-      - id
-      title: CreateSkillResponse
-      description: Response after creating a skill.
-    SkillListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SkillResponse'
-          type: array
-          title: Items
-          description: List of skills
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: SkillListResponse
-      description: Response for listing skills.
   securitySchemes:
     APIKeyHeader:
       type: apiKey

@@ -171,33 +171,15 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    OutputFileNotFoundError:
+    TaskNotFoundError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Output file not found
+          default: Task not found
       type: object
-      title: OutputFileNotFoundError
-      description: Error response when an output file is not found
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    UnsupportedContentTypeError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Unsupported content type
-      type: object
-      title: UnsupportedContentTypeError
-      description: Error response for unsupported content types
+      title: TaskNotFoundError
+      description: Error response when a task is not found
     SessionNotFoundError:
       properties:
         detail:
@@ -207,15 +189,28 @@ components:
       type: object
       title: SessionNotFoundError
       description: Error response when a session is not found
-    DownloadUrlGenerationError:
+    TaskOutputFileResponse:
       properties:
-        detail:
+        id:
           type: string
-          title: Detail
-          default: Failed to generate download URL
+          format: uuid
+          title: ID
+          description: Unique identifier for the file
+        fileName:
+          type: string
+          title: File Name
+          description: Name of the file
+        downloadUrl:
+          type: string
+          title: Download URL
+          description: URL to download the file
       type: object
-      title: DownloadUrlGenerationError
-      description: Error response when download URL generation fails
+      required:
+      - id
+      - fileName
+      - downloadUrl
+      title: TaskOutputFileResponse
+      description: Response model for output file requests.
     UploadFilePresignedUrlResponse:
       properties:
         url:
@@ -250,6 +245,15 @@ components:
       - expiresIn
       title: UploadFilePresignedUrlResponse
       description: Response model for a presigned upload URL.
+    UnsupportedContentTypeError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Unsupported content type
+      type: object
+      title: UnsupportedContentTypeError
+      description: Error response for unsupported content types
     InternalServerError:
       properties:
         detail:
@@ -259,6 +263,15 @@ components:
       type: object
       title: InternalServerError
       description: Error response for internal server errors
+    DownloadUrlGenerationError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Failed to generate download URL
+      type: object
+      title: DownloadUrlGenerationError
+      description: Error response when download URL generation fails
     ValidationError:
       properties:
         loc:
@@ -280,37 +293,6 @@ components:
       - msg
       - type
       title: ValidationError
-    TaskNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Task not found
-      type: object
-      title: TaskNotFoundError
-      description: Error response when a task is not found
-    TaskOutputFileResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the file
-        fileName:
-          type: string
-          title: File Name
-          description: Name of the file
-        downloadUrl:
-          type: string
-          title: Download URL
-          description: URL to download the file
-      type: object
-      required:
-      - id
-      - fileName
-      - downloadUrl
-      title: TaskOutputFileResponse
-      description: Response model for output file requests.
     UploadFileRequest:
       properties:
         fileName:
@@ -350,6 +332,24 @@ components:
       - sizeBytes
       title: UploadFileRequest
       description: Request model for uploading a file to the user's files bucket.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    OutputFileNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Output file not found
+      type: object
+      title: OutputFileNotFoundError
+      description: Error response when an output file is not found
   securitySchemes:
     APIKeyHeader:
       type: apiKey

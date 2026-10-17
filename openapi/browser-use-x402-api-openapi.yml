@@ -58,6 +58,32 @@ components:
       - msg
       - type
       title: ValidationError
+    X402BalanceRequest:
+      properties:
+        address:
+          type: string
+          title: Address
+          description: EVM wallet address that signed the message (0x...).
+        issued_at:
+          type: string
+          title: Issued At
+          description: ISO-8601 UTC timestamp included in the signed message.
+        nonce:
+          type: string
+          title: Nonce
+          description: Random single-use nonce included in the signed message.
+        signature:
+          type: string
+          title: Signature
+          description: EIP-191 personal_sign signature of the canonical message.
+      type: object
+      required:
+      - address
+      - issued_at
+      - nonce
+      - signature
+      title: X402BalanceRequest
+      description: Wallet-signature auth payload for a free, read-only balance check
     HTTPValidationError:
       properties:
         detail:
@@ -93,32 +119,6 @@ components:
       - total_credits_usd
       - additional_credits_usd
       title: X402BalanceResponse
-    X402BalanceRequest:
-      properties:
-        address:
-          type: string
-          title: Address
-          description: EVM wallet address that signed the message (0x...).
-        issued_at:
-          type: string
-          title: Issued At
-          description: ISO-8601 UTC timestamp included in the signed message.
-        nonce:
-          type: string
-          title: Nonce
-          description: Random single-use nonce included in the signed message.
-        signature:
-          type: string
-          title: Signature
-          description: EIP-191 personal_sign signature of the canonical message.
-      type: object
-      required:
-      - address
-      - issued_at
-      - nonce
-      - signature
-      title: X402BalanceRequest
-      description: Wallet-signature auth payload for a free, read-only balance check
   securitySchemes:
     APIKeyHeader:
       type: apiKey

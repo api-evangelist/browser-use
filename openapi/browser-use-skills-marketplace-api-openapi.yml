@@ -213,47 +213,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    SkillNotFinishedError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Skill is not finished
-      type: object
-      title: SkillNotFinishedError
-      description: Error response when skill is not finished
-    SkillCategory:
-      type: string
-      enum:
-      - search
-      - e_commerce
-      - financial
-      - news
-      - real_estate
-      - social_media
-      - travel
-      - marketplace
-      - lead_generation
-      - seo
-      - jobs
-      - developer
-      - media
-      - automation
-      - integration
-      - other
-      title: SkillCategory
-      description: Skill category.
-    SkillsGenerationStatus:
-      type: string
-      enum:
-      - recording
-      - generating
-      - failed
-      - finished
-      - cancelled
-      - timed_out
-      title: SkillsGenerationStatus
-      description: Status of skill generation.
     HTTPValidationError:
       properties:
         detail:
@@ -263,32 +222,6 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    SkillNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Skill not found
-      type: object
-      title: SkillNotFoundError
-      description: Error response when a skill is not found
-    ExecuteSkillRequest:
-      properties:
-        parameters:
-          additionalProperties: true
-          type: object
-          title: Parameters
-          description: Parameters to pass to the skill handler
-        sessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Sessionid
-          description: Optional session ID (UUID) for IP persistence.
-      type: object
-      title: ExecuteSkillRequest
-      description: Request to execute a skill.
     ParameterSchema:
       properties:
         name:
@@ -422,6 +355,27 @@ components:
       - updatedAt
       title: MarketplaceSkillResponse
       description: Skill information returned by the API.
+    SkillCategory:
+      type: string
+      enum:
+      - search
+      - e_commerce
+      - financial
+      - news
+      - real_estate
+      - social_media
+      - travel
+      - marketplace
+      - lead_generation
+      - seo
+      - jobs
+      - developer
+      - media
+      - automation
+      - integration
+      - other
+      title: SkillCategory
+      description: Skill category.
     MarketplaceSkillListResponse:
       properties:
         items:
@@ -450,47 +404,6 @@ components:
       - pageSize
       title: MarketplaceSkillListResponse
       description: Response for listing skills.
-    InsufficientCreditsError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Insufficient credits
-      type: object
-      title: InsufficientCreditsError
-      description: Error response when there are insufficient credits
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    ParameterType:
-      type: string
-      enum:
-      - string
-      - number
-      - boolean
-      - object
-      - array
-      - cookie
-      title: ParameterType
-      description: Type of a skill parameter.
     SkillResponse:
       properties:
         id:
@@ -639,6 +552,15 @@ components:
       - updatedAt
       title: SkillResponse
       description: Skill information returned by the API.
+    SkillNotFinishedError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Skill is not finished
+      type: object
+      title: SkillNotFinishedError
+      description: Error response when skill is not finished
     ExecuteSkillResponse:
       properties:
         success:
@@ -674,6 +596,84 @@ components:
       - success
       title: ExecuteSkillResponse
       description: Response from executing a skill.
+    SkillNotFoundError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Skill not found
+      type: object
+      title: SkillNotFoundError
+      description: Error response when a skill is not found
+    InsufficientCreditsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Insufficient credits
+      type: object
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
+    ParameterType:
+      type: string
+      enum:
+      - string
+      - number
+      - boolean
+      - object
+      - array
+      - cookie
+      title: ParameterType
+      description: Type of a skill parameter.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ExecuteSkillRequest:
+      properties:
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+          description: Parameters to pass to the skill handler
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+          description: Optional session ID (UUID) for IP persistence.
+      type: object
+      title: ExecuteSkillRequest
+      description: Request to execute a skill.
+    SkillsGenerationStatus:
+      type: string
+      enum:
+      - recording
+      - generating
+      - failed
+      - finished
+      - cancelled
+      - timed_out
+      title: SkillsGenerationStatus
+      description: Status of skill generation.
   securitySchemes:
     APIKeyHeader:
       type: apiKey
