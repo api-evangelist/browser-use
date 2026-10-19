@@ -1,13 +1,9 @@
 openapi: 3.2.0
 info:
-  title: Browser Use Browsers API
-  version: '1.0'
-  description: 'Operations tagged Browsers across 3 of this provider''s published API definitions: browser-use-api-v2-openapi.json, browser-use-api-v3-openapi.json, browser-use-api-v4-openapi.json. Each path carries the servers of the definition it was published in.'
+  title: Browser Use Public API v4 Browsers API
+  summary: Browser Use agent runs API (v4)
+  version: 4.0.0
 servers:
-- url: https://api.browser-use.com/api/v2
-  description: Production server
-- url: https://api.browser-use.com/api/v3
-  description: Production server
 - url: https://api.browser-use.com/api/v4
   description: Production server
 tags:
@@ -138,14 +134,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BrowserSessionItemView'
+        '402':
+          description: Insufficient credits, or the API key reached its monthly spend limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeySpendLimitError'
         '403':
-          description: Session timeout limit exceeded (maximum 4 hours)
+          description: Session timeout limit exceeded (maximum 4 hours), or extensions are not available to this project
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionTimeoutLimitExceededError'
         '404':
-          description: Profile not found
+          description: Profile or extension not found
           content:
             application/json:
               schema:
@@ -162,9 +164,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TooManyConcurrentActiveSessionsError'
-    servers:
-    - url: https://api.browser-use.com/api/v2
-      description: Production server
   /browsers/{session_id}:
     get:
       tags:
@@ -249,9 +248,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v2
-      description: Production server
   /browsers/{session_id}/downloads:
     get:
       tags:
@@ -319,92 +315,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v2
-      description: Production server
 components:
   schemas:
-    CreateBrowserSessionRequest:
-      properties:
-        profileId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Profile ID
-          description: The ID of the profile to use for the session
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          title: Proxy Country Code
-          description: Country code for proxy location. Defaults to US. Set to null to disable proxy.
-          default: us
-        metadata:
-          anyOf:
-          - additionalProperties:
-              type: string
-            type: object
-          - type: 'null'
-          title: Metadata
-          description: Labels for this browser. Up to 10 key-value pairs. Filterable on the browsers list and in the dashboard history.
-        timeout:
-          type: integer
-          title: Timeout
-          description: The timeout for the session in minutes. All users can use up to 240 minutes (4 hours). Browser sessions are charged $0.02/hour.
-          default: 60
-          ge: 1
-          le: 240
-        browserScreenWidth:
-          anyOf:
-          - type: integer
-            maximum: 6144.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Width
-          description: Custom screen width in pixels for the browser.
-        browserScreenHeight:
-          anyOf:
-          - type: integer
-            maximum: 3456.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Height
-          description: Custom screen height in pixels for the browser.
-        allowResizing:
-          type: boolean
-          title: Allow Resizing
-          description: Whether to allow the browser to be resized during the session (not recommended since it reduces stealthiness).
-          default: false
-        customProxy:
-          anyOf:
-          - $ref: '#/components/schemas/CustomProxy'
-          - type: 'null'
-          title: Custom Proxy
-          description: Custom proxy settings to use for the session. If not provided, our proxies will be used. Custom proxies are available on any active subscription.
-        enableRecording:
-          type: boolean
-          title: Enable Recording
-          description: If True, enables session recording. Defaults to False.
-          default: false
-      type: object
-      title: CreateBrowserSessionRequest
-      description: Request model for creating a browser session.
-    SessionNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Session not found
-      type: object
-      title: SessionNotFoundError
-      description: Error response when a session is not found
-    BrowserSessionUpdateAction:
-      type: string
-      enum:
-      - stop
-      title: BrowserSessionUpdateAction
-      description: "Available actions that can be performed on a browser session\n\nAttributes:\n    STOP: Stop the browser session (cannot be undone)"
     SessionTimeoutLimitExceededError:
       properties:
         detail:
@@ -414,128 +326,28 @@ components:
       type: object
       title: SessionTimeoutLimitExceededError
       description: Error response when session timeout exceeds the maximum allowed limit
-    BrowserDownloadListResponse:
-      properties:
-        files:
-          items:
-            $ref: '#/components/schemas/BrowserDownloadFile'
-          type: array
-          title: Files
-          description: List of files downloaded by the browser
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-          description: Cursor for the next page. Pass as the `cursor` query parameter to fetch the next page.
-        hasMore:
-          type: boolean
-          title: Hasmore
-          description: Whether there are more files beyond this page.
-          default: false
-      type: object
-      required:
-      - files
-      title: BrowserDownloadListResponse
-      description: Paginated list of browser downloads with optional presigned URLs.
-    BrowserSessionStatus:
-      type: string
-      enum:
-      - active
-      - stopped
-      title: BrowserSessionStatus
-      description: "Enumeration of possible browser session states\n\nAttributes:\n    ACTIVE: Session is currently active and running (browser is running)\n    STOPPED: Session has been stopped and is no longer active (browser is stopped)"
-    BrowserSessionView:
+    BrowserExtensionView:
       properties:
         id:
           type: string
           format: uuid
           title: ID
-          description: Unique identifier for the session
-        status:
-          $ref: '#/components/schemas/BrowserSessionStatus'
-          title: Status
-          description: Current status of the session (active/stopped)
-        liveUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Live URL
-          description: URL where the browser can be viewed live in real-time
-        cdpUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: CDP URL
-          description: Chrome DevTools Protocol URL for browser automation
-        timeoutAt:
+          description: Extension ID from POST /api/v4/extensions
+        runtimeId:
           type: string
-          format: date-time
-          title: Timeout At
-          description: Timestamp when the session will timeout
-        startedAt:
+          title: Runtime ID
+          description: Chromium extension ID, as in chrome-extension://{runtimeId}/
+        version:
           type: string
-          format: date-time
-          title: Started At
-          description: Timestamp when the session was created and started
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Timestamp when the session was stopped (None if still active)
-        proxyUsedMb:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Used MB
-          description: Amount of proxy data used in MB
-          default: '0'
-        proxyCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Cost
-          description: Cost of proxy usage in USD
-          default: '0'
-        browserCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Browser Cost
-          description: Cost of browser session hosting in USD
-          default: '0'
-        agentSessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Agent Session ID
-          description: ID of the agent session that created this browser (None for standalone BaaS sessions)
-        recordingUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Recording URL
-          description: 'Presigned URL to download the session recording, if recording was enabled. Only populated on GET /api/v2/browsers/{session_id}: the upload starts when the browser stops, so it is never ready in the stop response.'
-        recordingAvailable:
-          type: boolean
-          title: Recording Available
-          description: 'False when a recording can never appear for this session: recording was disabled, or the browser stopped long enough ago that the upload is not coming. Only ever false from proof, so a failed recording lookup leaves it true. Clients polling for `recordingUrl` must stop when this is false.'
-          default: true
-        metadata:
-          additionalProperties:
-            type: string
-          type: object
-          title: Metadata
-          description: Caller-supplied labels set when the browser was created.
-          default: {}
+          title: Version
+          description: Version from the extension manifest
       type: object
       required:
       - id
-      - status
-      - timeoutAt
-      - startedAt
-      title: BrowserSessionView
-      description: View model for representing a browser session.
+      - runtimeId
+      - version
+      title: BrowserExtensionView
+      description: An extension installed in a browser session.
     CustomProxy:
       properties:
         host:
@@ -577,63 +389,6 @@ components:
       - port
       title: CustomProxy
       description: Request model for creating a custom proxy.
-    TooManyConcurrentActiveSessionsError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
-      type: object
-      title: TooManyConcurrentActiveSessionsError
-      description: Error response when user has too many concurrent active sessions
-    UpdateBrowserSessionRequest:
-      properties:
-        action:
-          $ref: '#/components/schemas/BrowserSessionUpdateAction'
-          title: Action
-          description: The action to perform on the session
-      type: object
-      required:
-      - action
-      title: UpdateBrowserSessionRequest
-      description: Request model for updating browser session state.
-    ProfileNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Profile not found
-      type: object
-      title: ProfileNotFoundError
-      description: Error response when a profile is not found
-    BrowserSessionListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/BrowserSessionItemView'
-          type: array
-          title: Items
-          description: List of browser session views for the current page
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: BrowserSessionListResponse
-      description: Response model for paginated browser session list requests.
     ProxyCountryCode:
       type: string
       enum:
@@ -886,27 +641,150 @@ components:
       - zm
       - zw
       title: ProxyCountryCode
-    ValidationError:
+    SessionNotFoundError:
       properties:
-        loc:
+        detail:
+          type: string
+          title: Detail
+          default: Session not found
+      type: object
+      title: SessionNotFoundError
+      description: Error response when a session is not found
+    BrowserSessionView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the session
+        status:
+          $ref: '#/components/schemas/BrowserSessionStatus'
+          title: Status
+          description: Current status of the session (active/stopped)
+        liveUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Live URL
+          description: URL where the browser can be viewed live in real-time
+        cdpUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: CDP URL
+          description: Chrome DevTools Protocol URL for browser automation
+        timeoutAt:
+          type: string
+          format: date-time
+          title: Timeout At
+          description: Timestamp when the session will timeout
+        startedAt:
+          type: string
+          format: date-time
+          title: Started At
+          description: Timestamp when the session was created and started
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+          description: Timestamp when the session was stopped (None if still active)
+        proxyUsedMb:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Proxy Used MB
+          description: Amount of proxy data used in MB
+          default: '0'
+        proxyCost:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Proxy Cost
+          description: Cost of proxy usage in USD
+          default: '0'
+        browserCost:
+          type: string
+          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Browser Cost
+          description: Cost of browser session hosting in USD
+          default: '0'
+        agentSessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Agent Session ID
+          description: ID of the agent session that created this browser (None for standalone BaaS sessions)
+        recordingUrl:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Recording URL
+          description: 'Presigned URL to download the session recording, if recording was enabled. Only populated on GET /api/v2/browsers/{session_id}: the upload starts when the browser stops, so it is never ready in the stop response.'
+        recordingAvailable:
+          type: boolean
+          title: Recording Available
+          description: 'False when a recording can never appear for this session: recording was disabled, or the browser stopped long enough ago that the upload is not coming. Only ever false from proof, so a failed recording lookup leaves it true. Clients polling for `recordingUrl` must stop when this is false.'
+          default: true
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+          title: Metadata
+          description: Caller-supplied labels set when the browser was created.
+          default: {}
+        extensions:
           items:
-            anyOf:
-            - type: string
-            - type: integer
+            $ref: '#/components/schemas/BrowserExtensionView'
           type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
+          title: Extensions
+          description: Extensions installed in the browser, in the order of `extensionIds`.
+          default: []
       type: object
       required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
+      - id
+      - status
+      - timeoutAt
+      - startedAt
+      title: BrowserSessionView
+      description: View model for representing a browser session.
+    BrowserSessionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/BrowserSessionItemView'
+          type: array
+          title: Items
+          description: List of browser session views for the current page
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: BrowserSessionListResponse
+      description: Response model for paginated browser session list requests.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     BrowserSessionItemView:
       properties:
         id:
@@ -985,6 +863,13 @@ components:
           title: Metadata
           description: Caller-supplied labels set when the browser was created.
           default: {}
+        extensions:
+          items:
+            $ref: '#/components/schemas/BrowserExtensionView'
+          type: array
+          title: Extensions
+          description: Extensions installed in the browser, in the order of `extensionIds`.
+          default: []
       type: object
       required:
       - id
@@ -993,44 +878,57 @@ components:
       - startedAt
       title: BrowserSessionItemView
       description: View model for representing a browser session in list views.
-    HTTPValidationError:
+    BrowserDownloadListResponse:
       properties:
-        detail:
+        files:
           items:
-            $ref: '#/components/schemas/ValidationError'
+            $ref: '#/components/schemas/BrowserDownloadFile'
           type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    BrowserDownloadFile:
-      properties:
-        path:
-          type: string
-          title: Path
-          description: File name (basename relative to the session downloads prefix)
-        size:
-          type: integer
-          title: Size
-          description: File size in bytes
-        lastModified:
-          type: string
-          format: date-time
-          title: Lastmodified
-          description: When the file was last modified in S3
-        url:
+          title: Files
+          description: List of files downloaded by the browser
+        nextCursor:
           anyOf:
           - type: string
           - type: 'null'
-          title: Url
-          description: Presigned download URL (15 min expiry). Only included when `includeUrls=true`.
+          title: Nextcursor
+          description: Cursor for the next page. Pass as the `cursor` query parameter to fetch the next page.
+        hasMore:
+          type: boolean
+          title: Hasmore
+          description: Whether there are more files beyond this page.
+          default: false
       type: object
       required:
-      - path
-      - size
-      - lastModified
-      title: BrowserDownloadFile
-      description: A single file the browser downloaded during the session.
-    CreateBrowserSessionRequest_2:
+      - files
+      title: BrowserDownloadListResponse
+      description: Paginated list of browser downloads with optional presigned URLs.
+    TooManyConcurrentActiveSessionsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
+      type: object
+      title: TooManyConcurrentActiveSessionsError
+      description: Error response when user has too many concurrent active sessions
+    UpdateBrowserSessionRequest:
+      properties:
+        action:
+          $ref: '#/components/schemas/BrowserSessionUpdateAction'
+          title: Action
+          description: The action to perform on the session
+      type: object
+      required:
+      - action
+      title: UpdateBrowserSessionRequest
+      description: Request model for updating browser session state.
+    BrowserSessionUpdateAction:
+      type: string
+      enum:
+      - stop
+      title: BrowserSessionUpdateAction
+      description: "Available actions that can be performed on a browser session\n\nAttributes:\n    STOP: Stop the browser session (cannot be undone)"
+    CreateBrowserSessionRequest:
       properties:
         profileId:
           anyOf:
@@ -1046,6 +944,14 @@ components:
           title: Proxy Country Code
           description: Country code for proxy location. Defaults to US. Set to null to disable proxy.
           default: us
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Metadata
+          description: Labels for this browser. Up to 10 key-value pairs. Filterable on the browsers list and in the dashboard history.
         timeout:
           type: integer
           title: Timeout
@@ -1074,121 +980,140 @@ components:
           title: Allow Resizing
           description: Whether to allow the browser to be resized during the session (not recommended since it reduces stealthiness).
           default: false
+        pdfRendererEnabled:
+          type: boolean
+          title: PDF Renderer Enabled
+          description: Whether Chrome renders PDFs in a tab. Set to false to stop the in-tab render; the file is saved to the session's download directory either way.
+          default: true
+        solveCaptchas:
+          type: boolean
+          title: Solve Captchas
+          description: Whether the browser detects and solves CAPTCHAs on its own. Set to false to handle CAPTCHAs yourself. Defaults to true.
+          default: true
         customProxy:
           anyOf:
           - $ref: '#/components/schemas/CustomProxy'
           - type: 'null'
           title: Custom Proxy
-          description: Custom proxy settings to use for the session. If not provided, our proxies will be used. Custom proxies are available on any active subscription.
+          description: Custom proxy settings to use for the session. If not provided, our proxies will be used.
         enableRecording:
           type: boolean
           title: Enable Recording
           description: If True, enables session recording. Defaults to False.
           default: false
-        metadata:
-          anyOf:
-          - additionalProperties:
-              type: string
-            maxProperties: 10
-            type: object
-          - type: 'null'
-          title: Metadata
-          description: Labels for this browser. Up to 10 key-value pairs. Filterable on the browsers list and in the dashboard history.
+        extensionIds:
+          items:
+            type: string
+            format: uuid
+          type: array
+          maxItems: 3
+          title: Extension IDs
+          description: Up to 3 ready extensions from POST /api/v4/extensions to install before the browser starts.
+          default: []
       type: object
       title: CreateBrowserSessionRequest
       description: Request model for creating a browser session.
-    BrowserSessionView_2:
+    BrowserSessionStatus:
+      type: string
+      enum:
+      - active
+      - stopped
+      title: BrowserSessionStatus
+      description: "Enumeration of possible browser session states\n\nAttributes:\n    ACTIVE: Session is currently active and running (browser is running)\n    STOPPED: Session has been stopped and is no longer active (browser is stopped)"
+    ProfileNotFoundError:
       properties:
-        id:
+        detail:
           type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the session
-        status:
-          $ref: '#/components/schemas/BrowserSessionStatus'
-          title: Status
-          description: Current status of the session (active/stopped)
-        liveUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Live URL
-          description: URL where the browser can be viewed live in real-time
-        cdpUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: CDP URL
-          description: Chrome DevTools Protocol URL for browser automation
-        timeoutAt:
+          title: Detail
+          default: Profile not found
+      type: object
+      title: ProfileNotFoundError
+      description: Error response when a profile is not found
+    APIKeySpendLimitDetail:
+      properties:
+        code:
           type: string
-          format: date-time
-          title: Timeout At
-          description: Timestamp when the session will timeout
-        startedAt:
+          title: Code
+          default: api_key_monthly_spend_limit_reached
+        message:
           type: string
-          format: date-time
-          title: Started At
-          description: Timestamp when the session was created and started
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Timestamp when the session was stopped (None if still active)
-        proxyUsedMb:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Used MB
-          description: Amount of proxy data used in MB
-          default: '0'
-        proxyCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Cost
-          description: Cost of proxy usage in USD
-          default: '0'
-        browserCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Browser Cost
-          description: Cost of browser session hosting in USD
-          default: '0'
-        agentSessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Agent Session ID
-          description: ID of the agent session that created this browser (None for standalone BaaS sessions)
-        recordingUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Recording URL
-          description: 'Presigned URL to download the session recording, if recording was enabled. Only populated on GET /api/v2/browsers/{session_id}: the upload starts when the browser stops, so it is never ready in the stop response.'
-        metadata:
-          additionalProperties:
-            type: string
-          type: object
-          title: Metadata
-          description: Caller-supplied labels set when the browser was created.
-          default: {}
+          title: Message
+        cap:
+          type: number
+          title: Cap
+        spent:
+          type: number
+          title: Spent
       type: object
       required:
-      - id
-      - status
-      - timeoutAt
-      - startedAt
-      title: BrowserSessionView
-      description: View model for representing a browser session.
+      - message
+      - cap
+      - spent
+      title: APIKeySpendLimitDetail
+      description: Machine-readable 402 detail shared by run and browser creation.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    BrowserDownloadFile:
+      properties:
+        path:
+          type: string
+          title: Path
+          description: File name (basename relative to the session downloads prefix)
+        size:
+          type: integer
+          title: Size
+          description: File size in bytes
+        lastModified:
+          type: string
+          format: date-time
+          title: Lastmodified
+          description: When the file was last modified in S3
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+          description: Presigned download URL (15 min expiry). Only included when `includeUrls=true`.
+      type: object
+      required:
+      - path
+      - size
+      - lastModified
+      title: BrowserDownloadFile
+      description: A single file the browser downloaded during the session.
+    APIKeySpendLimitError:
+      properties:
+        detail:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/APIKeySpendLimitDetail'
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: APIKeySpendLimitError
+      description: FastAPI wraps endpoint errors in a top-level ``detail`` field.
   securitySchemes:
     APIKeyHeader:
       type: apiKey
       in: header
       name: X-Browser-Use-API-Key
-x-refined-from:
-- browser-use-api-v2-openapi.json
-- browser-use-api-v3-openapi.json
-- browser-use-api-v4-openapi.json

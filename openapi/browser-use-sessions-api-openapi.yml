@@ -1,13 +1,9 @@
 openapi: 3.2.0
 info:
-  title: Browser Use Sessions API
-  version: '1.0'
-  description: 'Operations tagged Sessions across 3 of this provider''s published API definitions: browser-use-api-v2-openapi.json, browser-use-api-v3-openapi.json, browser-use-api-v4-openapi.json. Each path carries the servers of the definition it was published in.'
+  title: Browser Use Public API v4 Sessions API
+  summary: Browser Use agent runs API (v4)
+  version: 4.0.0
 servers:
-- url: https://api.browser-use.com/api/v2
-  description: Production server
-- url: https://api.browser-use.com/api/v3
-  description: Production server
 - url: https://api.browser-use.com/api/v4
   description: Production server
 tags:
@@ -18,36 +14,54 @@ paths:
       tags:
       - Sessions
       summary: List Sessions
-      description: Get paginated list of AI agent sessions with optional status filtering.
+      description: 'List the project''s V4 sessions — one row per session (its most recent
+
+        run), most-recent first.
+
+
+        A session is a conversation: follow-up runs reuse the same
+
+        public_session_id, so GET /api/v4/runs would list one row per RUN. This
+
+        collapses to one row per SESSION directly in Postgres with DISTINCT ON, so a
+
+        chatty session with 100 runs is still a single row (no scan amplification),
+
+        and selects only the slim columns the session list needs — never the heavy
+
+        per-run text/token/cost fields.
+
+
+        Keyset-paginated on the latest run''s (created_at, id): pass `next_cursor`
+
+        back as `cursor` to page. Offset/COUNT was dropped — it doesn''t scale on
+
+        projects with many sessions.'
       operationId: list_sessions_sessions_get
       security:
       - APIKeyHeader: []
       parameters:
-      - name: pageSize
+      - name: limit
         in: query
         required: false
         schema:
           type: integer
           maximum: 100
           minimum: 1
-          default: 10
-          title: Pagesize
-      - name: pageNumber
-        in: query
-        required: false
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-          title: Pagenumber
-      - name: filterBy
+          description: Max sessions per page (max 100).
+          default: 20
+          title: Limit
+        description: Max sessions per page (max 100).
+      - name: cursor
         in: query
         required: false
         schema:
           anyOf:
-          - $ref: '#/components/schemas/SessionStatus'
+          - type: string
           - type: 'null'
-          title: Filterby
+          description: Keyset cursor from a prior response.
+          title: Cursor
+        description: Keyset cursor from a prior response.
       responses:
         '200':
           description: Successful Response
@@ -55,66 +69,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionListResponse'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '400':
+          description: Malformed pagination cursor.
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /sessions/{session_id}/purge:
     post:
       tags:
       - Sessions
-      summary: Create Session
-      description: Create a new session with a new task.
-      operationId: create_session_sessions_post
+      summary: Purge Session
+      description: 'Purge V4 session data; return 202 while active work or uploads defer deletion.
+
+
+        Redacts DB records and deletes S3 objects (bcode state, workspace files,
+
+        recordings, downloads, staging uploads) for every run in the session. Same
+
+        cleanup the ZDR cron performs, but on-demand; outstanding upload grants defer physical deletion. V4
+
+        analog of the V2 POST /sessions/{id}/purge. Surfaces shared with a still-live
+
+        sibling run are deferred by the same guards the cron uses.'
+      operationId: purge_session_sessions__session_id__purge_post
       security:
       - APIKeyHeader: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSessionRequest'
-              default:
-                proxyCountryCode: us
-                persistMemory: true
-                keepAlive: true
-                enableRecording: false
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
       responses:
-        '201':
+        '204':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionItemView'
-        '402':
-          description: Insufficient credits to start a session
+        '202':
+          description: Purge pending active work or outstanding uploads.
+        '403':
+          description: Project is not ZDR-enabled.
         '404':
-          description: Profile not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProfileNotFoundError'
+          description: Session not found.
         '422':
-          description: Request validation failed
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationError'
-        '429':
-          description: Too many concurrent active sessions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TooManyConcurrentActiveSessionsError'
-    servers:
-    - url: https://api.browser-use.com/api/v2
-      description: Production server
+                $ref: '#/components/schemas/HTTPValidationError'
   /sessions/{session_id}:
     get:
       tags:
       - Sessions
       summary: Get Session
-      description: Get detailed session information including status, URLs, and task details.
+      description: 'Session detail — the same slim shape as one GET /sessions row (its
+
+        latest run). Doubles as the busy/idle poll for a conversation (POLL rate
+
+        bucket): slim columns only, indexed public_session_id lookup, never the
+
+        heavy result/token fields.'
       operationId: get_session_sessions__session_id__get
       security:
       - APIKeyHeader: []
@@ -132,13 +151,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionView'
+                $ref: '#/components/schemas/SessionInfo'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
         '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionNotFoundError'
+          description: Run, session, workspace, or profile not found.
         '422':
           description: Validation Error
           content:
@@ -149,7 +166,18 @@ paths:
       tags:
       - Sessions
       summary: Update Session
-      description: Stop a session and all its running tasks.
+      description: 'Rename a session.
+
+
+        `session_title` is denormalized onto every run in the session (the session
+
+        list reads the latest run), so a rename writes them all in one UPDATE. Null
+
+        clears the name and the UI falls back to the opening task — it does NOT
+
+        re-run title generation, which only fills rows where the title IS NULL and
+
+        so would silently overwrite the clear.'
       operationId: update_session_sessions__session_id__patch
       security:
       - APIKeyHeader: []
@@ -166,31 +194,53 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateSessionRequest'
+              $ref: '#/components/schemas/SessionUpdateRequest'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionView'
+                $ref: '#/components/schemas/SessionInfo'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
         '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionNotFoundError'
+          description: Run, session, workspace, or profile not found.
         '422':
-          description: Request validation failed
+          description: Validation Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationError'
+                $ref: '#/components/schemas/HTTPValidationError'
     delete:
       tags:
       - Sessions
       summary: Delete Session
-      description: Delete a session with all its tasks.
+      description: 'Delete a session: it disappears from the session lists and can no longer
+
+        be opened or continued.
+
+
+        Soft delete (mirrors V2''s `is_archived`): the runs, events and usage records
+
+        stay in place so billing and analytics keep reconciling, and ZDR purge is the
+
+        only thing that ever destroys V4 content. Idempotent — deleting twice is a
+
+        no-op 204.
+
+
+        An in-flight run is cancelled first, and pending queued messages are
+
+        cancelled too; otherwise the drain would dispatch a follow-up run whose
+
+        `session_archived_at` is NULL and resurrect the session. Cancel is forwarded
+
+        to CP before anything is written (and outside the queue lock, per the
+
+        enqueue path''s ordering), so a CP failure (502) leaves the session visible
+
+        rather than hiding a run that is still burning credits.'
       operationId: delete_session_sessions__session_id__delete
       security:
       - APIKeyHeader: []
@@ -205,187 +255,27 @@ paths:
       responses:
         '204':
           description: Successful Response
-        '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionNotFoundError'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v2
-      description: Production server
-  /sessions/{session_id}/purge:
-    post:
-      tags:
-      - Sessions
-      summary: Purge Session
-      description: 'Immediately purge all data for a session (ZDR projects only).
-
-
-        Redacts PII from database records and deletes all S3 objects (screenshots,
-
-        output files, uploaded files, logs, history, downloads, agent state) for the
-
-        given session. This is the same cleanup the ZDR cron performs, but on-demand
-
-        and scoped to a single session with no grace period.'
-      operationId: purge_session_sessions__session_id__purge_post
-      security:
-      - APIKeyHeader: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          title: Session Id
-      responses:
-        '204':
-          description: Successful Response
         '403':
-          description: Project is not ZDR-enabled
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
         '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionNotFoundError'
+          description: Run, session, workspace, or profile not found.
+        '502':
+          description: The request could not be forwarded to the control plane.
+        '503':
+          description: The run is finishing; retry the cancel after Retry-After seconds.
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v2
-      description: Production server
-  /sessions/{session_id}/public-share:
-    get:
+  /sessions/{session_id}/cost-cap:
+    patch:
       tags:
       - Sessions
-      summary: Get Session Public Share
-      description: Get public share information including URL and usage statistics.
-      operationId: get_session_public_share_sessions__session_id__public_share_get
-      security:
-      - APIKeyHeader: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          title: Session Id
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShareView'
-        '404':
-          description: Session or share not found
-          content:
-            application/json:
-              schema:
-                anyOf:
-                - $ref: '#/components/schemas/SessionNotFoundError'
-                - $ref: '#/components/schemas/ShareNotFoundError'
-                title: Response 404 Get Session Public Share Sessions  Session Id  Public Share Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    post:
-      tags:
-      - Sessions
-      summary: Create Session Public Share
-      description: Create or return existing public share for a session.
-      operationId: create_session_public_share_sessions__session_id__public_share_post
-      security:
-      - APIKeyHeader: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          title: Session Id
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ShareView'
-        '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionNotFoundError'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    delete:
-      tags:
-      - Sessions
-      summary: Delete Session Public Share
-      description: Remove public share for a session.
-      operationId: delete_session_public_share_sessions__session_id__public_share_delete
-      security:
-      - APIKeyHeader: []
-      parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          title: Session Id
-      responses:
-        '204':
-          description: Successful Response
-        '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionNotFoundError'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v2
-      description: Production server
-  /sessions/{session_id}/stop:
-    post:
-      tags:
-      - Sessions
-      summary: Stop Session
-      description: 'Stop a session or the running task.
-
-
-        - strategy=session (default): destroy sandbox entirely, session → stopped.
-
-        - strategy=task: stop the running query, session stays alive (→ idle).'
-      operationId: stop_session_sessions__session_id__stop_post
+      summary: Update Session Cost Cap
+      description: Update the active run cap without starting another run.
+      operationId: update_session_cost_cap_sessions__session_id__cost_cap_patch
       security:
       - APIKeyHeader: []
       parameters:
@@ -397,36 +287,56 @@ paths:
           format: uuid
           title: Session Id
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              anyOf:
-              - $ref: '#/components/schemas/StopSessionRequest'
-              - type: 'null'
-              title: Body
+              $ref: '#/components/schemas/SessionCostCapRequest'
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionResponse'
+                $ref: '#/components/schemas/SessionCostCapResponse'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v3
-      description: Production server
-  /sessions/{session_id}/messages:
+  /sessions/{session_id}/cost:
     get:
       tags:
       - Sessions
-      summary: List Session Messages
-      description: Return messages for a session with cursor-based pagination (chronological order).
-      operationId: list_session_messages_sessions__session_id__messages_get
+      summary: Get Session Cost
+      description: 'Everything this session has cost so far, split by source.
+
+
+        A run''s `total_cost_usd` is its LLM (and web-search) charge only. Browser
+
+        time and proxy bandwidth are metered against the session''s browser, which
+
+        outlives any one run — so this is the endpoint for the session''s full cost.
+
+
+        These are recorded usage costs, not an invoice total: promotional waivers
+
+        and credits are applied downstream in billing, so a session run under a
+
+        promotion can report cost here that was never charged.
+
+
+        Costs keep moving after a run reports `finished`: LLM calls settle up to
+
+        about 90 seconds later, and the browser accrues time and proxy traffic
+
+        until it stops.'
+      operationId: get_session_cost_sessions__session_id__cost_get
       security:
       - APIKeyHeader: []
       parameters:
@@ -437,55 +347,23 @@ paths:
           type: string
           format: uuid
           title: Session Id
-      - name: after
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          description: 'Cursor: return messages after this message ID'
-          title: After
-        description: 'Cursor: return messages after this message ID'
-      - name: before
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          description: 'Cursor: return messages before this message ID'
-          title: Before
-        description: 'Cursor: return messages before this message ID'
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          maximum: 100
-          minimum: 1
-          description: Maximum number of messages to return (max 100).
-          default: 10
-          title: Limit
-        description: Maximum number of messages to return (max 100).
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageListResponse'
+                $ref: '#/components/schemas/SessionCostResponse'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v3
-      description: Production server
   /sessions/{session_id}/queue:
     post:
       tags:
@@ -510,6 +388,14 @@ paths:
           type: string
           format: uuid
           title: Session Id
+      - name: X-V4-Queue-Deduplicate
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-V4-Queue-Deduplicate
       requestBody:
         required: true
         content:
@@ -523,6 +409,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QueuedMessage'
+        '402':
+          description: The project has no credits available, or the authenticating API key has reached its recorded monthly total-spend soft stop.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeySpendLimitError'
         '403':
           description: Zero Data Retention is enabled on the project (V4 unsupported).
         '404':
@@ -539,20 +431,38 @@ paths:
       tags:
       - Sessions
       summary: List Session Queue
-      description: 'List open messages, the latest handoff row, and all steering cutoffs.
+      description: 'List open messages, recently delivered queued messages, and steering cutoffs.
 
 
-        Includes live dispatch claims so clients can restore an accepted steering
+        Includes live dispatch claims so clients can restore an accepted queued
 
-        handoff after a refresh without briefly losing its waiting state. The latest
+        message after a refresh without briefly losing its waiting state.
 
-        consumed interrupt bridges the primary-write/read-replica gap before its
 
-        replacement run appears; clients discard it once that run is visible. Compact
+        Consumed QUEUE rows are returned too, capped at the most recent
 
-        per-source cutoffs preserve every historical interrupted transcript boundary
+        _DELIVERED_QUEUE_HISTORY, plus up to _AGENCY_DELIVERED_QUEUE_HISTORY compact
 
-        without returning every historical steering message and its attachments.'
+        Agency choice and generation receipts so inbox state survives refresh. A message absorbed mid-run is announced by a
+
+        `queued_input_injected` event carrying only its input id, so the chat has no
+
+        other source for the text to render. The cap bounds this response because
+
+        clients poll it while a run is active; a session with more delivered
+
+        follow-ups than the cap renders its oldest injected bubbles without text.
+
+
+        The latest consumed interrupt bridges the primary-write/read-replica gap
+
+        before its replacement run appears; clients discard it once that run is
+
+        visible. Compact per-source cutoffs preserve every historical interrupted
+
+        transcript boundary without returning every historical steering message and
+
+        its attachments.'
       operationId: list_session_queue_sessions__session_id__queue_get
       security:
       - APIKeyHeader: []
@@ -581,9 +491,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v4
-      description: Production server
   /sessions/{session_id}/queue/{message_id}:
     get:
       tags:
@@ -665,1436 +572,120 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-    servers:
-    - url: https://api.browser-use.com/api/v4
-      description: Production server
+  /sessions/{session_id}/share:
+    get:
+      tags:
+      - Sessions
+      summary: Get Session Share
+      description: The session's share link (active or not); null if never shared.
+      operationId: get_session_share_sessions__session_id__share_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/SessionShareInfo'
+                - type: 'null'
+                title: Response Get Session Share Sessions  Session Id  Share Get
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Sessions
+      summary: Create Session Share
+      description: 'Enable sharing: reactivates the session''s existing share (stable token,
+
+        so a link that was toggled off keeps working when re-enabled) or creates
+
+        one on first use.'
+      operationId: create_session_share_sessions__session_id__share_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionShareInfo'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - Sessions
+      summary: Update Session Share
+      description: Toggle the session's share link on/off.
+      operationId: update_session_share_sessions__session_id__share_put
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Session Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionShareUpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionShareInfo'
+        '403':
+          description: Zero Data Retention is enabled on the project (V4 unsupported).
+        '404':
+          description: Run, session, workspace, or profile not found.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    UpdateSessionRequest:
-      properties:
-        action:
-          $ref: '#/components/schemas/SessionUpdateAction'
-          title: Action
-          description: The action to perform on the session
-      type: object
-      required:
-      - action
-      title: UpdateSessionRequest
-      description: Request model for updating session state.
-    ShareView:
-      properties:
-        shareToken:
-          type: string
-          title: Share Token
-          description: Token to access the public share
-        shareUrl:
-          type: string
-          title: Share URL
-          description: URL to access the public share
-        viewCount:
-          type: integer
-          title: View Count
-          description: Number of times the public share has been viewed
-        lastViewedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Last Viewed At
-          description: Timestamp of the last time the public share was viewed (None if never viewed)
-      type: object
-      required:
-      - shareToken
-      - shareUrl
-      - viewCount
-      title: ShareView
-      description: View model for representing a public share of a session.
-    SessionNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Session not found
-      type: object
-      title: SessionNotFoundError
-      description: Error response when a session is not found
-    SessionStatus:
-      type: string
-      enum:
-      - active
-      - stopped
-      title: SessionStatus
-      description: "Enumeration of possible agent session states\n\nAttributes:\n    ACTIVE: Agent session is currently active and running\n    STOPPED: Agent session has been stopped and is no longer active"
-    CreateSessionRequest:
-      properties:
-        profileId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Profile ID
-          description: The ID of the profile to use for the session
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          title: Proxy Country Code
-          description: Country code for proxy location. Defaults to US. Set to null to disable proxy.
-          default: us
-        startUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Start URL
-          description: URL to navigate to when the session starts.
-        browserScreenWidth:
-          anyOf:
-          - type: integer
-            maximum: 6144.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Width
-          description: Custom screen width in pixels for the browser.
-        browserScreenHeight:
-          anyOf:
-          - type: integer
-            maximum: 3456.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Height
-          description: Custom screen height in pixels for the browser.
-        persistMemory:
-          type: boolean
-          title: Persist Memory
-          description: If True (default), tasks in this session share memory and history with each other, allowing follow-up tasks to continue from previous context. If False, each task runs as a standalone task without any previous task context.
-          default: true
-        keepAlive:
-          type: boolean
-          title: Keep Alive
-          description: If True (default), the browser session stays alive after tasks complete, allowing follow-up tasks. If False, the session is closed immediately after task completion. Set to False for simple one-off tasks to reduce session idle time.
-          default: true
-        customProxy:
-          anyOf:
-          - $ref: '#/components/schemas/CustomProxy'
-          - type: 'null'
-          title: Custom Proxy
-          description: Custom proxy settings to use for the session. If not provided, our proxies will be used. Custom proxies are available on any active subscription.
-        enableRecording:
-          type: boolean
-          title: Enable Recording
-          description: If True, enables session recording. Defaults to False.
-          default: false
-      type: object
-      title: CreateSessionRequest
-      description: Request model for creating a session.
-    ShareNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Public share not found
-      type: object
-      title: ShareNotFoundError
-      description: Error response when a public share is not found
-    TaskStatus:
-      type: string
-      enum:
-      - created
-      - started
-      - finished
-      - failed
-      - stopped
-      title: TaskStatus
-      description: "Enumeration of possible task execution states\n\nAttributes:\n        CREATED: Task has been created but not yet started.\n    STARTED: Task has been started and is currently running.\n    FINISHED: Task has finished and the agent has completed the task.\n    FAILED: Task execution failed due to an error.\n    STOPPED: Task execution has been manually stopped (cannot be resumed)."
-    CustomProxy:
-      properties:
-        host:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Host
-          description: Host of the proxy.
-        port:
-          type: integer
-          maximum: 65535.0
-          minimum: 1.0
-          title: Port
-          description: Port of the proxy.
-        username:
-          anyOf:
-          - type: string
-            maxLength: 255
-            minLength: 1
-          - type: 'null'
-          title: Username
-          description: Username for proxy authentication.
-        password:
-          anyOf:
-          - type: string
-            maxLength: 255
-            minLength: 1
-          - type: 'null'
-          title: Password
-          description: Password for proxy authentication.
-        ignoreCertErrors:
-          type: boolean
-          title: Ignore Certificate Errors
-          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
-          default: false
-      type: object
-      required:
-      - host
-      - port
-      title: CustomProxy
-      description: Request model for creating a custom proxy.
     SessionListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SessionItemView'
-          type: array
-          title: Items
-          description: List of session views for the current page
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: SessionListResponse
-      description: Response model for paginated session list requests.
-    SessionView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the session
-        status:
-          $ref: '#/components/schemas/SessionStatus'
-          title: Status
-          description: Current status of the session (active/stopped)
-        liveUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Live URL
-          description: URL where the browser can be viewed live in real-time
-        recordingUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Recording URL
-          description: Presigned URL to download the session recording (available after session ends, if recording was enabled)
-        startedAt:
-          type: string
-          format: date-time
-          title: Started At
-          description: Timestamp when the session was created and started
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Timestamp when the session was stopped (None if still active)
-        tasks:
-          items:
-            $ref: '#/components/schemas/TaskItemView'
-          type: array
-          title: Tasks
-          description: List of tasks associated with this session
-        publicShareUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Public Share URL
-          description: Optional URL to access the public share of the session
-        persistMemory:
-          type: boolean
-          title: Persist Memory
-          description: Whether tasks in this session share memory and history with each other
-          default: true
-        keepAlive:
-          type: boolean
-          title: Keep Alive
-          description: Whether the browser session stays alive after tasks complete
-          default: true
-        proxyUsedMb:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Used MB
-          description: Amount of proxy data used in MB
-          default: '0'
-        proxyCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Cost
-          description: Cost of proxy usage in USD
-          default: '0'
-      type: object
-      required:
-      - id
-      - status
-      - startedAt
-      - tasks
-      title: SessionView
-      description: View model for representing a (browser) session with its associated tasks.
-    ProfileNotFoundError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Profile not found
-      type: object
-      title: ProfileNotFoundError
-      description: Error response when a profile is not found
-    TaskItemView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the task
-        sessionId:
-          type: string
-          format: uuid
-          title: Session ID
-          description: ID of the session this task belongs to
-        llm:
-          type: string
-          title: LLM
-          description: The LLM model used for this task represented as a string
-        task:
-          type: string
-          title: Task
-          description: The task prompt/instruction given to the agent
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-        createdAt:
-          type: string
-          format: date-time
-          title: Created At
-          description: Naive UTC timestamp when the task was created
-        startedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Started At
-          description: Naive UTC timestamp when the task was started (None if task has not started yet)
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Naive UTC timestamp when the task completed (None if still running)
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-          description: Optional additional metadata associated with the task set by the user
-          default: {}
-        output:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Output
-          description: Final output/result of the task
-        browserUseVersion:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Browser Use Version
-          description: Version of browser-use used for this task (older tasks may not have this set)
-        isSuccess:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Is Success
-          description: Whether the task was successful (self-reported by the agent)
-        judgement:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Judgement
-          description: Stringified JSON object containing the full report from the judge
-        judgeVerdict:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Judge Verdict
-          description: Judge verdict - True if the judge found the task to be successful, False otherwise (None if judge is not enabled)
-        cost:
-          anyOf:
-          - type: string
-            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          - type: 'null'
-          title: Cost
-          description: Total cost of the task in USD. This is the sum of all step costs incurred during task execution.
-        suggestions:
-          anyOf:
-          - items:
-              additionalProperties: true
-              type: object
-            type: array
-          - type: 'null'
-          title: Suggestions
-          description: List of actionable suggestions for improving task configuration based on detected issues during execution.
-      type: object
-      required:
-      - id
-      - sessionId
-      - llm
-      - task
-      - status
-      - createdAt
-      title: TaskItemView
-      description: View model for representing a task with its execution details
-    SessionUpdateAction:
-      type: string
-      enum:
-      - stop
-      title: SessionUpdateAction
-      description: "Available actions that can be performed on a session\n\nAttributes:\n    STOP: Stop the session and all its associated tasks (cannot be undone)"
-    ProxyCountryCode:
-      type: string
-      enum:
-      - ad
-      - ae
-      - af
-      - ag
-      - ai
-      - al
-      - am
-      - an
-      - ao
-      - aq
-      - ar
-      - as
-      - at
-      - au
-      - aw
-      - az
-      - ba
-      - bb
-      - bd
-      - be
-      - bf
-      - bg
-      - bh
-      - bi
-      - bj
-      - bl
-      - bm
-      - bn
-      - bo
-      - bq
-      - br
-      - bs
-      - bt
-      - bv
-      - bw
-      - by
-      - bz
-      - ca
-      - cc
-      - cd
-      - cf
-      - cg
-      - ch
-      - ci
-      - ck
-      - cl
-      - cm
-      - co
-      - cr
-      - cs
-      - cu
-      - cv
-      - cw
-      - cx
-      - cy
-      - cz
-      - de
-      - dj
-      - dk
-      - dm
-      - do
-      - dz
-      - ec
-      - ee
-      - eg
-      - eh
-      - er
-      - es
-      - et
-      - fi
-      - fj
-      - fk
-      - fm
-      - fo
-      - fr
-      - ga
-      - gd
-      - ge
-      - gf
-      - gg
-      - gh
-      - gi
-      - gl
-      - gm
-      - gn
-      - gp
-      - gq
-      - gr
-      - gs
-      - gt
-      - gu
-      - gw
-      - gy
-      - hk
-      - hm
-      - hn
-      - hr
-      - ht
-      - hu
-      - id
-      - ie
-      - il
-      - im
-      - in
-      - iq
-      - ir
-      - is
-      - it
-      - je
-      - jm
-      - jo
-      - jp
-      - ke
-      - kg
-      - kh
-      - ki
-      - km
-      - kn
-      - kp
-      - kr
-      - kw
-      - ky
-      - kz
-      - la
-      - lb
-      - lc
-      - li
-      - lk
-      - lr
-      - ls
-      - lt
-      - lu
-      - lv
-      - ly
-      - ma
-      - mc
-      - md
-      - me
-      - mf
-      - mg
-      - mh
-      - mk
-      - ml
-      - mm
-      - mn
-      - mo
-      - mp
-      - mq
-      - mr
-      - ms
-      - mt
-      - mu
-      - mv
-      - mw
-      - mx
-      - my
-      - mz
-      - na
-      - nc
-      - ne
-      - nf
-      - ng
-      - ni
-      - nl
-      - 'no'
-      - np
-      - nr
-      - nu
-      - nz
-      - om
-      - pa
-      - pe
-      - pf
-      - pg
-      - ph
-      - pk
-      - pl
-      - pm
-      - pn
-      - pr
-      - ps
-      - pt
-      - pw
-      - py
-      - qa
-      - re
-      - ro
-      - rs
-      - ru
-      - rw
-      - sa
-      - sb
-      - sc
-      - sd
-      - se
-      - sg
-      - sh
-      - si
-      - sj
-      - sk
-      - sl
-      - sm
-      - sn
-      - so
-      - sr
-      - ss
-      - st
-      - sv
-      - sx
-      - sy
-      - sz
-      - tc
-      - td
-      - tf
-      - tg
-      - th
-      - tj
-      - tk
-      - tl
-      - tm
-      - tn
-      - to
-      - tr
-      - tt
-      - tv
-      - tw
-      - tz
-      - ua
-      - ug
-      - uk
-      - us
-      - uy
-      - uz
-      - va
-      - vc
-      - ve
-      - vg
-      - vi
-      - vn
-      - vu
-      - wf
-      - ws
-      - xk
-      - ye
-      - yt
-      - za
-      - zm
-      - zw
-      title: ProxyCountryCode
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    SessionItemView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the session
-        status:
-          $ref: '#/components/schemas/SessionStatus'
-          title: Status
-          description: Current status of the session (active/stopped)
-        liveUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Live URL
-          description: URL where the browser can be viewed live in real-time
-        recordingUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Recording URL
-          description: Presigned URL to download the session recording (available after session ends, if recording was enabled)
-        startedAt:
-          type: string
-          format: date-time
-          title: Started At
-          description: Timestamp when the session was created and started
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Timestamp when the session was stopped (None if still active)
-        persistMemory:
-          type: boolean
-          title: Persist Memory
-          description: Whether tasks in this session share memory and history with each other
-        keepAlive:
-          type: boolean
-          title: Keep Alive
-          description: Whether the browser session stays alive after tasks complete
-        proxyUsedMb:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Used MB
-          description: Amount of proxy data used in MB
-          default: '0'
-        proxyCost:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxy Cost
-          description: Cost of proxy usage in USD
-          default: '0'
-      type: object
-      required:
-      - id
-      - status
-      - startedAt
-      - persistMemory
-      - keepAlive
-      title: SessionItemView
-      description: View model for representing a (browser) session.
-    TooManyConcurrentActiveSessionsError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
-      type: object
-      title: TooManyConcurrentActiveSessionsError
-      description: Error response when user has too many concurrent active sessions
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    MessageListResponse:
-      properties:
-        messages:
-          items:
-            $ref: '#/components/schemas/MessageResponse'
-          type: array
-          title: Messages
-          description: List of messages in chronological order.
-        hasMore:
-          type: boolean
-          title: Hasmore
-          description: Whether there are more messages available beyond this page. Use cursor-based pagination with the `after` or `before` query parameters to fetch more.
-      type: object
-      required:
-      - messages
-      - hasMore
-      title: MessageListResponse
-    MessageResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-          description: Unique message identifier.
-        sessionId:
-          type: string
-          format: uuid
-          title: Sessionid
-          description: ID of the session this message belongs to.
-        role:
-          type: string
-          title: Role
-          description: 'Message role: "human" for user-submitted tasks, "ai" for agent actions and responses.'
-        data:
-          type: string
-          title: Data
-          description: Raw message content. Format depends on the message type — may be plain text, JSON, or structured action data.
-        type:
-          type: string
-          title: Type
-          description: 'Message category. Common values: `user_message`, `assistant_message`, `browser_action`, `file_operation`, `code_execution`, `integration`, `planning`, `completion`, `browser_action_result`, `browser_action_error`.'
-          default: ''
-        summary:
-          type: string
-          title: Summary
-          description: 'One-liner human-readable description of the message (e.g. "Navigating to google.com", "Clicking element #5"). Useful for building activity feeds.'
-          default: ''
-        screenshotUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Screenshoturl
-          description: Browser screenshot captured at the time of this message. Presigned URL, expires after 5 minutes.
-        hidden:
-          type: boolean
-          title: Hidden
-          description: Whether this message should be hidden from the user in a chat UI.
-          default: false
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-          description: When this message was created.
-      type: object
-      required:
-      - id
-      - sessionId
-      - role
-      - data
-      - createdAt
-      title: MessageResponse
-      description: 'A single message from the session''s message stream.
-
-
-        Messages represent the agent''s actions, observations, and decisions as it executes a task.'
-    StopSessionRequest:
-      properties:
-        strategy:
-          $ref: '#/components/schemas/StopStrategy'
-          description: How to stop the session. Use "task" to stop only the current task and keep the session alive, or "session" to destroy the sandbox entirely.
-          default: session
-      type: object
-      title: StopSessionRequest
-    BuAgentSessionStatus:
-      type: string
-      enum:
-      - created
-      - idle
-      - running
-      - stopped
-      - timed_out
-      - error
-      title: BuAgentSessionStatus
-      description: 'Session lifecycle status. Progresses through: created → idle → running → idle → ... → stopped / timed_out / error.
-
-
-        - `created`: Sandbox is starting up. The session is not yet ready to accept tasks.
-
-        - `idle`: Sandbox is healthy and waiting for a task. You can dispatch a task or upload files.
-
-        - `running`: A task is currently being executed by the agent.
-
-        - `stopped`: Session was stopped — either explicitly via the stop endpoint, or automatically after task completion (when `keepAlive` is false).
-
-        - `timed_out`: Session was cleaned up due to inactivity timeout.
-
-        - `error`: Sandbox failed to start or encountered an unrecoverable error.'
-    SessionListResponse_2:
-      properties:
-        sessions:
-          items:
-            $ref: '#/components/schemas/SessionResponse'
-          type: array
-          title: Sessions
-          description: List of sessions.
-        total:
-          type: integer
-          title: Total
-          description: Total number of sessions matching the query.
-        page:
-          type: integer
-          title: Page
-          description: Current page number (1-indexed).
-        pageSize:
-          type: integer
-          title: Pagesize
-          description: Number of sessions per page.
-      type: object
-      required:
-      - sessions
-      - total
-      - page
-      - pageSize
-      title: SessionListResponse
-    BuModel:
-      type: string
-      enum:
-      - bu-mini
-      - bu-max
-      - bu-ultra
-      - gemini-3-flash
-      - claude-opus-4.6
-      - claude-opus-4.7
-      - claude-sonnet-5
-      - claude-opus-4.8
-      - gpt-5.4-mini
-      - glm-5.2
-      - minimax-m3
-      - claude-haiku-4.5
-      - gpt-5.2
-      - gpt-5-mini
-      - gpt-5.5
-      - gpt-5.6-sol
-      - gpt-5.6-terra
-      - gpt-5.6-luna
-      - gemini-3-pro
-      - gemini-3.1-pro
-      - gemini-3.5-flash
-      title: BuModel
-      description: 'The model to use for the agent. Each model has different capabilities and pricing.
-
-
-        - `bu-mini` / `gemini-3-flash`: Gemini 3 Flash — fast and cost-effective. Best for simple, well-defined tasks like form filling or data extraction.
-
-        - `bu-max` / `claude-sonnet-4.6` (legacy aliases) / `claude-sonnet-5`: Claude Sonnet 5 — balanced performance. Best for multi-step workflows that require reasoning and decision-making.
-
-        - `bu-ultra` / `claude-opus-4.6`: Claude Opus 4.6 — capable general-purpose Opus tier.
-
-        - `claude-opus-4.7`: Claude Opus 4.7 — most capable. Best for complex tasks that require advanced reasoning, long-horizon planning, or handling ambiguous instructions.
-
-        - `claude-opus-4.8`: Claude Opus 4.8 — most capable Opus-tier model, state-of-the-art on long-horizon agentic work.
-
-        - `gpt-5.4-mini`: GPT-5.4 mini — OpenAI''s fast and efficient model. Best for tasks that benefit from OpenAI''s capabilities.
-
-        - `glm-5.2`: Z.ai GLM 5.2 — capable, low-cost open model. Best for cost-sensitive agentic tasks.
-
-        - `minimax-m3`: MiniMax M3 — fast, very low-cost model. Best for simple, high-volume tasks.
-
-
-        Additional provider models (e.g. `gemini-3.5-flash`, `gpt-5.2`, and `gpt-5-mini`)
-
-        are selectable only with `use_own_key=true`, where your own provider key serves
-
-        them. The GPT-5.6 family is native when either Browser Use''s direct OpenAI key
-
-        or Amazon Bedrock route is configured. GPT-5.5 becomes native only through the
-
-        Bedrock rollout.'
-    SessionResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-          description: Unique session identifier.
-        status:
-          $ref: '#/components/schemas/BuAgentSessionStatus'
-          description: 'Current session lifecycle status. Progresses through: `created` (sandbox starting) → `idle` (ready, waiting for task) → `running` (task executing) → `stopped` / `timed_out` / `error`. Poll this field to track progress.'
-        model:
-          $ref: '#/components/schemas/BuModel'
-          description: The model tier used for this session.
-        thinkingLevel:
-          anyOf:
-          - $ref: '#/components/schemas/ThinkingLevel'
-          - type: 'null'
-          description: Configured model reasoning depth for this session, or null when provider defaults are used.
-        title:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Title
-          description: Auto-generated short title summarizing the task. Available after the task starts running.
-        output:
-          anyOf:
-          - {}
-          - type: 'null'
-          title: Output
-          description: The agent's final output. If `codeMode` was true, this will be an object with `text` (summary), `code` (Python source), and optionally `output` (execution result). If `outputSchema` was provided, this will be structured data conforming to that schema. Otherwise it may be a free-form string or null.
-        outputSchema:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Outputschema
-          description: The JSON Schema that was requested for structured output, if any.
-        stepCount:
-          type: integer
-          title: Stepcount
-          description: Number of steps the agent has executed so far.
-          default: 0
-        lastStepSummary:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Laststepsummary
-          description: Human-readable summary of the most recent agent step (e.g. "Clicking the Submit button"). Useful for showing real-time progress.
-        isTaskSuccessful:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Istasksuccessful
-          description: Whether the task completed successfully. `true` if the agent achieved the goal, `false` if it failed or gave up, `null` if the task is still running or no task was dispatched.
-        liveUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Liveurl
-          description: URL to view the live browser session. Available immediately on session creation — can be embedded in an iframe to show the browser in real time.
-        recordingUrls:
-          items:
-            type: string
-          type: array
-          title: Recordingurls
-          description: URLs to download session recordings. Only populated on `GET /api/v3/sessions/{id}`; always `[]` in list responses.
-          default: []
-        profileId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Profileid
-          description: ID of the browser profile loaded in this session, if any.
-        workspaceId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Workspaceid
-          description: ID of the workspace attached to this session, if any.
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          description: Country code of the proxy used for this session, or null if no proxy.
-        browserScreenWidth:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Browserscreenwidth
-          description: Custom browser screen width set for this session, or null for the default.
-        browserScreenHeight:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Browserscreenheight
-          description: Custom browser screen height set for this session, or null for the default.
-        maxCostUsd:
-          anyOf:
-          - type: string
-            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          - type: 'null'
-          title: Maxcostusd
-          description: Maximum cost limit in USD set for this session.
-        totalInputTokens:
-          type: integer
-          title: Totalinputtokens
-          description: Total LLM input tokens consumed by this session.
-          default: 0
-        totalOutputTokens:
-          type: integer
-          title: Totaloutputtokens
-          description: Total LLM output tokens consumed by this session.
-          default: 0
-        proxyUsedMb:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxyusedmb
-          description: Proxy bandwidth used in megabytes.
-          default: '0'
-        llmCostUsd:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Llmcostusd
-          description: Cost of LLM usage in USD.
-          default: '0'
-        proxyCostUsd:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Proxycostusd
-          description: Cost of proxy bandwidth in USD.
-          default: '0'
-        browserCostUsd:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Browsercostusd
-          description: Cost of browser compute time in USD.
-          default: '0'
-        totalCostUsd:
-          type: string
-          pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          title: Totalcostusd
-          description: Total session cost in USD (LLM + proxy + browser).
-          default: '0'
-        screenshotUrl:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Screenshoturl
-          description: Presigned URL of the latest screenshot (expires after 5 minutes). Only populated on `GET /api/v3/sessions/{id}`; always `null` in list responses.
-        agentmailEmail:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Agentmailemail
-          description: Temporary email address provisioned for this session (via AgentMail). Only present if `agentmail` was enabled.
-        integrationsUsed:
-          items:
-            type: string
-          type: array
-          title: Integrationsused
-          description: List of integration providers used during this session (e.g. ["gmail", "slack", "agentmail"]).
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-          description: When the session was created.
-        updatedAt:
-          type: string
-          format: date-time
-          title: Updatedat
-          description: When the session was last updated.
-      type: object
-      required:
-      - id
-      - status
-      - model
-      - createdAt
-      - updatedAt
-      title: SessionResponse
-      description: 'Represents a session and its current state.
-
-
-        Poll this endpoint to track task progress. The `status` field indicates the session lifecycle stage,
-
-        and `output` contains the agent''s structured result once the task completes.'
-    RunTaskRequest:
-      properties:
-        task:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Task
-          description: The natural-language instruction for the agent to execute (e.g. "Go to amazon.com and find the best-rated wireless mouse under $50"). Required when dispatching to an existing session.
-        model:
-          $ref: '#/components/schemas/BuModel'
-          description: The model to use. "gemini-3-flash" is fast and cheap, "claude-sonnet-5" is balanced, "claude-opus-4.7" is most capable (default), and "claude-opus-4.8" is the newest Opus-tier model. GPT-5.6 models are Browser Use native models when either direct OpenAI or Amazon Bedrock routing is configured; otherwise they require use_own_key=true. GPT-5.5 becomes native when Bedrock routing is enabled; otherwise it requires use_own_key=true. Other additional provider models (e.g. "gemini-3.5-flash" and "gpt-5.2") require use_own_key=true. See BuModel for details.
-          default: claude-opus-4.7
-        thinkingLevel:
-          anyOf:
-          - $ref: '#/components/schemas/ThinkingLevel'
-          - type: 'null'
-          description: 'Optional model reasoning depth. Omit this field to preserve the model provider default. Supported values depend on the selected model: most supported Claude models and GPT-5.1+ models support disabled/low/medium/high; Gemini Flash models support all four (disabled maps to Gemini''s minimal level); Claude Fable 5, earlier GPT-5 models, Gemini 2.5 Pro, o3/o4, and Grok support low/medium/high; Gemini 3.1 Pro supports low/high; GLM supports disabled/high. Unsupported model/level combinations are rejected.'
-        sessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Sessionid
-          description: ID of an existing idle session to dispatch the task to. If omitted, a new session is created.
-        keepAlive:
-          type: boolean
-          title: Keepalive
-          description: If true, the session stays alive in idle state after the task completes instead of automatically stopping. This lets you dispatch follow-up tasks to the same session, preserving browser state and files.
-          default: false
-        maxCostUsd:
-          anyOf:
-          - type: number
-          - type: string
-            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          - type: 'null'
-          title: Maxcostusd
-          description: Maximum total cost in USD allowed for this session. The task will be stopped if this limit is reached. If omitted, a default limit applies (capped by your available balance). When dispatching a follow-up task to an existing session (`sessionId` is set), supplying this value overrides the session's budget for the upcoming dispatch; otherwise the budget is automatically refreshed to current spend + default.
-        profileId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Profileid
-          description: ID of a browser profile to load into the session. Profiles persist cookies, local storage, and other browser state across sessions. Create profiles via the Profiles API.
-        workspaceId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Workspaceid
-          description: ID of a workspace to attach to the session. Workspaces provide persistent file storage that carries across sessions. Create workspaces via the Workspaces API.
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          description: Country code for the browser proxy (e.g. "US", "DE", "JP"). Set to null to disable the proxy. The proxy routes browser traffic through the specified country, useful for accessing geo-restricted content.
-          default: us
-        browserScreenWidth:
-          anyOf:
-          - type: integer
-            maximum: 6144.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browserscreenwidth
-          description: Custom browser screen width in pixels. Must be set together with browserScreenHeight. When omitted, the browser keeps its own default resolution.
-        browserScreenHeight:
-          anyOf:
-          - type: integer
-            maximum: 3456.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browserscreenheight
-          description: Custom browser screen height in pixels. Must be set together with browserScreenWidth. When omitted, the browser keeps its own default resolution.
-        outputSchema:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Outputschema
-          description: 'A JSON Schema that the agent''s final output must conform to. When set, the agent will return structured data matching this schema in the `output` field of the response. Example: {"type": "object", "properties": {"price": {"type": "number"}, "title": {"type": "string"}}}.'
-        enableScheduledTasks:
-          type: boolean
-          title: Enablescheduledtasks
-          description: 'If true, the agent can create scheduled tasks that run on a recurring basis (e.g. "every Monday morning, check my inbox and summarize new emails"). Scheduled tasks are tied to your project and persist beyond the session. Note: all scheduled tasks are visible project-wide, so avoid enabling this in multi-user setups where task isolation is needed.'
-          default: false
-        sensitiveData:
-          anyOf:
-          - additionalProperties:
-              type: string
-            type: object
-          - type: 'null'
-          title: Sensitivedata
-          description: Key-value pairs of sensitive data (e.g. passwords, API keys) that the agent can use via secure placeholders. Keys are exposed to the LLM; values are never shown. The agent uses `<secret>key</secret>` placeholders in browser_type_text to securely enter values.
-        enableRecording:
-          type: boolean
-          title: Enablerecording
-          description: If true, records a video of the browser session. The recording URLs will be available in the `recordingUrls` field of the session response after the task completes.
-          default: false
-        skills:
-          type: boolean
-          title: Skills
-          description: If true, the agent generates and persists reusable skills from completed tasks (saved per-domain in the DB and auto-injected into future runs). Set to false to skip skill generation — useful for privacy-sensitive tasks or to avoid the extra LLM cost.
-          default: true
-        agentmail:
-          type: boolean
-          title: Agentmail
-          description: If true, provisions a temporary email inbox (via AgentMail) for the session. The email address is available in the `agentmailEmail` field of the session response. Useful for tasks that require email verification or sign-ups.
-          default: true
-        codeMode:
-          type: boolean
-          title: Codemode
-          description: When true, the agent returns structured output with `text` (summary) and `code` (validated Python source) fields instead of free-form text.
-          default: false
-        cacheScript:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Cachescript
-          description: 'Controls deterministic script caching. `null` (default): auto-detected — enabled when the task contains `@{{value}}` brackets and a workspace is attached. `true`: force-enable script caching even without brackets (caches the exact task). `false`: force-disable, even if brackets are present. When active, the first call runs the full agent and saves a reusable script. Subsequent calls with the same task template execute the cached script with $0 LLM cost. Requires workspace_id when enabled. Example: "Get prices from @{{https://example.com}} for @{{electronics}}".'
-        useOwnKey:
-          type: boolean
-          title: Useownkey
-          description: If true, uses your own LLM API key (configured in project settings) instead of Browser Use managed keys. You pay your provider directly for inference; Browser Use charges a reduced orchestration fee (0.2× of provider list prices). If no key is configured for the model's provider, the request is rejected.
-          default: false
-        autoHeal:
-          type: boolean
-          title: Autoheal
-          description: When cache_script is active, controls whether a lightweight LLM validates the cached script output. If the output looks incorrect (empty, error, wrong structure), the system automatically re-triggers the full agent to generate a new version of the script. Set to false to disable validation and always return the raw script output.
-          default: true
-      type: object
-      title: RunTaskRequest
-      description: 'Create a new session, dispatch a task, or both.
-
-
-        - **No `sessionId` + no `task`**: creates an idle session (useful for uploading files before running a task).
-
-        - **No `sessionId` + `task`**: creates a new session and immediately runs the task.
-
-        - **`sessionId` + `task`**: dispatches the task to an existing idle session.
-
-        - **`sessionId` + no `task`**: returns 422 — a task is required when targeting an existing session.'
-    ThinkingLevel:
-      type: string
-      enum:
-      - disabled
-      - low
-      - medium
-      - high
-      title: ThinkingLevel
-      description: Provider-neutral model reasoning depth.
-    StopStrategy:
-      type: string
-      enum:
-      - task
-      - session
-      title: StopStrategy
-      description: 'Strategy for stopping a session.
-
-
-        - `task`: Stop the currently running task but keep the session alive in idle state. You can dispatch another task to the same session afterwards.
-
-        - `session`: Stop the session entirely and destroy the sandbox. The session cannot be reused after this.'
-    QueueListResponse:
-      properties:
-        queue:
-          items:
-            $ref: '#/components/schemas/QueuedMessage'
-          type: array
-          title: Queue
-        steeringCutoffs:
-          items:
-            $ref: '#/components/schemas/SteeringCutoff'
-          type: array
-          title: Steeringcutoffs
-      type: object
-      required:
-      - queue
-      title: QueueListResponse
-    QueueMessageRequest:
-      properties:
-        text:
-          type: string
-          minLength: 1
-          title: Text
-        interrupt:
-          type: boolean
-          title: Interrupt
-          default: false
-        attachedFileIds:
-          anyOf:
-          - items:
-              type: string
-              format: uuid
-            type: array
-            maxItems: 20
-          - type: 'null'
-          title: Attachedfileids
-      additionalProperties: false
-      type: object
-      required:
-      - text
-      title: QueueMessageRequest
-      description: 'Send a message to a session. If the session is busy the message waits on
-
-        the queue and runs as the next turn; if idle it runs immediately.
-
-
-        Set `interrupt` to make it take effect now: the session''s active run is
-
-        cancelled and this message drains straight after. Interrupt is a no-op when
-
-        the session is already idle, and BEST-EFFORT when busy — if the cancel can''t
-
-        be delivered, the message stays queued and runs after the current turn.'
-    QueuedMessage:
-      properties:
-        id:
-          type: integer
-          title: Id
-        sessionId:
-          type: string
-          format: uuid
-          title: Sessionid
-        runId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Runid
-        mode:
-          type: string
-          enum:
-          - queue
-          - interrupt
-          title: Mode
-        status:
-          type: string
-          enum:
-          - pending
-          - dispatching
-          - consumed
-          - cancelled
-          - superseded
-          - failed
-          title: Status
-        text:
-          type: string
-          title: Text
-        attachedFileIds:
-          anyOf:
-          - items:
-              type: string
-              format: uuid
-            type: array
-          - type: 'null'
-          title: Attachedfileids
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-      type: object
-      required:
-      - id
-      - sessionId
-      - runId
-      - mode
-      - status
-      - text
-      - createdAt
-      title: QueuedMessage
-      description: One message on a session's queue (a v4_session_input row).
-    SteeringCutoff:
-      properties:
-        sourceRunId:
-          type: string
-          format: uuid
-          title: Sourcerunid
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-      type: object
-      required:
-      - sourceRunId
-      - createdAt
-      title: SteeringCutoff
-      description: 'Earliest accepted steer for one interrupted source run.
-
-
-        The queue endpoint returns these compact boundaries separately from message
-
-        rows so a remount can keep every interrupted transcript frozen without
-
-        re-sending the full historical steering-message payload.'
-    SessionListResponse_3:
       properties:
         sessions:
           items:
@@ -2124,6 +715,29 @@ components:
         want a list of distinct *sessions* (e.g. the recent-sessions panel) should
 
         use this instead of de-duplicating runs client-side.'
+    SteeringCutoff:
+      properties:
+        sourceRunId:
+          type: string
+          format: uuid
+          title: Sourcerunid
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+      type: object
+      required:
+      - sourceRunId
+      - createdAt
+      title: SteeringCutoff
+      description: 'Earliest accepted steer for one interrupted source run.
+
+
+        The queue endpoint returns these compact boundaries separately from message
+
+        rows so a remount can keep every interrupted transcript frozen without
+
+        re-sending the full historical steering-message payload.'
     SessionInfo:
       properties:
         sessionId:
@@ -2185,12 +799,325 @@ components:
         show a label + status + time). The heavy per-run fields (result, error,
 
         token/cost totals) live on RunSummary and aren''t repeated here.'
+    QueuedMessage:
+      properties:
+        id:
+          type: integer
+          title: Id
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        runId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Runid
+        mode:
+          type: string
+          enum:
+          - queue
+          - interrupt
+          title: Mode
+        status:
+          type: string
+          enum:
+          - pending
+          - dispatching
+          - consumed
+          - cancelled
+          - superseded
+          - failed
+          title: Status
+        text:
+          type: string
+          title: Text
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+          - type: 'null'
+          title: Attachedfileids
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+      type: object
+      required:
+      - id
+      - sessionId
+      - runId
+      - mode
+      - status
+      - text
+      - createdAt
+      title: QueuedMessage
+      description: One message on a session's queue (a v4_session_input row).
+    SessionUpdateRequest:
+      properties:
+        title:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: Title
+      type: object
+      title: SessionUpdateRequest
+      description: 'Rename a session. Null clears the user-set name, so the UI falls back to
+
+        the session''s opening task.'
+    SessionCostResponse:
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        numRuns:
+          type: integer
+          title: Numruns
+        llmCostUsd:
+          type: string
+          title: Llmcostusd
+        searchCostUsd:
+          type: string
+          title: Searchcostusd
+        browserCostUsd:
+          type: string
+          title: Browsercostusd
+        proxyCostUsd:
+          type: string
+          title: Proxycostusd
+        proxyUsedMb:
+          type: string
+          title: Proxyusedmb
+        totalCostUsd:
+          type: string
+          title: Totalcostusd
+      type: object
+      required:
+      - sessionId
+      - numRuns
+      - llmCostUsd
+      - searchCostUsd
+      - browserCostUsd
+      - proxyCostUsd
+      - proxyUsedMb
+      - totalCostUsd
+      title: SessionCostResponse
+      description: 'Everything a session cost, split by what it was spent on.
+
+
+        Recorded usage, not an invoice total — promotional waivers and credits are
+
+        applied downstream in billing.
+
+
+        Browser time and proxy bandwidth are metered against the session''s browser,
+
+        which outlives any single run, so they have no per-run number — only
+
+        `RunSummary.total_cost_usd`, the LLM (and web search) charge, does.
+
+
+        All amounts are fixed-6-decimal strings for the same reason as
+
+        `RunSummary.total_cost_usd`: JS clients lose precision on float.'
+    SessionShareUpdateRequest:
+      properties:
+        isActive:
+          type: boolean
+          title: Isactive
+      type: object
+      required:
+      - isActive
+      title: SessionShareUpdateRequest
+    APIKeySpendLimitDetail:
+      properties:
+        code:
+          type: string
+          title: Code
+          default: api_key_monthly_spend_limit_reached
+        message:
+          type: string
+          title: Message
+        cap:
+          type: number
+          title: Cap
+        spent:
+          type: number
+          title: Spent
+      type: object
+      required:
+      - message
+      - cap
+      - spent
+      title: APIKeySpendLimitDetail
+      description: Machine-readable 402 detail shared by run and browser creation.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    SessionShareInfo:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        shareToken:
+          type: string
+          title: Sharetoken
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        isActive:
+          type: boolean
+          title: Isactive
+        viewCount:
+          type: integer
+          title: Viewcount
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        shareUrl:
+          type: string
+          title: Shareurl
+      type: object
+      required:
+      - id
+      - shareToken
+      - sessionId
+      - isActive
+      - viewCount
+      - createdAt
+      - shareUrl
+      title: SessionShareInfo
+      description: A session's public share-link state (share modal reads/writes this).
+    SessionCostCapResponse:
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        maxCostUsd:
+          type: string
+          title: Maxcostusd
+      type: object
+      required:
+      - sessionId
+      - maxCostUsd
+      title: SessionCostCapResponse
+    SessionCostCapRequest:
+      properties:
+        maxCostUsd:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          title: Maxcostusd
+      additionalProperties: false
+      type: object
+      required:
+      - maxCostUsd
+      title: SessionCostCapRequest
+      description: Set the maximum spend for the active run in a session.
+    QueueMessageRequest:
+      properties:
+        text:
+          type: string
+          minLength: 1
+          title: Text
+        interrupt:
+          type: boolean
+          title: Interrupt
+          default: false
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+            maxItems: 20
+          - type: 'null'
+          title: Attachedfileids
+      additionalProperties: false
+      type: object
+      required:
+      - text
+      title: QueueMessageRequest
+      description: 'Send a message to a session. If the session is busy the message waits on
+
+        the queue and runs as the next turn; if idle it runs immediately.
+
+
+        Set `interrupt` to make it take effect now: the session''s active run is
+
+        cancelled and this message drains straight after. Interrupt is a no-op when
+
+        the session is already idle, and BEST-EFFORT when busy — if the cancel can''t
+
+        be delivered, the message stays queued and runs after the current turn.'
+    APIKeySpendLimitError:
+      properties:
+        detail:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/APIKeySpendLimitDetail'
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: APIKeySpendLimitError
+      description: FastAPI wraps endpoint errors in a top-level ``detail`` field.
+    QueueListResponse:
+      properties:
+        queue:
+          items:
+            $ref: '#/components/schemas/QueuedMessage'
+          type: array
+          title: Queue
+        steeringCutoffs:
+          items:
+            $ref: '#/components/schemas/SteeringCutoff'
+          type: array
+          title: Steeringcutoffs
+      type: object
+      required:
+      - queue
+      title: QueueListResponse
   securitySchemes:
     APIKeyHeader:
       type: apiKey
       in: header
       name: X-Browser-Use-API-Key
-x-refined-from:
-- browser-use-api-v2-openapi.json
-- browser-use-api-v3-openapi.json
-- browser-use-api-v4-openapi.json

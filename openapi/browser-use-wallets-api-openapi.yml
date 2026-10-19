@@ -1,0 +1,175 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Public API v4 Wallets API
+  summary: Browser Use agent runs API (v4)
+  version: 4.0.0
+servers:
+- url: https://api.browser-use.com/api/v4
+  description: Production server
+tags:
+- name: Wallets
+paths:
+  /agentcard/wallets:
+    get:
+      tags:
+      - Wallets
+      summary: List Agentcard Wallets
+      description: 'The project''s active AgentCard wallets, newest first.
+
+
+        Read-only: funding is admin-only during the beta. The UI uses this to offer
+
+        a wallet on the composer, which is how a run opts into spending — the id
+
+        then rides RunCreateRequest.agentcard_wallet_id and is validated again there
+
+        against this same project.'
+      operationId: list_agentcard_wallets_agentcard_wallets_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentCardWalletListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /stripe-link:
+    get:
+      tags:
+      - Wallets
+      summary: Get Stripe Link Status
+      description: 'The project''s active Stripe Link wallet connection, if any.
+
+
+        Read-only: connecting happens in the cloud UI. A run opts into paying with
+
+        it by passing `connection_id` as RunCreateRequest.stripe_link_connection_id,
+
+        which is validated again there against this same project.'
+      operationId: get_stripe_link_status_stripe_link_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StripeLinkStatusResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+components:
+  schemas:
+    StripeLinkStatusResponse:
+      properties:
+        isConnected:
+          type: boolean
+          title: Isconnected
+        connectionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Connectionid
+        linkEmail:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Linkemail
+        mode:
+          anyOf:
+          - type: string
+            enum:
+            - test
+            - live
+          - type: 'null'
+          title: Mode
+      type: object
+      required:
+      - isConnected
+      title: StripeLinkStatusResponse
+      description: The project's active Stripe Link connection, if any.
+    AgentCardWalletSummary:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        currency:
+          type: string
+          title: Currency
+        availableCents:
+          type: integer
+          title: Availablecents
+        activeHoldCents:
+          type: integer
+          title: Activeholdcents
+      type: object
+      required:
+      - id
+      - name
+      - currency
+      - availableCents
+      - activeHoldCents
+      title: AgentCardWalletSummary
+      description: A spendable project wallet as the composer needs to show it.
+    AgentCardWalletListResponse:
+      properties:
+        wallets:
+          items:
+            $ref: '#/components/schemas/AgentCardWalletSummary'
+          type: array
+          title: Wallets
+      type: object
+      required:
+      - wallets
+      title: AgentCardWalletListResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

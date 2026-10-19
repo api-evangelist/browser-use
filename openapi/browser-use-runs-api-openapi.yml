@@ -30,16 +30,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RunCreateResponse'
+        '400':
+          description: Invalid request (bad session/workspace pairing or file path).
         '402':
-          description: The project has no credits available.
+          description: The project has no credits available, or the authenticating API key has reached its recorded monthly total-spend soft stop.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeySpendLimitError'
         '403':
           description: Zero Data Retention is enabled on the project (V4 unsupported).
         '404':
           description: Run, session, workspace, or profile not found.
         '409':
           description: The session already has an active run.
-        '400':
-          description: Invalid request (bad session/workspace pairing or file path).
+        '429':
+          description: The project is at its concurrent-session limit.
         '422':
           description: Validation Error
           content:
@@ -254,6 +260,8 @@ paths:
           description: Run, session, workspace, or profile not found.
         '502':
           description: The request could not be forwarded to the control plane.
+        '503':
+          description: The run is finishing; retry the cancel after Retry-After seconds.
         '422':
           description: Validation Error
           content:
@@ -344,232 +352,34 @@ components:
         fetch the full RunSummary once via GET /runs/{id}. Mirrors v2''s
 
         GET /tasks/{id}/status.'
-    RunCreateResponse:
+    RunEvent:
       properties:
+        runId:
+          type: string
+          format: uuid
+          title: Runid
         id:
-          type: string
-          format: uuid
-          title: Id
-        status:
-          type: string
-          enum:
-          - queued
-          - dispatching
-          - running
-          - completed
-          - failed
-          - cancelled
-          title: Status
-        model:
-          type: string
-          title: Model
-        sessionId:
-          type: string
-          format: uuid
-          title: Sessionid
-        workspaceId:
-          type: string
-          format: uuid
-          title: Workspaceid
-        eventsUrl:
-          type: string
-          title: Eventsurl
-        missingFileIds:
-          items:
-            type: string
-            format: uuid
-          type: array
-          title: Missingfileids
-      type: object
-      required:
-      - id
-      - status
-      - model
-      - sessionId
-      - workspaceId
-      - eventsUrl
-      title: RunCreateResponse
-    RunCreateRequest:
-      properties:
-        task:
-          type: string
-          minLength: 1
-          title: Task
-        model:
-          type: string
-          enum:
-          - glm-5.2
-          - grok-4.5
-          - kimi-k3
-          - minimax-m3
-          - claude-opus-4.7
-          - claude-opus-4.8
-          - claude-opus-5
-          - claude-fable-5
-          - claude-sonnet-5
-          - gpt-5.5
-          - gpt-5.6
-          - gpt-5.6-sol
-          - gpt-5.6-terra
-          - gpt-5.6-luna
-          - gemini-3.6-flash
-          - gemini-3.5-flash
-          - gemini-3.1-pro
-          - gemini-3-flash
-          title: Model
-          default: gpt-5.6-luna
-        modelParams:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          title: Modelparams
-          description: 'Optional provider-native request parameters for the selected model, written with the provider''s own field names and values and forwarded unchanged (e.g. {"reasoning": {"effort": "high"}} for OpenAI, {"thinking": {"type": "adaptive"}} for Anthropic, {"thinkingConfig": {"thinkingLevel": "high"}} for Google). Supported paths and values are per-model; an unsupported path, value, or a model that accepts no parameters at all is rejected with 422. Omitting this field applies the model''s default parameters (gpt-5.6-luna defaults to {"reasoning": {"effort": "xhigh"}}); passing {} opts out of that default and leaves the provider''s own defaults in place.'
-        sessionId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Sessionid
-        workspaceId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Workspaceid
-        browserSettings:
-          anyOf:
-          - $ref: '#/components/schemas/RunBrowserSettings'
-          - type: 'null'
-        agentmail:
-          type: boolean
-          title: Agentmail
-          description: If true, provisions a persistent temporary email inbox (via AgentMail) for the run workspace. The agent receives the email address in its context and can send, receive, read, and reply to email. Set false to disable AgentMail for this run.
-          default: false
-        attachedFileIds:
-          anyOf:
-          - items:
-              type: string
-              format: uuid
-            type: array
-            maxItems: 20
-          - type: 'null'
-          title: Attachedfileids
-        secretBindings:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/SecretBinding'
-            type: array
-            maxItems: 10
-          - type: 'null'
-          title: Secretbindings
-          description: Credentials this run may use without ever seeing them. The agent can ask the server to type a binding by alias on one of its allowed domains; it cannot read the value. Bindings are not persisted past the run.
-        judge:
-          anyOf:
-          - $ref: '#/components/schemas/RunJudgeSettings'
-          - type: 'null'
-        maxCostUsd:
-          anyOf:
-          - type: number
-            exclusiveMinimum: 0.0
-          - type: string
-            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          - type: 'null'
-          title: Maxcostusd
-      additionalProperties: false
-      type: object
-      required:
-      - task
-      title: RunCreateRequest
-    SecretBinding:
-      properties:
-        alias:
-          type: string
-          title: Alias
-          description: Name the agent refers to this secret by, e.g. "github_password".
-        source:
-          $ref: '#/components/schemas/InlineSecretSource'
-        allowedDomains:
-          items:
-            type: string
-          type: array
-          maxItems: 10
-          minItems: 1
-          title: Alloweddomains
-          description: Hosts the secret may be typed into, e.g. ["github.com"]. A host covers its subdomains. Bare hostnames only — no scheme, port, path, or wildcard.
-      additionalProperties: false
-      type: object
-      required:
-      - alias
-      - source
-      - allowedDomains
-      title: SecretBinding
-      description: 'One credential this run may have typed into a browser field.
-
-
-        The value never reaches the agent. It is encrypted at rest, kept out of the
-
-        worker payload, and typed straight into the focused field by the server when
-
-        the agent asks for the alias by name — and only while the page it is typing
-
-        into is on one of `allowedDomains`.
-
-
-        Run-scoped: bindings die with the run, so a follow-up run that needs the same
-
-        credential must send it again.'
-    RunAttachment:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        name:
-          type: string
-          title: Name
-          description: Filename shown to the user, e.g. "data.csv".
-        contentType:
-          type: string
-          title: Contenttype
-        sizeBytes:
           type: integer
-          title: Sizebytes
-        status:
+          title: Id
+        ts:
           type: string
-          enum:
-          - pending
-          - uploaded
-          title: Status
-          description: '"pending" | "uploaded".'
+          format: date-time
+          title: Ts
+        type:
+          type: string
+          title: Type
+        data:
+          additionalProperties: true
+          type: object
+          title: Data
       type: object
       required:
+      - runId
       - id
-      - name
-      - contentType
-      - sizeBytes
-      - status
-      title: RunAttachment
-    RunListResponse:
-      properties:
-        runs:
-          items:
-            $ref: '#/components/schemas/RunSummary'
-          type: array
-          title: Runs
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-        hasMore:
-          type: boolean
-          title: Hasmore
-          default: false
-      type: object
-      required:
-      - runs
-      title: RunListResponse
+      - ts
+      - type
+      - data
+      title: RunEvent
     CustomProxy:
       properties:
         host:
@@ -611,27 +421,55 @@ components:
       - port
       title: CustomProxy
       description: Request model for creating a custom proxy.
-    InlineSecretSource:
+    OnePasswordSecretSource:
       properties:
         type:
           type: string
-          const: inline
+          const: onepassword
           title: Type
-        value:
+        integrationId:
           type: string
-          maxLength: 4096
+          format: uuid
+          title: Integrationid
+          description: 1Password integration to resolve through. Must belong to this project.
+        vaultId:
+          type: string
+          maxLength: 64
           minLength: 1
-          format: password
-          title: Value
-          description: The secret itself. Limited to 4096 bytes once encoded for encryption; non-ASCII characters cost more than one byte each.
-          writeOnly: true
+          title: Vaultid
+        itemId:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Itemid
+        fieldId:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Fieldid
+          description: Field id from the item-fields endpoint, e.g. "password".
       additionalProperties: false
       type: object
       required:
       - type
-      - value
-      title: InlineSecretSource
-      description: A value the caller supplies directly with the run.
+      - integrationId
+      - vaultId
+      - itemId
+      - fieldId
+      title: OnePasswordSecretSource
+      description: 'One field of a 1Password item, resolved only when the agent asks for it.
+
+
+        Nothing here is a secret: the quadruple NAMES a credential without carrying
+
+        it. Creating the binding makes no call to 1Password — a provider outage must
+
+        not stop a run from being dispatched, and no vault is ever enumerated.
+
+
+        A one-time-password field resolves to its current code; its seed is never
+
+        read, so there is no flag to ask for one.'
     RunSummary:
       properties:
         id:
@@ -649,6 +487,12 @@ components:
         model:
           type: string
           title: Model
+        modelParams:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Modelparams
         contextLimit:
           type: integer
           title: Contextlimit
@@ -667,6 +511,17 @@ components:
           - type: string
           - type: 'null'
           title: Result
+        output:
+          anyOf:
+          - {}
+          - type: 'null'
+          title: Output
+        outputSchema:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Outputschema
         error:
           anyOf:
           - type: string
@@ -731,35 +586,6 @@ components:
       - createdAt
       - updatedAt
       title: RunSummary
-    RunAttachmentsResponse:
-      properties:
-        attachments:
-          items:
-            $ref: '#/components/schemas/RunAttachment'
-          type: array
-          title: Attachments
-      type: object
-      required:
-      - attachments
-      title: RunAttachmentsResponse
-    RunJudgeSettings:
-      properties:
-        context:
-          anyOf:
-          - type: string
-            maxLength: 10000
-          - type: 'null'
-          title: Context
-      additionalProperties: false
-      type: object
-      title: RunJudgeSettings
-      description: 'Opt-in LLM judgement of the finished run. Presence of this object turns
-
-        the judge on (send {} for defaults); CP judges the run''s trajectory after
-
-        it goes terminal and surfaces the verdict as RunSummary.judgement (null
-
-        until it lands). The judge''s LLM call is billed to the run.'
     ProxyCountryCode:
       type: string
       enum:
@@ -1012,6 +838,399 @@ components:
       - zm
       - zw
       title: ProxyCountryCode
+    RunBrowserSettings:
+      properties:
+        profileId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Profileid
+          description: ID of a browser profile to load into the session. Profiles persist cookies, local storage, and other browser state across sessions.
+        proxyCountryCode:
+          anyOf:
+          - $ref: '#/components/schemas/ProxyCountryCode'
+          - type: 'null'
+          description: ISO country code to proxy the browser through. Defaults to US. Pass null to run without a proxy.
+          default: us
+        customProxy:
+          anyOf:
+          - $ref: '#/components/schemas/CustomProxy'
+          - type: 'null'
+          description: Custom proxy for the browser. Overrides proxyCountryCode. Never stored or inherited by follow-up runs; pass it on each run that should use it.
+        screenWidth:
+          anyOf:
+          - type: integer
+            maximum: 6144.0
+            minimum: 320.0
+          - type: 'null'
+          title: Screenwidth
+          description: Custom screen width in pixels for the browser.
+        screenHeight:
+          anyOf:
+          - type: integer
+            maximum: 3456.0
+            minimum: 320.0
+          - type: 'null'
+          title: Screenheight
+          description: Custom screen height in pixels for the browser.
+        allowResizing:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Allowresizing
+          description: Let you or the agent resize the browser window over CDP. Resizing makes the browser easier to detect. API runs default to off. Follow-up runs inherit the value of the previous browser. The value applies only when the run starts a new browser.
+        record:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Record
+          description: 'Record the browser session to an mp4, retrievable via GET /browsers/{id} once the browser stops. API runs default to off; pass true to enable. Like other browser settings, this only applies when a new browser is provisioned: a follow-up that reuses the session''s live browser keeps that browser''s recording state. Ignored (always off) for Zero Data Retention projects.'
+        extensionIds:
+          items:
+            type: string
+            format: uuid
+          type: array
+          maxItems: 3
+          title: Extensionids
+          description: Up to 3 ready extensions from POST /api/v4/extensions to install in every browser of the session. Follow-up runs inherit the session's extensions; passing a different set returns 400. After you delete an extension, omit extensionIds or pass the reduced set; later browsers skip deleted extensions. The agent is not told about installed extensions, so name any extension pages in the task.
+      additionalProperties: false
+      type: object
+      title: RunBrowserSettings
+      description: 'Browser config, owned by the browser row (never the run). Follow-ups:
+
+        omitted fields inherit the session''s prior browser; explicit values apply
+
+        only to newly provisioned browsers (a live browser is reused as-is).
+
+        Profile is the exception: a different profile → 400; an explicit value
+
+        mismatching the live browser''s profile (incl. null vs a profiled browser)
+
+        declines reuse and provisions fresh. A live browser already matching the
+
+        requested profile is reused. Extensions are session-wide: follow-ups
+
+        inherit them, and a different set → 400 (see extensionIds).'
+    RunCreateRequest:
+      properties:
+        task:
+          type: string
+          minLength: 1
+          title: Task
+        outputSchema:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Outputschema
+          description: Optional JSON Schema for the final output (API runs only).
+        model:
+          type: string
+          enum:
+          - mimo-v2.6-pro
+          - mimo-v2.6-flash
+          - deepseek-v4.1-flash
+          - glm-5.2
+          - grok-4.5
+          - grok-4.6
+          - glm-5.3-flash
+          - deepseek-v4-flash-vision
+          - kimi-k3
+          - minimax-m3
+          - claude-opus-4.7
+          - claude-opus-4.8
+          - claude-opus-5
+          - claude-opus-5-5
+          - claude-fable-5
+          - claude-sonnet-5
+          - claude-sonnet-5-5
+          - gpt-5.5
+          - gpt-5.6
+          - gpt-6-astra
+          - gpt-6-sol
+          - gpt-6.1-sol
+          - gpt-6-luna
+          - gpt-5.6-sol
+          - gpt-5.6-terra
+          - gpt-5.6-luna
+          - gemini-3.6-flash
+          - gemini-3.5-flash
+          - gemini-3.1-pro
+          - gemini-3-flash
+          - bu-ultrafast
+          - bu-fast
+          title: Model
+          description: bu-ultrafast and bu-fast are early-access ultrafast presets; they take no modelParams and are rejected for projects without access.
+          default: gpt-6-luna
+        modelParams:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Modelparams
+          description: 'Optional provider-native request parameters for the selected model, written with the provider''s own field names and values and forwarded unchanged (e.g. {"reasoning": {"effort": "high"}} for OpenAI, {"thinking": {"type": "adaptive"}} for Anthropic, {"thinkingConfig": {"thinkingLevel": "high"}} for Google). Supported paths and values are per-model; an unsupported path, value, or a model that accepts no parameters at all is rejected with 422. Omitting this field applies the model''s default parameters (gpt-6-luna defaults to {"reasoning": {"effort": "high"}}); passing {} opts out of that default and leaves the provider''s own defaults in place.'
+        sessionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sessionid
+        workspaceId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Workspaceid
+        browserSettings:
+          anyOf:
+          - $ref: '#/components/schemas/RunBrowserSettings'
+          - type: 'null'
+        keepAlive:
+          anyOf:
+          - type: integer
+            maximum: 14400.0
+            minimum: 120.0
+          - type: 'null'
+          title: Keepalive
+          description: Seconds the session's browser stays open after its last run, so a follow-up run reuses the same page, never past the browser's 4 h lifetime. Default 120. Follow-up runs inherit the session's value; send a new value to change it or null to restore the default. Kept time is billed as browser time. Ignored (always 120) for free-tier and Zero Data Retention projects.
+        agentmail:
+          type: boolean
+          title: Agentmail
+          description: If true, provisions a persistent temporary email inbox (via AgentMail) for the run workspace. The agent receives the email address in its context and can send, receive, read, and reply to email. Set false to disable AgentMail for this run.
+          default: false
+        agentcardWalletId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Agentcardwalletid
+        stripeLinkConnectionId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Stripelinkconnectionid
+        agenticAutofillGrantId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Agenticautofillgrantid
+        attachedFileIds:
+          anyOf:
+          - items:
+              type: string
+              format: uuid
+            type: array
+            maxItems: 20
+          - type: 'null'
+          title: Attachedfileids
+        secretBindings:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/SecretBinding'
+            type: array
+            maxItems: 20
+          - type: 'null'
+          title: Secretbindings
+          description: Credentials this run may use without ever seeing them. The agent can ask the server to type a binding by alias on one of its allowed domains; it cannot read the value. Bindings are not persisted past the run.
+        opVaultId:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          title: Opvaultid
+          description: A 1Password vault id whose items become typed secrets for this run. The project's connected 1Password integration is resolved server-side; no per-item ids are needed.
+        opVaultAllowedDomains:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Opvaultalloweddomains
+          description: Hosts every credential from opVaultId may be typed into, e.g. ["amazon.com"]. Omit to derive each item's hosts from its own 1Password website entries; items with no website are then skipped and reported in skippedVaultItems. A host covers its subdomains, so 1Password's ExactDomain autofill setting is not honored either way.
+        judge:
+          anyOf:
+          - $ref: '#/components/schemas/RunJudgeSettings'
+          - type: 'null'
+        maxCostUsd:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Maxcostusd
+      additionalProperties: false
+      type: object
+      required:
+      - task
+      title: RunCreateRequest
+    RunAttachmentsResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/RunAttachment'
+          type: array
+          title: Attachments
+      type: object
+      required:
+      - attachments
+      title: RunAttachmentsResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    RunCreateResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+        model:
+          type: string
+          title: Model
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        workspaceId:
+          type: string
+          format: uuid
+          title: Workspaceid
+        eventsUrl:
+          type: string
+          title: Eventsurl
+        missingFileIds:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Missingfileids
+        skippedVaultItems:
+          items:
+            type: string
+          type: array
+          title: Skippedvaultitems
+          description: Titles of opVaultId items that hold a credential but no 1Password website, so deriving their domains left them with nowhere to be typed. The run still starts without them; add a website to the item or pass opVaultAllowedDomains.
+      type: object
+      required:
+      - id
+      - status
+      - model
+      - sessionId
+      - workspaceId
+      - eventsUrl
+      title: RunCreateResponse
+    InlineSecretSource:
+      properties:
+        type:
+          type: string
+          const: inline
+          title: Type
+        value:
+          type: string
+          minLength: 1
+          format: password
+          title: Value
+          description: The secret itself. Limited to 4096 bytes once encoded for encryption; non-ASCII characters cost more than one byte each.
+          writeOnly: true
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - value
+      title: InlineSecretSource
+      description: A value the caller supplies directly with the run.
+    RunListResponse:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/RunSummary'
+          type: array
+          title: Runs
+        nextCursor:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nextcursor
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - runs
+      title: RunListResponse
+    RunAttachment:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+          description: Filename shown to the user, e.g. "data.csv".
+        contentType:
+          type: string
+          title: Contenttype
+        sizeBytes:
+          type: integer
+          title: Sizebytes
+        status:
+          type: string
+          enum:
+          - pending
+          - uploaded
+          title: Status
+          description: '"pending" | "uploaded".'
+      type: object
+      required:
+      - id
+      - name
+      - contentType
+      - sizeBytes
+      - status
+      title: RunAttachment
+    APIKeySpendLimitDetail:
+      properties:
+        code:
+          type: string
+          title: Code
+          default: api_key_monthly_spend_limit_reached
+        message:
+          type: string
+          title: Message
+        cap:
+          type: number
+          title: Cap
+        spent:
+          type: number
+          title: Spent
+      type: object
+      required:
+      - message
+      - cap
+      - spent
+      title: APIKeySpendLimitDetail
+      description: Machine-readable 402 detail shared by run and browser creation.
     ValidationError:
       properties:
         loc:
@@ -1033,34 +1252,6 @@ components:
       - msg
       - type
       title: ValidationError
-    RunEvent:
-      properties:
-        runId:
-          type: string
-          format: uuid
-          title: Runid
-        id:
-          type: integer
-          title: Id
-        ts:
-          type: string
-          format: date-time
-          title: Ts
-        type:
-          type: string
-          title: Type
-        data:
-          additionalProperties: true
-          type: object
-          title: Data
-      type: object
-      required:
-      - runId
-      - id
-      - ts
-      - type
-      - data
-      title: RunEvent
     RunEventsResponse:
       properties:
         events:
@@ -1081,73 +1272,82 @@ components:
       required:
       - events
       title: RunEventsResponse
-    HTTPValidationError:
+    RunJudgeSettings:
       properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    RunBrowserSettings:
-      properties:
-        profileId:
+        context:
           anyOf:
           - type: string
-            format: uuid
+            maxLength: 10000
           - type: 'null'
-          title: Profileid
-          description: ID of a browser profile to load into the session. Profiles persist cookies, local storage, and other browser state across sessions.
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          description: ISO country code to proxy the browser through. Defaults to US. Pass null to run without a proxy.
-          default: us
-        customProxy:
-          anyOf:
-          - $ref: '#/components/schemas/CustomProxy'
-          - type: 'null'
-          description: Custom proxy for the browser. Overrides proxyCountryCode. Requires an active subscription. Never stored or inherited by follow-up runs; pass it on each run that should use it.
-        screenWidth:
-          anyOf:
-          - type: integer
-            maximum: 6144.0
-            minimum: 320.0
-          - type: 'null'
-          title: Screenwidth
-          description: Custom screen width in pixels for the browser.
-        screenHeight:
-          anyOf:
-          - type: integer
-            maximum: 3456.0
-            minimum: 320.0
-          - type: 'null'
-          title: Screenheight
-          description: Custom screen height in pixels for the browser.
-        record:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Record
-          description: 'Record the browser session to an mp4, retrievable via GET /browsers/{id} once the browser stops. API runs default to off; pass true to enable. Like other browser settings, this only applies when a new browser is provisioned: a follow-up that reuses the session''s live browser keeps that browser''s recording state. Ignored (always off) for Zero Data Retention projects.'
+          title: Context
       additionalProperties: false
       type: object
-      title: RunBrowserSettings
-      description: 'Browser config, owned by the browser row (never the run). Follow-ups:
+      title: RunJudgeSettings
+      description: 'Opt-in LLM judgement of the finished run. Presence of this object turns
 
-        omitted fields inherit the session''s prior browser; explicit values apply
+        the judge on (send {} for defaults); CP judges the run''s trajectory after
 
-        only to newly provisioned browsers (a live browser is reused as-is).
+        it goes terminal and surfaces the verdict as RunSummary.judgement (null
 
-        Profile is the exception: a different profile → 400; an explicit value
+        until it lands). The judge''s LLM call is billed to the run.'
+    APIKeySpendLimitError:
+      properties:
+        detail:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/APIKeySpendLimitDetail'
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: APIKeySpendLimitError
+      description: FastAPI wraps endpoint errors in a top-level ``detail`` field.
+    SecretBinding:
+      properties:
+        alias:
+          type: string
+          title: Alias
+          description: Name the agent refers to this secret by, e.g. "github_password".
+        source:
+          oneOf:
+          - $ref: '#/components/schemas/InlineSecretSource'
+          - $ref: '#/components/schemas/OnePasswordSecretSource'
+          title: Source
+          discriminator:
+            propertyName: type
+            mapping:
+              inline: '#/components/schemas/InlineSecretSource'
+              onepassword: '#/components/schemas/OnePasswordSecretSource'
+        allowedDomains:
+          items:
+            type: string
+          type: array
+          maxItems: 20
+          minItems: 1
+          title: Alloweddomains
+          description: Hosts the secret may be typed into, e.g. ["github.com"]. A host covers its subdomains. Bare hostnames only — no scheme, port, path, or wildcard.
+      additionalProperties: false
+      type: object
+      required:
+      - alias
+      - source
+      - allowedDomains
+      title: SecretBinding
+      description: 'One credential this run may have typed into a browser field.
 
-        mismatching the live browser''s profile (incl. null vs a profiled browser)
 
-        declines reuse and provisions fresh. A live browser already matching the
+        The value never reaches the agent. It is encrypted at rest, kept out of the
 
-        requested profile is reused.'
+        worker payload, and typed straight into the focused field by the server when
+
+        the agent asks for the alias by name — and only while the page it is typing
+
+        into is on one of `allowedDomains`.
+
+
+        Run-scoped: bindings die with the run, so a follow-up run that needs the same
+
+        credential must send it again.'
   securitySchemes:
     APIKeyHeader:
       type: apiKey

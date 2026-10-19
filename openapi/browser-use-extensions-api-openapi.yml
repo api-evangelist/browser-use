@@ -1,0 +1,233 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Public API v4 Extensions API
+  summary: Browser Use agent runs API (v4)
+  version: 4.0.0
+servers:
+- url: https://api.browser-use.com/api/v4
+  description: Production server
+tags:
+- name: Extensions
+paths:
+  /extensions:
+    post:
+      tags:
+      - Extensions
+      summary: Upload Extension
+      description: Upload a Manifest V3 extension as a ZIP file with manifest.json at its root.
+      operationId: upload_extension_extensions_post
+      security:
+      - APIKeyHeader: []
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtensionView'
+        '403':
+          description: Extensions are not available for Zero Data Retention projects
+        '413':
+          description: The upload is larger than 100 MiB
+        '422':
+          description: The extension is invalid or the project has 100 extensions
+        '503':
+          description: The extension could not be stored
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+    get:
+      tags:
+      - Extensions
+      summary: List Extensions
+      description: List the extensions uploaded to this project.
+      operationId: list_extensions_extensions_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 10
+          title: Pagesize
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Pagenumber
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtensionListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /extensions/{extension_id}:
+    get:
+      tags:
+      - Extensions
+      summary: Get Extension
+      description: Get an uploaded extension by its ID.
+      operationId: get_extension_extensions__extension_id__get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: extension_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Extension Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtensionView'
+        '404':
+          description: Extension not found
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Extensions
+      summary: Delete Extension
+      description: Permanently delete an extension without affecting running browsers.
+      operationId: delete_extension_extensions__extension_id__delete
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: extension_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Extension Id
+      responses:
+        '204':
+          description: Successful Response
+        '404':
+          description: Extension not found
+        '503':
+          description: The extension could not be deleted
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ExtensionView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        version:
+          type: string
+          title: Version
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+      type: object
+      required:
+      - id
+      - name
+      - version
+      - createdAt
+      title: ExtensionView
+    ExtensionListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ExtensionView'
+          type: array
+          title: Items
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: ExtensionListResponse
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key

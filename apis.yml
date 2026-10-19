@@ -91,26 +91,6 @@ apis:
     url: mcp/browser-use-tool-crosswalk.yml
   - type: Documentation
     url: https://docs.browser-use.com/cloud/guides/mcp-server
-- aid: browser-use:browser-use-billing-api
-  name: Browser Use Billing API
-  description: The Billing API from Browser Use — 1 operation(s) for billing.
-  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
-  baseURL: https://api.browser-use.com/api/v4
-  tags:
-  - Billing
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-billing-api-openapi.yml
-  - type: APIReference
-    url: https://browser-use.com/api
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v4-overview
-  - type: DataModel
-    url: data-model/browser-use-data-model.yml
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-reference
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v2-overview
 - aid: browser-use:browser-use-browsers-api
   name: Browser Use Browsers API
   description: The Browsers API from Browser Use — 3 operation(s) for browsers.
@@ -123,28 +103,6 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/browser-use-browsers-api-openapi.yml
-  - type: APIReference
-    url: https://browser-use.com/api
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v4-overview
-  - type: DataModel
-    url: data-model/browser-use-data-model.yml
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-reference
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v2-overview
-- aid: browser-use:browser-use-files-api
-  name: Browser Use Files API
-  description: The Files API from Browser Use — 3 operation(s) for files.
-  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
-  baseURL: https://api.browser-use.com/api/v4
-  tags:
-  - File
-  tags_raw:
-  - Files
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-files-api-openapi.yml
   - type: APIReference
     url: https://browser-use.com/api
   - type: Documentation
@@ -215,68 +173,6 @@ apis:
     url: https://docs.browser-use.com/cloud/api-reference
   - type: Documentation
     url: https://docs.browser-use.com/cloud/api-v2-overview
-- aid: browser-use:browser-use-skills-api
-  name: Browser Use Skills API
-  description: The Skills API from Browser Use — 8 operation(s) for skills.
-  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
-  baseURL: https://api.browser-use.com/api/v4
-  tags:
-  - Skills
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-skills-api-openapi.yml
-  - type: APIReference
-    url: https://browser-use.com/api
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v4-overview
-  - type: DataModel
-    url: data-model/browser-use-data-model.yml
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-reference
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v2-overview
-- aid: browser-use:browser-use-skills-marketplace-api
-  name: Browser Use Skills Marketplace API
-  description: The Skills Marketplace API from Browser Use — 4 operation(s) for skills marketplace.
-  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
-  baseURL: https://api.browser-use.com/api/v4
-  tags:
-  - Skills Marketplace
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-skills-marketplace-api-openapi.yml
-  - type: APIReference
-    url: https://browser-use.com/api
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v4-overview
-  - type: DataModel
-    url: data-model/browser-use-data-model.yml
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-reference
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v2-overview
-- aid: browser-use:browser-use-tasks-api
-  name: Browser Use Tasks API
-  description: The Tasks API from Browser Use — 4 operation(s) for tasks.
-  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
-  baseURL: https://api.browser-use.com/api/v4
-  tags:
-  - Task
-  tags_raw:
-  - Tasks
-  properties:
-  - type: OpenAPI
-    url: openapi/browser-use-tasks-api-openapi.yml
-  - type: APIReference
-    url: https://browser-use.com/api
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v4-overview
-  - type: DataModel
-    url: data-model/browser-use-data-model.yml
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-reference
-  - type: Documentation
-    url: https://docs.browser-use.com/cloud/api-v2-overview
 - aid: browser-use:browser-use-workspaces-api
   name: Browser Use Workspaces API
   description: The Workspaces API from Browser Use — 5 operation(s) for workspaces.
@@ -299,16 +195,56 @@ apis:
     url: https://docs.browser-use.com/cloud/api-reference
   - type: Documentation
     url: https://docs.browser-use.com/cloud/api-v2-overview
-- aid: browser-use:browser-use-x402-api
-  name: Browser Use X402 API
-  description: The x402 API from Browser Use — 1 operation(s) for x402.
-  humanURL: https://docs.browser-use.com/cloud/api-v4-overview
-  baseURL: https://api.browser-use.com/api/v4
+- aid: browser-use:browser-use-extensions-api
+  name: Browser Use Extensions API
+  description: The Extensions API from Browser Use — 2 operation(s) for extensions.
+  humanURL: https://browser-use.com/mcp
+  baseURL: https://api.browser-use.com/mcp
   tags:
-  - x402
+  - Extensions
   properties:
   - type: OpenAPI
-    url: openapi/browser-use-x402-api-openapi.yml
+    url: openapi/browser-use-extensions-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-integrations-api
+  name: Browser Use Integrations API
+  description: The Integrations API from Browser Use — 5 operation(s) for integrations.
+  humanURL: https://browser-use.com/mcp
+  baseURL: https://api.browser-use.com/mcp
+  tags:
+  - Integrations
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-integrations-api-openapi.yml
+  - type: APIReference
+    url: https://browser-use.com/api
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v4-overview
+  - type: DataModel
+    url: data-model/browser-use-data-model.yml
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-reference
+  - type: Documentation
+    url: https://docs.browser-use.com/cloud/api-v2-overview
+- aid: browser-use:browser-use-wallets-api
+  name: Browser Use Wallets API
+  description: The Wallets API from Browser Use — 2 operation(s) for wallets.
+  humanURL: https://browser-use.com/mcp
+  baseURL: https://api.browser-use.com/mcp
+  tags:
+  - Wallets
+  properties:
+  - type: OpenAPI
+    url: openapi/browser-use-wallets-api-openapi.yml
   - type: APIReference
     url: https://browser-use.com/api
   - type: Documentation

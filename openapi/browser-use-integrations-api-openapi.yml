@@ -1,0 +1,371 @@
+openapi: 3.2.0
+info:
+  title: Browser Use Public API v4 Integrations API
+  summary: Browser Use agent runs API (v4)
+  version: 4.0.0
+servers:
+- url: https://api.browser-use.com/api/v4
+  description: Production server
+tags:
+- name: Integrations
+paths:
+  /integrations:
+    get:
+      tags:
+      - Integrations
+      summary: List Integrations
+      description: 'List available integrations with this project''s connection status.
+
+
+        `is_connected` is resolved per integration, so a client can render the whole
+
+        catalogue and the connected subset from this one call. `connected_only` is
+
+        what a "my integrations" view reads — including on a restricted project,
+
+        which cannot connect anything but can still remove what it already has.'
+      operationId: list_integrations_integrations_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+          - type: 'null'
+          description: Maximum number of results
+          title: Limit
+        description: Maximum number of results
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          description: Number of results to skip
+          default: 0
+          title: Offset
+        description: Number of results to skip
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Filter by name, description or provider
+          title: Search
+        description: Filter by name, description or provider
+      - name: popular_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Only return popular integrations
+          default: false
+          title: Popular Only
+        description: Only return popular integrations
+      - name: connected_only
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Only return integrations this project has connected
+          default: false
+          title: Connected Only
+        description: Only return integrations this project has connected
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationListResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /integrations/categories:
+    get:
+      tags:
+      - Integrations
+      summary: List Categories
+      description: Get all integration categories, for filtering the list above.
+      operationId: list_categories_integrations_categories_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationCategoryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - APIKeyHeader: []
+  /integrations/{provider}/authorize:
+    post:
+      tags:
+      - Integrations
+      summary: Authorize Integration
+      description: 'Get the OAuth redirect URL for connecting an integration.
+
+
+        The client opens the returned URL in a web auth session and polls
+
+        `/integrations/{provider}/status` once the flow lands back on the callback
+
+        path. The URL is Composio-hosted; no redirect URI is registered per client.'
+      operationId: authorize_integration_integrations__provider__authorize_post
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /integrations/{provider}/status:
+    get:
+      tags:
+      - Integrations
+      summary: Get Connection Status
+      description: 'Check whether this project has connected a specific provider.
+
+
+        Poll this after opening the authorize URL to learn when OAuth completed.'
+      operationId: get_connection_status_integrations__provider__status_get
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStatusResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /integrations/{provider}:
+    delete:
+      tags:
+      - Integrations
+      summary: Disconnect Integration
+      description: 'Disconnect an integration for this project.
+
+
+        Deliberately NOT gated like `authorize` above: a restricted project must
+
+        still be able to tear down a connection it already has.'
+      operationId: disconnect_integration_integrations__provider__delete
+      security:
+      - APIKeyHeader: []
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisconnectResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    IntegrationResponse:
+      properties:
+        provider:
+          type: string
+          title: Provider
+        display_name:
+          type: string
+          title: Display Name
+        description:
+          type: string
+          title: Description
+        icon_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Icon Url
+        category:
+          type: string
+          title: Category
+        is_connected:
+          type: boolean
+          title: Is Connected
+        auth_type:
+          type: string
+          title: Auth Type
+        is_popular:
+          type: boolean
+          title: Is Popular
+          default: false
+      type: object
+      required:
+      - provider
+      - display_name
+      - description
+      - icon_url
+      - category
+      - is_connected
+      - auth_type
+      title: IntegrationResponse
+      description: Response for a single integration.
+    IntegrationCategoryResponse:
+      properties:
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+      type: object
+      required:
+      - categories
+      title: IntegrationCategoryResponse
+      description: Response for integration categories.
+    DisconnectResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+        provider:
+          type: string
+          title: Provider
+      type: object
+      required:
+      - success
+      - provider
+      title: DisconnectResponse
+      description: Response for disconnect action.
+    IntegrationListResponse:
+      properties:
+        integrations:
+          items:
+            $ref: '#/components/schemas/IntegrationResponse'
+          type: array
+          title: Integrations
+        total:
+          type: integer
+          title: Total
+        limit:
+          type: integer
+          title: Limit
+        offset:
+          type: integer
+          title: Offset
+      type: object
+      required:
+      - integrations
+      - total
+      - limit
+      - offset
+      title: IntegrationListResponse
+      description: Paginated response for integrations list.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    AuthorizeResponse:
+      properties:
+        redirect_url:
+          type: string
+          title: Redirect Url
+        provider:
+          type: string
+          title: Provider
+      type: object
+      required:
+      - redirect_url
+      - provider
+      title: AuthorizeResponse
+      description: Response with OAuth redirect URL.
+    ConnectionStatusResponse:
+      properties:
+        provider:
+          type: string
+          title: Provider
+        is_connected:
+          type: boolean
+          title: Is Connected
+      type: object
+      required:
+      - provider
+      - is_connected
+      title: ConnectionStatusResponse
+      description: Response for connection status check.
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Browser-Use-API-Key
