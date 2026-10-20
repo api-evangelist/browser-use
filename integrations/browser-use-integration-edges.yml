@@ -1,4 +1,34 @@
 edges:
+- partner_name: npm registry
+  partner: npm
+  partner_match: register
+  type: register
+  direction: provider-built
+  category: official SDK (JavaScript/TypeScript)
+  evidence: https://www.npmjs.com/package/browser-use-sdk
+  channel: package-registry
+  relationship: distribution-channel
+  contract_reference:
+    register: npm registry (public registry JSON)
+    spec_file: null
+    language: JavaScript/TypeScript
+    packages:
+    - name: browser-use-sdk
+      version: 3.12.1
+      released: '2026-10-17'
+      released_field: modified
+      lapsed: false
+      page: https://www.npmjs.com/package/browser-use-sdk
+      repo_leg: github-org:browser-use
+      publisher_leg: email:browser-use.com
+      matched_by: domain
+    current: true
+    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
+      24 months'
+    detected_by: sweep-official-sdks.py
+    detected: '2026-10-18'
+  detected_by: sweep-official-sdks.py
+  first_seen: '2026-10-18'
 - partner_name: MCP Registry
   partner: mcp
   partner_match: register
@@ -14,7 +44,7 @@ edges:
     registered_name: com.browser-use/browser-use
     register_id: com.browser-use/browser-use
     detected_by: sweep-agent-tools.py
-    detected: '2026-10-15'
+    detected: '2026-10-19'
   mcp_registry:
     servers:
     - com.browser-use/browser-use
@@ -60,7 +90,7 @@ edges:
     matched_domain: browser-use.com
     matched_by: own-domain
     detected_by: sweep-ai-agents.py
-    detected: '2026-10-15'
+    detected: '2026-10-19'
   detected_by: sweep-ai-agents.py
   first_seen: '2026-10-15'
 - partner_name: CNCF (Cloud Native Landscape)
@@ -69,11 +99,11 @@ edges:
   type: register
   direction: partner-built
   category: Cloud native landscape
-  evidence: https://github.com/cncf/landscape/blob/3a7d378b1824b82e729a453bb03fa6f1e37557e1/landscape.yml
+  evidence: https://github.com/cncf/landscape/blob/42dd4cd91dad8ec8558ac02467a43f0805b9957a/landscape.yml
   channel: standard-directory
   relationship: standard-participant
   contract_reference:
-    register: CNCF Cloud Native Landscape (github.com/cncf/landscape landscape.yml @3a7d378b18)
+    register: CNCF Cloud Native Landscape (github.com/cncf/landscape landscape.yml @42dd4cd91d)
     spec_file: null
     standard: Cloud Native (CNCF)
     role: landscape-listed
@@ -93,7 +123,7 @@ edges:
     signal_note: 'participation only: a landscape listing is standard-participant evidence, not depth. Entries,
       categories, tier and projects are CONTEXT, never read (breadth is not credit)'
     detected_by: sweep-cloud-native.py
-    detected: '2026-10-15'
+    detected: '2026-10-19'
   detected_by: sweep-cloud-native.py
   first_seen: '2026-10-15'
 - partner_name: Pipedream
@@ -104,7 +134,7 @@ edges:
   channel: open-source-node
   relationship: ipaas-bridge
   direction: third-party
-  evidence: https://github.com/PipedreamHQ/pipedream/tree/94800dd6de6640b942c65ea7ee655f71ac56d438/components/browser_use
+  evidence: https://github.com/PipedreamHQ/pipedream/tree/d5872355ef27b4efa769f05352f2820c299a456e/components/browser_use
   category: null
   contract_reference:
     register: Pipedream components (PipedreamHQ/pipedream components/)
@@ -122,36 +152,6 @@ edges:
     builder: Pipedream repo (component)
   detected_by: sweep-workflow-automation.py
   first_seen: '2026-10-15'
-- partner_name: npm registry
-  partner: npm
-  partner_match: register
-  type: register
-  direction: provider-built
-  category: official SDK (JavaScript/TypeScript)
-  evidence: https://www.npmjs.com/package/browser-use-sdk
-  channel: package-registry
-  relationship: distribution-channel
-  contract_reference:
-    register: npm registry (public registry JSON)
-    spec_file: null
-    language: JavaScript/TypeScript
-    packages:
-    - name: browser-use-sdk
-      version: 3.12.1
-      released: '2026-10-17'
-      released_field: modified
-      lapsed: false
-      page: https://www.npmjs.com/package/browser-use-sdk
-      repo_leg: github-org:browser-use
-      publisher_leg: email:browser-use.com
-      matched_by: domain
-    current: true
-    signal_note: 'an official package on the registry: distribution, not an integration; lapsed = no release in
-      24 months'
-    detected_by: sweep-official-sdks.py
-    detected: '2026-10-18'
-  detected_by: sweep-official-sdks.py
-  first_seen: '2026-10-18'
 generated: '2026-10-14'
 method: searched
 checked:
@@ -160,6 +160,7 @@ checked:
 - https://crates.io/api/v1
 - https://focus.finops.org/data-generators/
 - https://github.com/PipedreamHQ/pipedream/tree/94800dd6de6640b942c65ea7ee655f71ac56d438/components/
+- https://github.com/PipedreamHQ/pipedream/tree/d5872355ef27b4efa769f05352f2820c299a456e/components/
 - https://github.com/cncf/k8s-conformance
 - https://github.com/cncf/landscape
 - https://proxy.golang.org
