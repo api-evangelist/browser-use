@@ -1,6 +1,13 @@
 {
-  "jsonrpc": "2.0",
-  "id": 1,
+  "endpoint": "https://api.browser-use.com/mcp",
+  "captured": "2026-10-20",
+  "method": "initialize + tools/list (anonymous, no tool called; roadmap#992)",
+  "protocol_version": "2024-11-05",
+  "server_info": {
+    "name": "browser-use-web-automation",
+    "version": "1.0.0",
+    "description": "AI-powered web browser automation for scraping, data extraction, form filling, and general web tasks"
+  },
   "result": {
     "tools": [
       {
@@ -28,7 +35,7 @@
             },
             "model": {
               "type": "string",
-              "description": "LLM model to use for the browser agent. Default is \"browser-use-2.0\" (fastest/cheapest). Available models: browser-use-2.0, gpt-4.1, gpt-4.1-mini, o4-mini, o3, gemini-2.5-flash, gemini-2.5-pro, gemini-3-pro-preview, gemini-3.1-pro-preview, gemini-3-flash-preview, gemini-3.5-flash, claude-sonnet-4-5-20250929, claude-sonnet-5, claude-opus-4-5-20251101, claude-opus-4-7, claude-opus-4-8, claude-opus-5, glm-5.2, minimax-m3. Different models have different costs per step - use more powerful models like claude-opus-5 or o3 for complex reasoning tasks.",
+              "description": "LLM model to use for the browser agent. Default is \"browser-use-2.0\" (fastest/cheapest). Available models: browser-use-2.0, gpt-4.1, gpt-4.1-mini, o4-mini, o3, gemini-2.5-flash, gemini-2.5-pro, gemini-3-pro-preview, gemini-3.1-pro-preview, gemini-3-flash-preview, gemini-3.5-flash, claude-sonnet-4-5-20250929, claude-sonnet-5, claude-opus-4-5-20251101, claude-opus-4-7, claude-opus-4-8, claude-opus-5, glm-5.2, minimax-m3, grok-4.6, glm-5.3-flash, deepseek-v4-flash-vision. Different models have different costs per step - use more powerful models like claude-opus-5 or o3 for complex reasoning tasks.",
               "enum": [
                 "browser-use-2.0",
                 "gpt-4.1",
@@ -48,7 +55,10 @@
                 "claude-opus-4-8",
                 "claude-opus-5",
                 "glm-5.2",
-                "minimax-m3"
+                "minimax-m3",
+                "grok-4.6",
+                "glm-5.3-flash",
+                "deepseek-v4-flash-vision"
               ],
               "default": "browser-use-2.0"
             },
@@ -122,7 +132,7 @@
             },
             {
               "value": "claude-sonnet-5",
-              "usd_per_step": 0.05
+              "usd_per_step": 0.03
             },
             {
               "value": "claude-opus-4-5-20251101",
@@ -147,6 +157,18 @@
             {
               "value": "minimax-m3",
               "usd_per_step": 0.0075
+            },
+            {
+              "value": "grok-4.6",
+              "usd_per_step": 0.03
+            },
+            {
+              "value": "glm-5.3-flash",
+              "usd_per_step": 0.004
+            },
+            {
+              "value": "deepseek-v4-flash-vision",
+              "usd_per_step": 0.004
             }
           ],
           "note": "Billed per step taken. Cost varies by model."
@@ -223,7 +245,7 @@
       },
       {
         "name": "execute_skill",
-        "description": "Execute a skill with provided parameters. Skills are fast automation workflows that run in milliseconds without browser overhead. IMPORTANT: Before calling this tool: 1) Use list_skills to find the skill and check its parameters 2) If any parameter has type=\"cookie\", you must first call get_cookies with the profile_id and the cookie's domain (from cookie_domain field), then pass the cookie values as parameters 3) Parameters with type=\"cookie\" expect the cookie VALUE, not the full cookie object. Example flow: list_skills() \u2192 finds skill with auth_token (type=cookie, cookie_domain=x.com) \u2192 get_cookies(profile_id=\"...\", domains=[\"x.com\"]) \u2192 execute_skill(skill_id=\"...\", parameters={\"tweet_text\": \"Hello\", \"auth_token\": \"<value from cookies>\"})",
+        "description": "Execute a skill with provided parameters. Skills are fast automation workflows that run in milliseconds without browser overhead. IMPORTANT: Before calling this tool: 1) Use list_skills to find the skill and check its parameters 2) If any parameter has type=\"cookie\", you must first call get_cookies with the profile_id and the cookie's domain (from cookie_domain field), then pass the cookie values as parameters 3) Parameters with type=\"cookie\" expect the cookie VALUE, not the full cookie object. Example flow: list_skills() → finds skill with auth_token (type=cookie, cookie_domain=x.com) → get_cookies(profile_id=\"...\", domains=[\"x.com\"]) → execute_skill(skill_id=\"...\", parameters={\"tweet_text\": \"Hello\", \"auth_token\": \"<value from cookies>\"})",
         "inputSchema": {
           "type": "object",
           "properties": {
