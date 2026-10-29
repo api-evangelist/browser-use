@@ -1,4 +1,4 @@
-# Browser Use (browser-use)
+# Browser Use
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -64,52 +64,167 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Browser Use is an open-source framework for AI-powered browser automation and web interaction.
+Browser Use makes websites accessible to AI agents. It ships two commercial products on one managed browser platform — Browser Use Agents, which take a natural-language goal and return completed web work, and Browser Infrastructure, which rents stealth cloud Chromium browsers over SDK, REST, or CDP to automation you already own. The public Cloud API is versioned (v4 for long-horizon agent runs, v3 for sessions and workspaces, v2 for low-cost step-based tasks), authenticates with an X-Browser-Use-API-Key header, and is complemented by an OAuth-protected remote MCP server, signed webhooks, an A2A agent card, a published agent skill, first-party Python and TypeScript SDKs, and a CLI. The open-source browser-use Python library is a separate developer tool with its own API.
 
-**APIs.json:** [https://raw.githubusercontent.com/api-evangelist/browser-use/refs/heads/main/apis.yml](https://raw.githubusercontent.com/api-evangelist/browser-use/refs/heads/main/apis.yml)
+**Areas:** AI Automation · Browser Automation · Web Agents · Web Scraping · Agent Infrastructure · MCP · Cloud Browser · A2A
 
-## Scope
+## Browser Use on APIs.io
 
-- **Type:** Index
+Everything profiled for Browser Use is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/browser-use/](https://apis.io/providers/browser-use/)** — or go straight to one of the APIs or properties below.
 
-## Tags
+### APIs (12)
 
-- AI Automation
-- Browser Automation
+- [Browser Use MCP Server](https://apis.io/apis/browser-use/browser-use-mcp/) — Browser Use's hosted remote Model Context Protocol server. An anonymous tools/list returns six real tools — browser_task, monitor_task, list_skills,…
+- [Browser Use Billing API](https://apis.io/apis/browser-use/browser-use-billing-api/) — The Billing API from Browser Use — 1 operation(s) for billing.
+- [Browser Use Browsers API](https://apis.io/apis/browser-use/browser-use-browsers-api/) — The Browsers API from Browser Use — 3 operation(s) for browsers.
+- [Browser Use Files API](https://apis.io/apis/browser-use/browser-use-files-api/) — The Files API from Browser Use — 3 operation(s) for files.
+- [Browser Use Profiles API](https://apis.io/apis/browser-use/browser-use-profiles-api/) — The Profiles API from Browser Use — 2 operation(s) for profiles.
+- [Browser Use Runs API](https://apis.io/apis/browser-use/browser-use-runs-api/) — The Runs API from Browser Use — 6 operation(s) for runs.
+- [Browser Use Sessions API](https://apis.io/apis/browser-use/browser-use-sessions-api/) — The Sessions API from Browser Use — 8 operation(s) for sessions.
+- [Browser Use Skills API](https://apis.io/apis/browser-use/browser-use-skills-api/) — The Skills API from Browser Use — 8 operation(s) for skills.
+- [Browser Use Skills Marketplace API](https://apis.io/apis/browser-use/browser-use-skills-marketplace-api/) — The Skills Marketplace API from Browser Use — 4 operation(s) for skills marketplace.
+- [Browser Use Tasks API](https://apis.io/apis/browser-use/browser-use-tasks-api/) — The Tasks API from Browser Use — 4 operation(s) for tasks.
+- [Browser Use Workspaces API](https://apis.io/apis/browser-use/browser-use-workspaces-api/) — The Workspaces API from Browser Use — 5 operation(s) for workspaces.
+- [Browser Use X402 API](https://apis.io/apis/browser-use/browser-use-x402-api/) — The x402 API from Browser Use — 1 operation(s) for x402.
 
-## Timestamps
+### Published properties
 
-- **Created:** 2026-03-27
-- **Modified:** 2026-03-27
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
 
-## APIs
+#### AsyncAPI (1)
 
-### Browser Use
+Event-driven and webhook contracts.
 
-Browser Use is an open-source framework for AI-powered browser automation and web interaction.
+- [Browser Use Webhooks](https://apis.io/asyncapis/browser-use/browser-use-webhooks/)
 
-- **Human URL:** [https://browser-use.com](https://browser-use.com)
+#### MCP servers (1)
 
-#### Tags
+Model Context Protocol servers that expose the API to agents.
 
-- AI Automation
+- [browser-use-mcp.yml](https://apis.io/servers/browser-use/browser-use-mcp-yml/)
 
-#### Properties
+#### Agentic access (1)
 
-- [Documentation](https://docs.browser-use.com)
-- [Postman Collection](collections/browser-use.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/browser-use.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+Which operations an agent can call, which act, and which need a human in the loop.
 
-## Common Properties
+- [Browser Use Agentic Access](https://apis.io/agentic-access/browser-use/browser-use-agentic-access/)
 
-- [GitHub Organization](https://github.com/browser-use)
-- [LinkedIn](https://www.linkedin.com/company/browser-use)
+#### Overlays (12)
+
+OpenAPI overlays, including conversational phrasing for each operation.
+
+- [Browser Use Api V4 Overlay](https://apis.io/overlays/browser-use/browser-use-api-v4-overlay/)
+- [Browser Use Billing Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-billing-api-phrasing-overlay/)
+- [Browser Use Browsers Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-browsers-api-phrasing-overlay/)
+- [Browser Use Files Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-files-api-phrasing-overlay/)
+- [Browser Use Profiles Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-profiles-api-phrasing-overlay/)
+- [Browser Use Runs Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-runs-api-phrasing-overlay/)
+- [Browser Use Sessions Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-sessions-api-phrasing-overlay/)
+- [Browser Use Skills Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-skills-api-phrasing-overlay/)
+- [Browser Use Skills Marketplace Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-skills-marketplace-api-phrasing-overlay/)
+- [Browser Use Tasks Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-tasks-api-phrasing-overlay/)
+- [Browser Use Workspaces Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-workspaces-api-phrasing-overlay/)
+- [Browser Use X402 Api Phrasing Overlay](https://apis.io/overlays/browser-use/browser-use-x402-api-phrasing-overlay/)
+
+#### Security (2)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Browser Use Authentication](https://apis.io/security/browser-use/browser-use-authentication/)
+- [Browser Use Domain Security](https://apis.io/security/browser-use/browser-use-domain-security/)
+
+#### OAuth scopes (1)
+
+The permissions the API asks for.
+
+- [Browser Use Scopes](https://apis.io/scopes/browser-use/browser-use-scopes/)
+
+#### Plans and pricing (1)
+
+Published plans, tiers and prices.
+
+- [Browser Use Plans Pricing](https://apis.io/plans/browser-use/browser-use-plans-pricing/)
+
+#### Rate limits (1)
+
+Published request limits.
+
+- [Browser Use Rate Limits](https://apis.io/rate-limits/browser-use/browser-use-rate-limits/)
+
+#### FinOps (1)
+
+What the API costs to run, by operation.
+
+- [Browser Use Finops](https://apis.io/finops/browser-use/browser-use-finops/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
 - [Website](https://browser-use.com)
 - [Documentation](https://docs.browser-use.com)
-- [Integrations](https://browser-use.com/marketplace)
-- [L L Ms Txt](https://docs.browser-use.com/llms.txt)
+- [Getting started](https://docs.browser-use.com/cloud/quickstart)
+- [API reference](https://browser-use.com/api)
+- [Pricing](https://browser-use.com/pricing)
+- [Sign up](https://cloud.browser-use.com)
+- [Support](https://link.browser-use.com/discord)
+- [Blog](https://browser-use.com/posts)
+- [Terms of service](https://browser-use.com/legal/terms-of-service)
+- [Privacy policy](https://browser-use.com/privacy/)
+- [GitHub](https://github.com/browser-use)
+- [Status](https://status.browser-use.com)
 
-## Maintainers
+## API Evangelist rating
 
-**FN:** Kin Lane
-**Email:** kin@apievangelist.com
+**Kin Score 69.3** — exemplar · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 80.0 |
+| Contract quality | 60.8 |
+| Contract governance | 18.2 |
+| Operational transparency | 65.8 |
+| Developer ergonomics | 77.9 |
+| Access clarity | 84.2 |
+
+**Agent readiness 61.8** — agent-ready (gated down from agent-native)
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | derived (partial credit) |
+| Reversibility Documented | documented (partial credit) |
+| MCP Server | verified |
+| Auth Clarity | served (partial credit) |
+| Idempotency | — |
+| Error Semantics | verified |
+| OpenAPI Examples | — |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | yes |
+| Agent Skills | unknown |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | served (partial credit) |
+| Protected Resource Metadata | verified |
+| Dynamic Client Registration | yes |
+| Agentic Commerce | — |
+| Pagination Ratio | paginated |
+| Operation Distinctiveness | distinct |
+
+**Regulatory alignment 39.2** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/browser-use/](https://apis.io/providers/browser-use/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Browser Use: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/browser-use/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
