@@ -230,6 +230,41 @@ components:
       - is_connected
       title: ConnectionStatusResponse
       description: Response for connection status check.
+    DisconnectResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+        provider:
+          type: string
+          title: Provider
+      type: object
+      required:
+      - success
+      - provider
+      title: DisconnectResponse
+      description: Response for disconnect action.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    IntegrationCategoryResponse:
+      properties:
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+      type: object
+      required:
+      - categories
+      title: IntegrationCategoryResponse
+      description: Response for integration categories.
     IntegrationListResponse:
       properties:
         integrations:
@@ -254,6 +289,27 @@ components:
       - offset
       title: IntegrationListResponse
       description: Paginated response for integrations list.
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
     IntegrationResponse:
       properties:
         provider:
@@ -308,62 +364,6 @@ components:
       - provider
       title: AuthorizeResponse
       description: Response with OAuth redirect URL.
-    IntegrationCategoryResponse:
-      properties:
-        categories:
-          items:
-            type: string
-          type: array
-          title: Categories
-      type: object
-      required:
-      - categories
-      title: IntegrationCategoryResponse
-      description: Response for integration categories.
-    DisconnectResponse:
-      properties:
-        success:
-          type: boolean
-          title: Success
-        provider:
-          type: string
-          title: Provider
-      type: object
-      required:
-      - success
-      - provider
-      title: DisconnectResponse
-      description: Response for disconnect action.
-    ValidationError:
-      properties:
-        loc:
-          items:
-            anyOf:
-            - type: string
-            - type: integer
-          type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
-      type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
   securitySchemes:
     APIKeyHeader:
       type: apiKey

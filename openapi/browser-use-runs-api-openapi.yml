@@ -329,6 +329,73 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    RunJudgeSettings:
+      properties:
+        context:
+          anyOf:
+          - type: string
+            maxLength: 10000
+          - type: 'null'
+          title: Context
+      additionalProperties: false
+      type: object
+      title: RunJudgeSettings
+      description: 'Opt-in LLM judgement of the finished run. Presence of this object turns
+
+        the judge on (send {} for defaults); CP judges the run''s trajectory after
+
+        it goes terminal and surfaces the verdict as RunSummary.judgement (null
+
+        until it lands). The judge''s LLM call is billed to the run.'
+    OnePasswordSecretSource:
+      properties:
+        type:
+          type: string
+          const: onepassword
+          title: Type
+        integrationId:
+          type: string
+          format: uuid
+          title: Integrationid
+          description: 1Password integration to resolve through. Must belong to this project.
+        vaultId:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Vaultid
+        itemId:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Itemid
+        fieldId:
+          type: string
+          maxLength: 64
+          minLength: 1
+          title: Fieldid
+          description: Field id from the item-fields endpoint, e.g. "password".
+      additionalProperties: false
+      type: object
+      required:
+      - type
+      - integrationId
+      - vaultId
+      - itemId
+      - fieldId
+      title: OnePasswordSecretSource
+      description: 'One field of a 1Password item, resolved only when the agent asks for it.
+
+
+        Nothing here is a secret: the quadruple NAMES a credential without carrying
+
+        it. Creating the binding makes no call to 1Password — a provider outage must
+
+        not stop a run from being dispatched, and no vault is ever enumerated.
+
+
+        A one-time-password field resolves to its current code; its seed is never
+
+        read, so there is no flag to ask for one.'
     RunBrowserSettings:
       properties:
         profileId:
@@ -403,26 +470,106 @@ components:
         requested profile is reused. Extensions are session-wide: follow-ups
 
         inherit them, and a different set → 400 (see extensionIds).'
-    RunEventsResponse:
+    SecretBinding:
       properties:
-        events:
+        alias:
+          type: string
+          title: Alias
+          description: Name the agent refers to this secret by, e.g. "github_password".
+        source:
+          oneOf:
+          - $ref: '#/components/schemas/InlineSecretSource'
+          - $ref: '#/components/schemas/OnePasswordSecretSource'
+          title: Source
+          discriminator:
+            propertyName: type
+            mapping:
+              inline: '#/components/schemas/InlineSecretSource'
+              onepassword: '#/components/schemas/OnePasswordSecretSource'
+        allowedDomains:
           items:
-            $ref: '#/components/schemas/RunEvent'
+            type: string
           type: array
-          title: Events
-        nextAfter:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          title: Nextafter
-        hasMore:
-          type: boolean
-          title: Hasmore
-          default: false
+          maxItems: 20
+          minItems: 1
+          title: Alloweddomains
+          description: Hosts the secret may be typed into, e.g. ["github.com"]. A host covers its subdomains. Bare hostnames only — no scheme, port, path, or wildcard.
+      additionalProperties: false
       type: object
       required:
-      - events
-      title: RunEventsResponse
+      - alias
+      - source
+      - allowedDomains
+      title: SecretBinding
+      description: 'One credential this run may have typed into a browser field.
+
+
+        The value never reaches the agent. It is encrypted at rest, kept out of the
+
+        worker payload, and typed straight into the focused field by the server when
+
+        the agent asks for the alias by name — and only while the page it is typing
+
+        into is on one of `allowedDomains`.
+
+
+        Run-scoped: bindings die with the run, so a follow-up run that needs the same
+
+        credential must send it again.'
+    RunAttachmentsResponse:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/RunAttachment'
+          type: array
+          title: Attachments
+      type: object
+      required:
+      - attachments
+      title: RunAttachmentsResponse
+    RunAttachment:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+          description: Filename shown to the user, e.g. "data.csv".
+        contentType:
+          type: string
+          title: Contenttype
+        sizeBytes:
+          type: integer
+          title: Sizebytes
+        status:
+          type: string
+          enum:
+          - pending
+          - uploaded
+          title: Status
+          description: '"pending" | "uploaded".'
+      type: object
+      required:
+      - id
+      - name
+      - contentType
+      - sizeBytes
+      - status
+      title: RunAttachment
+    APIKeySpendLimitError:
+      properties:
+        detail:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/APIKeySpendLimitDetail'
+          title: Detail
+      type: object
+      required:
+      - detail
+      title: APIKeySpendLimitError
+      description: FastAPI wraps endpoint errors in a top-level ``detail`` field.
     RunEvent:
       properties:
         runId:
@@ -451,6 +598,49 @@ components:
       - type
       - data
       title: RunEvent
+    RunStatusResponse:
+      properties:
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+      type: object
+      required:
+      - status
+      title: RunStatusResponse
+      description: 'Minimal poll target: just the run''s status. Poll this until terminal
+
+        (cheap indexed lookup, tiny payload — never the task/result text), then
+
+        fetch the full RunSummary once via GET /runs/{id}. Mirrors v2''s
+
+        GET /tasks/{id}/status.'
+    RunEventsResponse:
+      properties:
+        events:
+          items:
+            $ref: '#/components/schemas/RunEvent'
+          type: array
+          title: Events
+        nextAfter:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Nextafter
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
+      type: object
+      required:
+      - events
+      title: RunEventsResponse
     ProxyCountryCode:
       type: string
       enum:
@@ -703,120 +893,6 @@ components:
       - zm
       - zw
       title: ProxyCountryCode
-    RunCreateResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        status:
-          type: string
-          enum:
-          - queued
-          - dispatching
-          - running
-          - completed
-          - failed
-          - cancelled
-          title: Status
-        model:
-          type: string
-          title: Model
-        sessionId:
-          type: string
-          format: uuid
-          title: Sessionid
-        workspaceId:
-          type: string
-          format: uuid
-          title: Workspaceid
-        eventsUrl:
-          type: string
-          title: Eventsurl
-        missingFileIds:
-          items:
-            type: string
-            format: uuid
-          type: array
-          title: Missingfileids
-        skippedVaultItems:
-          items:
-            type: string
-          type: array
-          title: Skippedvaultitems
-          description: Titles of opVaultId items that hold a credential but no 1Password website, so deriving their domains left them with nowhere to be typed. The run still starts without them; add a website to the item or pass opVaultAllowedDomains.
-      type: object
-      required:
-      - id
-      - status
-      - model
-      - sessionId
-      - workspaceId
-      - eventsUrl
-      title: RunCreateResponse
-    CustomProxy:
-      properties:
-        host:
-          type: string
-          maxLength: 255
-          minLength: 1
-          title: Host
-          description: Host of the proxy.
-        port:
-          type: integer
-          maximum: 65535.0
-          minimum: 1.0
-          title: Port
-          description: Port of the proxy.
-        username:
-          anyOf:
-          - type: string
-            maxLength: 255
-            minLength: 1
-          - type: 'null'
-          title: Username
-          description: Username for proxy authentication.
-        password:
-          anyOf:
-          - type: string
-            maxLength: 255
-            minLength: 1
-          - type: 'null'
-          title: Password
-          description: Password for proxy authentication.
-        ignoreCertErrors:
-          type: boolean
-          title: Ignore Certificate Errors
-          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
-          default: false
-      type: object
-      required:
-      - host
-      - port
-      title: CustomProxy
-      description: Request model for creating a custom proxy.
-    APIKeySpendLimitDetail:
-      properties:
-        code:
-          type: string
-          title: Code
-          default: api_key_monthly_spend_limit_reached
-        message:
-          type: string
-          title: Message
-        cap:
-          type: number
-          title: Cap
-        spent:
-          type: number
-          title: Spent
-      type: object
-      required:
-      - message
-      - cap
-      - spent
-      title: APIKeySpendLimitDetail
-      description: Machine-readable 402 detail shared by run and browser creation.
     RunCreateRequest:
       properties:
         task:
@@ -972,75 +1048,15 @@ components:
       required:
       - task
       title: RunCreateRequest
-    SecretBinding:
-      properties:
-        alias:
-          type: string
-          title: Alias
-          description: Name the agent refers to this secret by, e.g. "github_password".
-        source:
-          oneOf:
-          - $ref: '#/components/schemas/InlineSecretSource'
-          - $ref: '#/components/schemas/OnePasswordSecretSource'
-          title: Source
-          discriminator:
-            propertyName: type
-            mapping:
-              inline: '#/components/schemas/InlineSecretSource'
-              onepassword: '#/components/schemas/OnePasswordSecretSource'
-        allowedDomains:
-          items:
-            type: string
-          type: array
-          maxItems: 20
-          minItems: 1
-          title: Alloweddomains
-          description: Hosts the secret may be typed into, e.g. ["github.com"]. A host covers its subdomains. Bare hostnames only — no scheme, port, path, or wildcard.
-      additionalProperties: false
-      type: object
-      required:
-      - alias
-      - source
-      - allowedDomains
-      title: SecretBinding
-      description: 'One credential this run may have typed into a browser field.
-
-
-        The value never reaches the agent. It is encrypted at rest, kept out of the
-
-        worker payload, and typed straight into the focused field by the server when
-
-        the agent asks for the alias by name — and only while the page it is typing
-
-        into is on one of `allowedDomains`.
-
-
-        Run-scoped: bindings die with the run, so a follow-up run that needs the same
-
-        credential must send it again.'
-    RunAttachmentsResponse:
-      properties:
-        attachments:
-          items:
-            $ref: '#/components/schemas/RunAttachment'
-          type: array
-          title: Attachments
-      type: object
-      required:
-      - attachments
-      title: RunAttachmentsResponse
-    APIKeySpendLimitError:
+    HTTPValidationError:
       properties:
         detail:
-          anyOf:
-          - type: string
-          - $ref: '#/components/schemas/APIKeySpendLimitDetail'
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
           title: Detail
       type: object
-      required:
-      - detail
-      title: APIKeySpendLimitError
-      description: FastAPI wraps endpoint errors in a top-level ``detail`` field.
+      title: HTTPValidationError
     RunSummary:
       properties:
         id:
@@ -1157,136 +1173,48 @@ components:
       - createdAt
       - updatedAt
       title: RunSummary
-    HTTPValidationError:
+    RunListResponse:
       properties:
-        detail:
+        runs:
           items:
-            $ref: '#/components/schemas/ValidationError'
+            $ref: '#/components/schemas/RunSummary'
           type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    RunAttachment:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        name:
-          type: string
-          title: Name
-          description: Filename shown to the user, e.g. "data.csv".
-        contentType:
-          type: string
-          title: Contenttype
-        sizeBytes:
-          type: integer
-          title: Sizebytes
-        status:
-          type: string
-          enum:
-          - pending
-          - uploaded
-          title: Status
-          description: '"pending" | "uploaded".'
-      type: object
-      required:
-      - id
-      - name
-      - contentType
-      - sizeBytes
-      - status
-      title: RunAttachment
-    RunJudgeSettings:
-      properties:
-        context:
+          title: Runs
+        nextCursor:
           anyOf:
           - type: string
-            maxLength: 10000
           - type: 'null'
-          title: Context
-      additionalProperties: false
-      type: object
-      title: RunJudgeSettings
-      description: 'Opt-in LLM judgement of the finished run. Presence of this object turns
-
-        the judge on (send {} for defaults); CP judges the run''s trajectory after
-
-        it goes terminal and surfaces the verdict as RunSummary.judgement (null
-
-        until it lands). The judge''s LLM call is billed to the run.'
-    RunStatusResponse:
-      properties:
-        status:
-          type: string
-          enum:
-          - queued
-          - dispatching
-          - running
-          - completed
-          - failed
-          - cancelled
-          title: Status
+          title: Nextcursor
+        hasMore:
+          type: boolean
+          title: Hasmore
+          default: false
       type: object
       required:
-      - status
-      title: RunStatusResponse
-      description: 'Minimal poll target: just the run''s status. Poll this until terminal
-
-        (cheap indexed lookup, tiny payload — never the task/result text), then
-
-        fetch the full RunSummary once via GET /runs/{id}. Mirrors v2''s
-
-        GET /tasks/{id}/status.'
-    OnePasswordSecretSource:
+      - runs
+      title: RunListResponse
+    APIKeySpendLimitDetail:
       properties:
-        type:
+        code:
           type: string
-          const: onepassword
-          title: Type
-        integrationId:
+          title: Code
+          default: api_key_monthly_spend_limit_reached
+        message:
           type: string
-          format: uuid
-          title: Integrationid
-          description: 1Password integration to resolve through. Must belong to this project.
-        vaultId:
-          type: string
-          maxLength: 64
-          minLength: 1
-          title: Vaultid
-        itemId:
-          type: string
-          maxLength: 64
-          minLength: 1
-          title: Itemid
-        fieldId:
-          type: string
-          maxLength: 64
-          minLength: 1
-          title: Fieldid
-          description: Field id from the item-fields endpoint, e.g. "password".
-      additionalProperties: false
+          title: Message
+        cap:
+          type: number
+          title: Cap
+        spent:
+          type: number
+          title: Spent
       type: object
       required:
-      - type
-      - integrationId
-      - vaultId
-      - itemId
-      - fieldId
-      title: OnePasswordSecretSource
-      description: 'One field of a 1Password item, resolved only when the agent asks for it.
-
-
-        Nothing here is a secret: the quadruple NAMES a credential without carrying
-
-        it. Creating the binding makes no call to 1Password — a provider outage must
-
-        not stop a run from being dispatched, and no vault is ever enumerated.
-
-
-        A one-time-password field resolves to its current code; its seed is never
-
-        read, so there is no flag to ask for one.'
+      - message
+      - cap
+      - spent
+      title: APIKeySpendLimitDetail
+      description: Machine-readable 402 detail shared by run and browser creation.
     ValidationError:
       properties:
         loc:
@@ -1308,6 +1236,98 @@ components:
       - msg
       - type
       title: ValidationError
+    RunCreateResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        status:
+          type: string
+          enum:
+          - queued
+          - dispatching
+          - running
+          - completed
+          - failed
+          - cancelled
+          title: Status
+        model:
+          type: string
+          title: Model
+        sessionId:
+          type: string
+          format: uuid
+          title: Sessionid
+        workspaceId:
+          type: string
+          format: uuid
+          title: Workspaceid
+        eventsUrl:
+          type: string
+          title: Eventsurl
+        missingFileIds:
+          items:
+            type: string
+            format: uuid
+          type: array
+          title: Missingfileids
+        skippedVaultItems:
+          items:
+            type: string
+          type: array
+          title: Skippedvaultitems
+          description: Titles of opVaultId items that hold a credential but no 1Password website, so deriving their domains left them with nowhere to be typed. The run still starts without them; add a website to the item or pass opVaultAllowedDomains.
+      type: object
+      required:
+      - id
+      - status
+      - model
+      - sessionId
+      - workspaceId
+      - eventsUrl
+      title: RunCreateResponse
+    CustomProxy:
+      properties:
+        host:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Host
+          description: Host of the proxy.
+        port:
+          type: integer
+          maximum: 65535.0
+          minimum: 1.0
+          title: Port
+          description: Port of the proxy.
+        username:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Username
+          description: Username for proxy authentication.
+        password:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+          - type: 'null'
+          title: Password
+          description: Password for proxy authentication.
+        ignoreCertErrors:
+          type: boolean
+          title: Ignore Certificate Errors
+          description: Ignore TLS certificate errors. Enable this if your proxy uses a self-signed or untrusted certificate (e.g. Burp Suite, corporate proxies).
+          default: false
+      type: object
+      required:
+      - host
+      - port
+      title: CustomProxy
+      description: Request model for creating a custom proxy.
     InlineSecretSource:
       properties:
         type:
@@ -1328,26 +1348,6 @@ components:
       - value
       title: InlineSecretSource
       description: A value the caller supplies directly with the run.
-    RunListResponse:
-      properties:
-        runs:
-          items:
-            $ref: '#/components/schemas/RunSummary'
-          type: array
-          title: Runs
-        nextCursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Nextcursor
-        hasMore:
-          type: boolean
-          title: Hasmore
-          default: false
-      type: object
-      required:
-      - runs
-      title: RunListResponse
   securitySchemes:
     APIKeyHeader:
       type: apiKey
