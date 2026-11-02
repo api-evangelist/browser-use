@@ -1,0 +1,157 @@
+# Pricing transcribed from the provider's own page — see provenance. Numbers are quoted, not derived.
+generated: '2026-10-28'
+method: searched
+source: https://browser-use.com/pricing
+sources:
+- https://browser-use.com/pricing
+provenance:
+  tool: engine/economics/harvest_pricing.py
+  run: 20261028T120612
+  grounding: every price_text was found verbatim in the fetched page text
+audience: developer-api
+pricing_basis: per-call
+delivery:
+  delivery: managed+licensed
+  method: page
+  read: '2026-10-28'
+  evidence: On-prem Run browsers and agents inside your network.
+  managed_tier: Browsers
+published: true
+note: 'Pay-as-you-go page: browser hourly rate, 20% model markup with per-1M-token tables, proxy per-GB,
+  concurrency tiers by total paid. On-prem option listed without price; no subscription plans offered.'
+plan_count: 8
+currency: USD
+plans:
+- name: Browsers
+  price_text: $0.02 / hour
+  price: 0.02
+  currency: USD
+  period: per-use
+  unit: hour
+  included_quota: Cloud browsers
+  overage: plus $5 / GB residential proxy
+- name: Browser agents
+  price_text: Model + 20 %
+  price: 20
+  currency: USD
+  period: per-use
+  unit: model tokens
+  included_quota: Web agents
+  overage: plus browser time and traffic
+- name: On-prem
+  price_text: Run browsers and agents inside your network.
+  period: none
+- name: High-quality residential proxies
+  price_text: $5 / GB
+  price: 5
+  currency: USD
+  period: per-use
+  unit: GB
+  included_quota: on by default
+- name: Direct / your own proxy
+  price_text: $0.20 / GB
+  price: 0.2
+  currency: USD
+  period: per-use
+  unit: GB
+- name: Minimum top-up
+  price_text: $ 5
+  price: 5
+  currency: USD
+  period: one-time
+  unit: top-up
+  included_quota: unlocks every model
+- name: Free credits
+  price_text: $ 1 once per person.
+  price: 1
+  currency: USD
+  period: one-time
+  unit: credit
+  included_quota: Eligible Google, GitHub or Microsoft signups. No card required.
+- name: Custom model API - BU 2.0
+  price_text: $0.60
+  price: 0.6
+  currency: USD
+  period: per-use
+  unit: 1M input tokens
+  included_quota: Cached input $0.06, Output $3.50
+rate_limit_statements:
+- Start with 10 concurrent sessions.
+- one $ 1,000 top-up unlocks 250 , $ 5,000 unlocks 500
+- $ 25,000 1,000
+- Browser billing Rounded up to whole minutes. 1-minute minimum.
+x-canonical:
+  generated: '2026-11-01'
+  vocabulary: engine/economics/plans-canonical.yml
+  models:
+  - hybrid
+  - subscription
+  units:
+  - compute
+  - credit
+  - data
+  - token
+  plans:
+  - name: Browsers
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - compute
+    periods:
+    - other
+  - name: Browser agents
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - token
+    periods:
+    - other
+  - name: On-prem
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods:
+    - none
+  - name: High-quality residential proxies
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - data
+    periods:
+    - other
+  - name: Direct / your own proxy
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - data
+    periods:
+    - other
+  - name: Minimum top-up
+    access: other
+    model: subscription
+    model_how: derived
+    units:
+    - other
+    periods:
+    - one-time
+  - name: Free credits
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - credit
+    periods:
+    - one-time
+  - name: Custom model API - BU 2.0
+    access: other
+    model: hybrid
+    model_how: derived
+    units:
+    - token
+    periods:
+    - other
