@@ -147,15 +147,29 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    HTTPValidationError:
+    ExtensionView:
       properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        version:
+          type: string
+          title: Version
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
       type: object
-      title: HTTPValidationError
+      required:
+      - id
+      - name
+      - version
+      - createdAt
+      title: ExtensionView
     ExtensionListResponse:
       properties:
         items:
@@ -182,6 +196,15 @@ components:
       - pageNumber
       - pageSize
       title: ExtensionListResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
     ValidationError:
       properties:
         loc:
@@ -203,29 +226,6 @@ components:
       - msg
       - type
       title: ValidationError
-    ExtensionView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        name:
-          type: string
-          title: Name
-        version:
-          type: string
-          title: Version
-        createdAt:
-          type: string
-          format: date-time
-          title: Createdat
-      type: object
-      required:
-      - id
-      - name
-      - version
-      - createdAt
-      title: ExtensionView
   securitySchemes:
     APIKeyHeader:
       type: apiKey

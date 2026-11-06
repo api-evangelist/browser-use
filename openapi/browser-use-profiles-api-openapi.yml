@@ -224,62 +224,15 @@ paths:
       description: Production server
 components:
   schemas:
-    HTTPValidationError:
+    InsufficientCreditsError:
       properties:
         detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
+          type: string
           title: Detail
+          default: Insufficient credits
       type: object
-      title: HTTPValidationError
-    ProfileListResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/ProfileView'
-          type: array
-          title: Items
-          description: List of profile views for the current page
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
-      type: object
-      required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: ProfileListResponse
-      description: Response model for paginated profile list requests.
-    ProfileUpdateRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-            maxLength: 100
-          - type: 'null'
-          title: Name
-          description: Optional name for the profile
-        userId:
-          anyOf:
-          - type: string
-            maxLength: 255
-          - type: 'null'
-          title: User ID
-          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
-      type: object
-      title: ProfileUpdateRequest
-      description: Request model for updating a profile.
+      title: InsufficientCreditsError
+      description: Error response when there are insufficient credits
     ProfileView:
       properties:
         id:
@@ -345,15 +298,34 @@ components:
       type: object
       title: ProfileNotFoundError
       description: Error response when a profile is not found
-    InsufficientCreditsError:
+    ProfileUpdateRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          title: Name
+          description: Optional name for the profile
+        userId:
+          anyOf:
+          - type: string
+            maxLength: 255
+          - type: 'null'
+          title: User ID
+          description: Your internal user identifier for this profile. Use this to associate a profile with a user in your system.
+      type: object
+      title: ProfileUpdateRequest
+      description: Request model for updating a profile.
+    HTTPValidationError:
       properties:
         detail:
-          type: string
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
           title: Detail
-          default: Insufficient credits
       type: object
-      title: InsufficientCreditsError
-      description: Error response when there are insufficient credits
+      title: HTTPValidationError
     ValidationError:
       properties:
         loc:
@@ -394,6 +366,34 @@ components:
       type: object
       title: ProfileCreateRequest
       description: Request model for creating a new profile.
+    ProfileListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ProfileView'
+          type: array
+          title: Items
+          description: List of profile views for the current page
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: ProfileListResponse
+      description: Response model for paginated profile list requests.
   securitySchemes:
     APIKeyHeader:
       type: apiKey

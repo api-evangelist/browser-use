@@ -216,55 +216,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    ConnectionStatusResponse:
-      properties:
-        provider:
-          type: string
-          title: Provider
-        is_connected:
-          type: boolean
-          title: Is Connected
-      type: object
-      required:
-      - provider
-      - is_connected
-      title: ConnectionStatusResponse
-      description: Response for connection status check.
-    DisconnectResponse:
-      properties:
-        success:
-          type: boolean
-          title: Success
-        provider:
-          type: string
-          title: Provider
-      type: object
-      required:
-      - success
-      - provider
-      title: DisconnectResponse
-      description: Response for disconnect action.
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    IntegrationCategoryResponse:
-      properties:
-        categories:
-          items:
-            type: string
-          type: array
-          title: Categories
-      type: object
-      required:
-      - categories
-      title: IntegrationCategoryResponse
-      description: Response for integration categories.
     IntegrationListResponse:
       properties:
         integrations:
@@ -289,6 +240,41 @@ components:
       - offset
       title: IntegrationListResponse
       description: Paginated response for integrations list.
+    IntegrationCategoryResponse:
+      properties:
+        categories:
+          items:
+            type: string
+          type: array
+          title: Categories
+      type: object
+      required:
+      - categories
+      title: IntegrationCategoryResponse
+      description: Response for integration categories.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ConnectionStatusResponse:
+      properties:
+        provider:
+          type: string
+          title: Provider
+        is_connected:
+          type: boolean
+          title: Is Connected
+      type: object
+      required:
+      - provider
+      - is_connected
+      title: ConnectionStatusResponse
+      description: Response for connection status check.
     ValidationError:
       properties:
         loc:
@@ -310,6 +296,34 @@ components:
       - msg
       - type
       title: ValidationError
+    AuthorizeResponse:
+      properties:
+        redirect_url:
+          type: string
+          title: Redirect Url
+        provider:
+          type: string
+          title: Provider
+      type: object
+      required:
+      - redirect_url
+      - provider
+      title: AuthorizeResponse
+      description: Response with OAuth redirect URL.
+    DisconnectResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+        provider:
+          type: string
+          title: Provider
+      type: object
+      required:
+      - success
+      - provider
+      title: DisconnectResponse
+      description: Response for disconnect action.
     IntegrationResponse:
       properties:
         provider:
@@ -350,20 +364,6 @@ components:
       - auth_type
       title: IntegrationResponse
       description: Response for a single integration.
-    AuthorizeResponse:
-      properties:
-        redirect_url:
-          type: string
-          title: Redirect Url
-        provider:
-          type: string
-          title: Provider
-      type: object
-      required:
-      - redirect_url
-      - provider
-      title: AuthorizeResponse
-      description: Response with OAuth redirect URL.
   securitySchemes:
     APIKeyHeader:
       type: apiKey

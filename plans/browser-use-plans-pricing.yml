@@ -81,7 +81,7 @@ rate_limit_statements:
 - $ 25,000 1,000
 - Browser billing Rounded up to whole minutes. 1-minute minimum.
 x-canonical:
-  generated: '2026-11-02'
+  generated: '2026-11-06'
   vocabulary: engine/economics/plans-canonical.yml
   models:
   - hybrid

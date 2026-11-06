@@ -327,24 +327,66 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    DownloadUrlGenerationError:
+    SessionNotFoundError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Failed to generate download URL
+          default: Session not found
       type: object
-      title: DownloadUrlGenerationError
-      description: Error response when download URL generation fails
-    ThinkingLevel:
-      type: string
-      enum:
-      - disabled
-      - low
-      - medium
-      - high
-      title: ThinkingLevel
-      description: Provider-neutral model reasoning depth.
+      title: SessionNotFoundError
+      description: Error response when a session is not found
+    TooManyConcurrentActiveSessionsError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
+      type: object
+      title: TooManyConcurrentActiveSessionsError
+      description: Error response when user has too many concurrent active sessions
+    SessionSettings:
+      properties:
+        profileId:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Profile ID
+          description: Browser profile ID for persistent browser state (cookies, local storage, etc.).
+        proxyCountryCode:
+          anyOf:
+          - $ref: '#/components/schemas/ProxyCountryCode'
+          - type: 'null'
+          title: Proxy Country Code
+          description: Proxy country code for geo-targeted browsing. Defaults to US. Set to null to disable proxy.
+          default: us
+        browserScreenWidth:
+          anyOf:
+          - type: integer
+            maximum: 6144.0
+            minimum: 320.0
+          - type: 'null'
+          title: Browser Screen Width
+          description: Custom screen width in pixels for the browser.
+        browserScreenHeight:
+          anyOf:
+          - type: integer
+            maximum: 3456.0
+            minimum: 320.0
+          - type: 'null'
+          title: Browser Screen Height
+          description: Custom screen height in pixels for the browser.
+        enableRecording:
+          type: boolean
+          title: Enable Recording
+          description: If True, enables session recording. Defaults to False.
+          default: false
+      type: object
+      title: SessionSettings
+      description: 'Session configuration for auto-created sessions.
+
+        These settings only apply when no session_id is provided.'
     SupportedLLMs:
       type: string
       enum:
@@ -379,16 +421,119 @@ components:
       - llama-4-maverick-17b-128e-instruct
       - claude-3-7-sonnet-20250219
       title: SupportedLLMs
-    SessionNotFoundError:
+    TaskStatus:
+      type: string
+      enum:
+      - created
+      - started
+      - finished
+      - failed
+      - stopped
+      title: TaskStatus
+      description: "Enumeration of possible task execution states\n\nAttributes:\n        CREATED: Task has been created but not yet started.\n    STARTED: Task has been started and is currently running.\n    FINISHED: Task has finished and the agent has completed the task.\n    FAILED: Task execution failed due to an error.\n    STOPPED: Task execution has been manually stopped (cannot be resumed)."
+    DownloadUrlGenerationError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Session not found
+          default: Failed to generate download URL
       type: object
-      title: SessionNotFoundError
-      description: Error response when a session is not found
-    TaskItemView:
+      title: DownloadUrlGenerationError
+      description: Error response when download URL generation fails
+    TaskListResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/TaskItemView'
+          type: array
+          title: Items
+          description: List of task views for the current page
+        totalItems:
+          type: integer
+          title: Total Items
+          description: Total number of items in the list
+        pageNumber:
+          type: integer
+          title: Page Number
+          description: Page number
+        pageSize:
+          type: integer
+          title: Page Size
+          description: Number of items per page
+      type: object
+      required:
+      - items
+      - totalItems
+      - pageNumber
+      - pageSize
+      title: TaskListResponse
+      description: Response model for paginated task list requests.
+    TaskStatusView:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the task
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+          title: Status
+          description: Current status of the task
+        output:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Output
+          description: Final output/result of the task (null while running)
+        finishedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Finished At
+          description: Naive UTC timestamp when the task completed (null if still running)
+        isSuccess:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Success
+          description: Whether the task was successful based on the agent's self-reported output
+        cost:
+          anyOf:
+          - type: string
+            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
+          - type: 'null'
+          title: Cost
+          description: Total cost of the task in USD
+      type: object
+      required:
+      - id
+      - status
+      title: TaskStatusView
+      description: 'Lightweight view optimized for polling. Use GET /tasks/{id}/status for efficient polling
+
+        instead of GET /tasks/{id} which loads full step details.'
+    SessionStoppedError:
+      properties:
+        detail:
+          type: string
+          title: Detail
+          default: Browser session is stopped. Please start a new session and try again.
+      type: object
+      title: SessionStoppedError
+      description: Error response when trying to use a stopped session
+    TaskLogFileResponse:
+      properties:
+        downloadUrl:
+          type: string
+          title: Download URL
+          description: URL to download the log file
+      type: object
+      required:
+      - downloadUrl
+      title: TaskLogFileResponse
+      description: Response model for log file requests
+    TaskView:
       properties:
         id:
           type: string
@@ -398,8 +543,7 @@ components:
         sessionId:
           type: string
           format: uuid
-          title: Session ID
-          description: ID of the session this task belongs to
+          title: Sessionid
         llm:
           type: string
           title: LLM
@@ -410,6 +554,8 @@ components:
           description: The task prompt/instruction given to the agent
         status:
           $ref: '#/components/schemas/TaskStatus'
+          title: Status
+          description: Current status of the task execution
         createdAt:
           type: string
           format: date-time
@@ -435,12 +581,22 @@ components:
           title: Metadata
           description: Optional additional metadata associated with the task set by the user
           default: {}
+        steps:
+          items:
+            $ref: '#/components/schemas/TaskStepView'
+          type: array
+          title: Steps
         output:
           anyOf:
           - type: string
           - type: 'null'
           title: Output
           description: Final output/result of the task
+        outputFiles:
+          items:
+            $ref: '#/components/schemas/FileView'
+          type: array
+          title: Outputfiles
         browserUseVersion:
           anyOf:
           - type: string
@@ -452,7 +608,7 @@ components:
           - type: boolean
           - type: 'null'
           title: Is Success
-          description: Whether the task was successful (self-reported by the agent)
+          description: Whether the task was successful based on the agent's self-reported output (less reliable than the judge)
         judgement:
           anyOf:
           - type: string
@@ -489,54 +645,57 @@ components:
       - task
       - status
       - createdAt
-      title: TaskItemView
+      - steps
+      - outputFiles
+      title: TaskView
       description: View model for representing a task with its execution details
-    UpdateTaskRequest:
+    FileView:
       properties:
-        action:
-          $ref: '#/components/schemas/TaskUpdateAction'
-          title: Action
-          description: The action to perform on the task
+        id:
+          type: string
+          format: uuid
+          title: ID
+          description: Unique identifier for the output file
+        fileName:
+          type: string
+          title: File Name
+          description: Name of the output file
       type: object
       required:
-      - action
-      title: UpdateTaskRequest
-      description: Request model for updating task state
-    TaskUpdateAction:
+      - id
+      - fileName
+      title: FileView
+      description: View model for representing an output file generated by the agent
+    ThinkingLevel:
       type: string
       enum:
-      - stop
-      - stop_task_and_session
-      title: TaskUpdateAction
-      description: "Available actions that can be performed on a task\n\nAttributes:\n    STOP: Stop the current task execution\n    STOP_TASK_AND_SESSION: Stop both the task and its parent session"
-    TaskListResponse:
+      - disabled
+      - low
+      - medium
+      - high
+      title: ThinkingLevel
+      description: Provider-neutral model reasoning depth.
+    ValidationError:
       properties:
-        items:
+        loc:
           items:
-            $ref: '#/components/schemas/TaskItemView'
+            anyOf:
+            - type: string
+            - type: integer
           type: array
-          title: Items
-          description: List of task views for the current page
-        totalItems:
-          type: integer
-          title: Total Items
-          description: Total number of items in the list
-        pageNumber:
-          type: integer
-          title: Page Number
-          description: Page number
-        pageSize:
-          type: integer
-          title: Page Size
-          description: Number of items per page
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
       type: object
       required:
-      - items
-      - totalItems
-      - pageNumber
-      - pageSize
-      title: TaskListResponse
-      description: Response model for paginated task list requests.
+      - loc
+      - msg
+      - type
+      title: ValidationError
     CreateTaskRequest:
       properties:
         task:
@@ -678,24 +837,17 @@ components:
       - task
       title: CreateTaskRequest
       description: Request model for creating a task
-    TaskNotFoundError:
+    UpdateTaskRequest:
       properties:
-        detail:
-          type: string
-          title: Detail
-          default: Task not found
+        action:
+          $ref: '#/components/schemas/TaskUpdateAction'
+          title: Action
+          description: The action to perform on the task
       type: object
-      title: TaskNotFoundError
-      description: Error response when a task is not found
-    TooManyConcurrentActiveSessionsError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Too many concurrent active sessions. Please wait for one to finish, kill one, or upgrade your plan.
-      type: object
-      title: TooManyConcurrentActiveSessionsError
-      description: Error response when user has too many concurrent active sessions
+      required:
+      - action
+      title: UpdateTaskRequest
+      description: Request model for updating task state
     ProxyCountryCode:
       type: string
       enum:
@@ -948,61 +1100,7 @@ components:
       - zm
       - zw
       title: ProxyCountryCode
-    HTTPValidationError:
-      properties:
-        detail:
-          items:
-            $ref: '#/components/schemas/ValidationError'
-          type: array
-          title: Detail
-      type: object
-      title: HTTPValidationError
-    TaskStatusView:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the task
-        status:
-          $ref: '#/components/schemas/TaskStatus'
-          title: Status
-          description: Current status of the task
-        output:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Output
-          description: Final output/result of the task (null while running)
-        finishedAt:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-          title: Finished At
-          description: Naive UTC timestamp when the task completed (null if still running)
-        isSuccess:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          title: Is Success
-          description: Whether the task was successful based on the agent's self-reported output
-        cost:
-          anyOf:
-          - type: string
-            pattern: ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$
-          - type: 'null'
-          title: Cost
-          description: Total cost of the task in USD
-      type: object
-      required:
-      - id
-      - status
-      title: TaskStatusView
-      description: 'Lightweight view optimized for polling. Use GET /tasks/{id}/status for efficient polling
-
-        instead of GET /tasks/{id} which loads full step details.'
-    TaskView:
+    TaskItemView:
       properties:
         id:
           type: string
@@ -1012,7 +1110,8 @@ components:
         sessionId:
           type: string
           format: uuid
-          title: Sessionid
+          title: Session ID
+          description: ID of the session this task belongs to
         llm:
           type: string
           title: LLM
@@ -1023,8 +1122,6 @@ components:
           description: The task prompt/instruction given to the agent
         status:
           $ref: '#/components/schemas/TaskStatus'
-          title: Status
-          description: Current status of the task execution
         createdAt:
           type: string
           format: date-time
@@ -1050,22 +1147,12 @@ components:
           title: Metadata
           description: Optional additional metadata associated with the task set by the user
           default: {}
-        steps:
-          items:
-            $ref: '#/components/schemas/TaskStepView'
-          type: array
-          title: Steps
         output:
           anyOf:
           - type: string
           - type: 'null'
           title: Output
           description: Final output/result of the task
-        outputFiles:
-          items:
-            $ref: '#/components/schemas/FileView'
-          type: array
-          title: Outputfiles
         browserUseVersion:
           anyOf:
           - type: string
@@ -1077,7 +1164,7 @@ components:
           - type: boolean
           - type: 'null'
           title: Is Success
-          description: Whether the task was successful based on the agent's self-reported output (less reliable than the judge)
+          description: Whether the task was successful (self-reported by the agent)
         judgement:
           anyOf:
           - type: string
@@ -1114,120 +1201,53 @@ components:
       - task
       - status
       - createdAt
-      - steps
-      - outputFiles
-      title: TaskView
+      title: TaskItemView
       description: View model for representing a task with its execution details
-    ValidationError:
+    HTTPValidationError:
       properties:
-        loc:
+        detail:
           items:
-            anyOf:
-            - type: string
-            - type: integer
+            $ref: '#/components/schemas/ValidationError'
           type: array
-          title: Location
-        msg:
-          type: string
-          title: Message
-        type:
-          type: string
-          title: Error Type
+          title: Detail
       type: object
-      required:
-      - loc
-      - msg
-      - type
-      title: ValidationError
-    TaskStatus:
-      type: string
-      enum:
-      - created
-      - started
-      - finished
-      - failed
-      - stopped
-      title: TaskStatus
-      description: "Enumeration of possible task execution states\n\nAttributes:\n        CREATED: Task has been created but not yet started.\n    STARTED: Task has been started and is currently running.\n    FINISHED: Task has finished and the agent has completed the task.\n    FAILED: Task execution failed due to an error.\n    STOPPED: Task execution has been manually stopped (cannot be resumed)."
-    FileView:
+      title: HTTPValidationError
+    TaskCreatedResponse:
       properties:
         id:
           type: string
           format: uuid
           title: ID
-          description: Unique identifier for the output file
-        fileName:
+          description: Unique identifier for the created task
+        sessionId:
           type: string
-          title: File Name
-          description: Name of the output file
+          format: uuid
+          title: Session ID
+          description: Session ID where the task was created
       type: object
       required:
       - id
-      - fileName
-      title: FileView
-      description: View model for representing an output file generated by the agent
-    TaskLogFileResponse:
-      properties:
-        downloadUrl:
-          type: string
-          title: Download URL
-          description: URL to download the log file
-      type: object
-      required:
-      - downloadUrl
-      title: TaskLogFileResponse
-      description: Response model for log file requests
-    SessionStoppedError:
+      - sessionId
+      title: TaskCreatedResponse
+      description: Response model for creating a task
+    TaskNotFoundError:
       properties:
         detail:
           type: string
           title: Detail
-          default: Browser session is stopped. Please start a new session and try again.
+          default: Task not found
       type: object
-      title: SessionStoppedError
-      description: Error response when trying to use a stopped session
-    SessionSettings:
+      title: TaskNotFoundError
+      description: Error response when a task is not found
+    SessionHasRunningTaskError:
       properties:
-        profileId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Profile ID
-          description: Browser profile ID for persistent browser state (cookies, local storage, etc.).
-        proxyCountryCode:
-          anyOf:
-          - $ref: '#/components/schemas/ProxyCountryCode'
-          - type: 'null'
-          title: Proxy Country Code
-          description: Proxy country code for geo-targeted browsing. Defaults to US. Set to null to disable proxy.
-          default: us
-        browserScreenWidth:
-          anyOf:
-          - type: integer
-            maximum: 6144.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Width
-          description: Custom screen width in pixels for the browser.
-        browserScreenHeight:
-          anyOf:
-          - type: integer
-            maximum: 3456.0
-            minimum: 320.0
-          - type: 'null'
-          title: Browser Screen Height
-          description: Custom screen height in pixels for the browser.
-        enableRecording:
-          type: boolean
-          title: Enable Recording
-          description: If True, enables session recording. Defaults to False.
-          default: false
+        detail:
+          type: string
+          title: Detail
+          default: Agent session already has a running task. Please wait for it to finish or stop it manually.
       type: object
-      title: SessionSettings
-      description: 'Session configuration for auto-created sessions.
-
-        These settings only apply when no session_id is provided.'
+      title: SessionHasRunningTaskError
+      description: Error response when session already has a running task
     TaskStepView:
       properties:
         number:
@@ -1278,33 +1298,13 @@ components:
       - actions
       title: TaskStepView
       description: View model for representing a single step in a task's execution
-    TaskCreatedResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: ID
-          description: Unique identifier for the created task
-        sessionId:
-          type: string
-          format: uuid
-          title: Session ID
-          description: Session ID where the task was created
-      type: object
-      required:
-      - id
-      - sessionId
-      title: TaskCreatedResponse
-      description: Response model for creating a task
-    SessionHasRunningTaskError:
-      properties:
-        detail:
-          type: string
-          title: Detail
-          default: Agent session already has a running task. Please wait for it to finish or stop it manually.
-      type: object
-      title: SessionHasRunningTaskError
-      description: Error response when session already has a running task
+    TaskUpdateAction:
+      type: string
+      enum:
+      - stop
+      - stop_task_and_session
+      title: TaskUpdateAction
+      description: "Available actions that can be performed on a task\n\nAttributes:\n    STOP: Stop the current task execution\n    STOP_TASK_AND_SESSION: Stop both the task and its parent session"
   securitySchemes:
     APIKeyHeader:
       type: apiKey

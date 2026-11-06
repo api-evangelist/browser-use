@@ -71,6 +71,33 @@ paths:
       - APIKeyHeader: []
 components:
   schemas:
+    AgentCardWalletSummary:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        currency:
+          type: string
+          title: Currency
+        availableCents:
+          type: integer
+          title: Availablecents
+        activeHoldCents:
+          type: integer
+          title: Activeholdcents
+      type: object
+      required:
+      - id
+      - name
+      - currency
+      - availableCents
+      - activeHoldCents
+      title: AgentCardWalletSummary
+      description: A spendable project wallet as the composer needs to show it.
     StripeLinkStatusResponse:
       properties:
         isConnected:
@@ -141,33 +168,6 @@ components:
       - msg
       - type
       title: ValidationError
-    AgentCardWalletSummary:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        name:
-          type: string
-          title: Name
-        currency:
-          type: string
-          title: Currency
-        availableCents:
-          type: integer
-          title: Availablecents
-        activeHoldCents:
-          type: integer
-          title: Activeholdcents
-      type: object
-      required:
-      - id
-      - name
-      - currency
-      - availableCents
-      - activeHoldCents
-      title: AgentCardWalletSummary
-      description: A spendable project wallet as the composer needs to show it.
   securitySchemes:
     APIKeyHeader:
       type: apiKey
